@@ -28,4 +28,12 @@ export class RegisterUserDto {
 
   @IsOptional()
   permissions?: string[];
+
+  @IsString()
+  @IsOptional()
+  dob?: string;
+
+  @IsString()
+  @IsOptional()
+  gender?: string;
 }

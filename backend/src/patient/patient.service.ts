@@ -259,4 +259,10 @@ export class PatientService {
 
     return updatedPatient;
   }
+
+  async findProfileByUserId(userId: string) {
+    return this.prisma.patientProfile.findUnique({
+      where: { userId },
+    });
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Get, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Body, Param, Query, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { PatientService } from './patient.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { MergePatientsDto } from './dto/merge-patients.dto';
@@ -30,9 +30,19 @@ export class PatientController {
     return this.patientService.searchPatients(clinicId, query);
   }
 
-  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF, UserRole.PATIENT)
   @Get(':id/timeline')
-  async getTimeline(@ClinicId() clinicId: string, @Param('id') id: string) {
+  async getTimeline(
+    @ClinicId() clinicId: string,
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    if (user.role === UserRole.PATIENT) {
+      const patientProfile = await this.patientService.findProfileByUserId(user.id);
+      if (!patientProfile || patientProfile.id !== id) {
+        throw new ForbiddenException('You are not authorized to access this patient profile');
+      }
+    }
     return this.patientService.getPatientTimeline(clinicId, id);
   }
 

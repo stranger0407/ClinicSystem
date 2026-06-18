@@ -193,12 +193,21 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-8 border-t border-slate-800/80 pt-6 text-center">
+        <div className="mt-8 border-t border-slate-800/80 pt-6 text-center space-y-3">
+          <p className="text-slate-400 text-xs">
+            Are you a patient?{' '}
+            <Link
+              href="/register-patient"
+              className="text-teal-400 hover:text-teal-300 font-semibold transition-colors underline underline-offset-4"
+            >
+              Register / Claim Patient Account
+            </Link>
+          </p>
           <p className="text-slate-400 text-xs">
             Want to start your own clinic?{' '}
             <Link
               href="/register"
-              className="text-teal-400 hover:text-teal-300 font-semibold transition-colors underline underline-offset-4"
+              className="text-teal-400 hover:text-teal-350 font-semibold transition-colors underline underline-offset-4"
             >
               Register your Clinic
             </Link>

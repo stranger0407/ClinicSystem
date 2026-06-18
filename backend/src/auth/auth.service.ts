@@ -152,18 +152,43 @@ export class AuthService {
 
       // Handle role-specific profiles
       if (dto.role === UserRole.PATIENT) {
-        await tx.patientProfile.create({
-          data: {
+        // Look for an unclaimed patient profile with the same phone in the clinic
+        const existingProfile = dto.phone ? await tx.patientProfile.findFirst({
+          where: {
             clinicId,
-            userId: user.id,
-            phone: dto.phone || '',
-            firstName: dto.firstName,
-            lastName: dto.lastName,
-            dob: new Date('2000-01-01'), // Default date of birth to be updated later
-            gender: 'UNKNOWN',
-            emergencyContact: {},
+            phone: dto.phone.trim(),
+            userId: null,
+            deletedAt: null,
           },
-        });
+        }) : null;
+
+        if (existingProfile) {
+          // Link existing profile to this user instead of creating a duplicate
+          await tx.patientProfile.update({
+            where: { id: existingProfile.id },
+            data: {
+              userId: user.id,
+              firstName: dto.firstName,
+              lastName: dto.lastName,
+              ...(dto.dob ? { dob: new Date(dto.dob) } : {}),
+              ...(dto.gender ? { gender: dto.gender } : {}),
+            },
+          });
+        } else {
+          // Create new patient profile
+          await tx.patientProfile.create({
+            data: {
+              clinicId,
+              userId: user.id,
+              phone: dto.phone || '',
+              firstName: dto.firstName,
+              lastName: dto.lastName,
+              dob: dto.dob ? new Date(dto.dob) : new Date('2000-01-01'),
+              gender: dto.gender || 'UNKNOWN',
+              emergencyContact: {},
+            },
+          });
+        }
       } else if (dto.role === UserRole.DOCTOR) {
         await tx.doctorProfile.create({
           data: {
