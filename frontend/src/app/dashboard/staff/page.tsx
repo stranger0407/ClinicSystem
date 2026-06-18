@@ -62,6 +62,140 @@ export default function StaffDashboard() {
   const [mergeError, setMergeError] = useState('');
   const [mergeSuccess, setMergeSuccess] = useState(false);
 
+  // Appointments tab state
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
+
+  // Booking Form State
+  const [bookingPatientSearch, setBookingPatientSearch] = useState('');
+  const [bookingPatientResults, setBookingPatientResults] = useState<any[]>([]);
+  const [bookingPatient, setBookingPatient] = useState<any | null>(null);
+  const [bookingType, setBookingType] = useState<'SLOT' | 'WALK_IN'>('SLOT');
+  const [bookingTime, setBookingTime] = useState('');
+  const [bookingIsFollowUp, setBookingIsFollowUp] = useState(false);
+  const [bookingNotes, setBookingNotes] = useState('');
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingError, setBookingError] = useState('');
+  const [bookingInProgress, setBookingInProgress] = useState(false);
+
+  // Load doctors list
+  const loadDoctors = async () => {
+    try {
+      const docs = await apiFetch('/doctor');
+      setDoctors(docs);
+      if (docs.length > 0 && !selectedDoctorId) {
+        setSelectedDoctorId(docs[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to load doctors:', err);
+    }
+  };
+
+  // Load appointments list
+  const loadAppointments = async () => {
+    if (!selectedDoctorId) return;
+    setLoadingAppointments(true);
+    try {
+      const appts = await apiFetch(`/appointment?doctorId=${selectedDoctorId}&date=${selectedDate}`);
+      setAppointments(appts);
+    } catch (err) {
+      console.error('Failed to load appointments:', err);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  };
+
+  // Trigger loading doctors
+  useEffect(() => {
+    if (activeTab === 'appointments') {
+      loadDoctors();
+    }
+  }, [activeTab]);
+
+  // Trigger loading appointments
+  useEffect(() => {
+    if (activeTab === 'appointments' && selectedDoctorId) {
+      loadAppointments();
+    }
+  }, [activeTab, selectedDoctorId, selectedDate]);
+
+  // Search patient during booking
+  const searchBookingPatient = async (q: string) => {
+    setBookingPatientSearch(q);
+    if (!q.trim()) {
+      setBookingPatientResults([]);
+      return;
+    }
+    try {
+      const results = await apiFetch(`/patient/search?q=${encodeURIComponent(q.trim())}`);
+      setBookingPatientResults(results);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Submit Booking
+  const handleBookAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookingPatient) {
+      setBookingError('Please select a patient first.');
+      return;
+    }
+    setBookingError('');
+    setBookingSuccess(false);
+    setBookingInProgress(true);
+
+    try {
+      const payload: any = {
+        patientId: bookingPatient.id,
+        doctorId: selectedDoctorId,
+        type: bookingType,
+        isFollowUp: bookingIsFollowUp,
+        notes: bookingNotes,
+      };
+
+      if (bookingType === 'SLOT') {
+        if (!bookingTime) {
+          throw new Error('Please select a booking time');
+        }
+        payload.startTime = new Date(`${selectedDate}T${bookingTime}`).toISOString();
+      }
+
+      await apiFetch('/appointment', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      setBookingSuccess(true);
+      setBookingNotes('');
+      setBookingTime('');
+      setBookingPatient(null);
+      setBookingPatientSearch('');
+      setBookingPatientResults([]);
+      loadAppointments();
+    } catch (err: any) {
+      setBookingError(err.message || 'Failed to book appointment');
+    } finally {
+      setBookingInProgress(false);
+    }
+  };
+
+  // Change Appointment Status
+  const handleUpdateStatus = async (appId: string, status: string) => {
+    try {
+      await apiFetch(`/appointment/${appId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+      loadAppointments();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update status');
+    }
+  };
+
   // Redirect if not authenticated or unauthorized role
   useEffect(() => {
     if (!authLoading) {
@@ -779,19 +913,295 @@ export default function StaffDashboard() {
           </div>
         )}
 
-        {/* Placeholder for Appointments Tab */}
+        {/* TAB 2: Appointments & Live Queue */}
         {activeTab === 'appointments' && (
           <div className="space-y-6">
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Appointments & Live Queue</h1>
-              <p className="text-slate-500 text-xs mt-0.5">Manage doctor availability, book appointments, and oversee walk-in queue numbers.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4 gap-4">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight">Appointments & Live Queue</h1>
+                <p className="text-slate-500 text-xs mt-0.5">Manage schedules, book consultations, and check-in walk-in queues.</p>
+              </div>
+
+              {/* Filter controls */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Doctor</span>
+                  <select
+                    value={selectedDoctorId}
+                    onChange={(e) => setSelectedDoctorId(e.target.value)}
+                    className="bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-700"
+                  >
+                    {doctors.map((doc) => (
+                      <option key={doc.id} value={doc.id}>
+                        Dr. {doc.user.firstName} {doc.user.lastName} ({doc.specialty})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Date</span>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1 text-xs text-slate-700"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
-              <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-sm font-bold text-slate-700">Appointments module ready to initialize</h3>
-              <p className="text-slate-400 text-xs max-w-sm mx-auto mt-1">
-                Phase 3 (Patient Master & Search) is fully functional. We will initialize the Slot booking and Walk-in Queue algorithms in Phase 4.
-              </p>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Form panel: Book Appointment */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4 h-fit">
+                <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center">
+                  <Calendar className="w-4.5 h-4.5 mr-2 text-teal-600" />
+                  Book appointment
+                </h3>
+
+                {bookingSuccess && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 flex items-start space-x-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-emerald-800 text-xs font-semibold">Appointment booked successfully!</span>
+                  </div>
+                )}
+
+                {bookingError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-start space-x-2">
+                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <span className="text-red-800 text-xs font-semibold">{bookingError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleBookAppointment} className="space-y-4">
+                  {/* Select Patient Autocomplete */}
+                  <div className="space-y-1 relative">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase">Patient Search</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={bookingPatient ? `${bookingPatient.firstName} ${bookingPatient.lastName} (${bookingPatient.phone})` : bookingPatientSearch}
+                        disabled={!!bookingPatient}
+                        onChange={(e) => searchBookingPatient(e.target.value)}
+                        placeholder="Search patient by name or phone..."
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs disabled:bg-slate-100 disabled:text-slate-600"
+                      />
+                      {bookingPatient && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBookingPatient(null);
+                            setBookingPatientSearch('');
+                          }}
+                          className="absolute right-2.5 top-1.5 text-[10px] text-red-500 font-bold uppercase hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Autocomplete dropdown */}
+                    {!bookingPatient && bookingPatientResults.length > 0 && (
+                      <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto z-20 divide-y divide-slate-100">
+                        {bookingPatientResults.map((pat) => (
+                          <div
+                            key={pat.id}
+                            onClick={() => {
+                              setBookingPatient(pat);
+                              setBookingPatientResults([]);
+                            }}
+                            className="p-2 text-xs hover:bg-slate-50 cursor-pointer flex justify-between"
+                          >
+                            <span className="font-bold">{pat.firstName} {pat.lastName}</span>
+                            <span className="text-slate-400">{pat.phone}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Booking type */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase block">Booking style</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBookingType('SLOT')}
+                        className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                          bookingType === 'SLOT'
+                            ? 'bg-teal-600 text-white border-teal-600 shadow'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        Time slot
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBookingType('WALK_IN')}
+                        className={`py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                          bookingType === 'WALK_IN'
+                            ? 'bg-teal-600 text-white border-teal-600 shadow'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        Walk-in queue
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Slot selection (Time picker) */}
+                  {bookingType === 'SLOT' && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-bold uppercase">Time slot (24H format)</label>
+                      <input
+                        type="time"
+                        value={bookingTime}
+                        required={bookingType === 'SLOT'}
+                        onChange={(e) => setBookingTime(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-700"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="isFollowUp"
+                      checked={bookingIsFollowUp}
+                      onChange={(e) => setBookingIsFollowUp(e.target.checked)}
+                      className="rounded text-teal-600 focus:ring-teal-500 h-3.5 w-3.5"
+                    />
+                    <label htmlFor="isFollowUp" className="text-xs text-slate-600 font-medium">
+                      Mark as follow-up visit
+                    </label>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase">Notes / Symptoms</label>
+                    <textarea
+                      value={bookingNotes}
+                      onChange={(e) => setBookingNotes(e.target.value)}
+                      placeholder="e.g. Cough and cold, review reports..."
+                      rows={2}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={bookingInProgress}
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg py-2 text-xs transition-colors flex items-center justify-center space-x-1.5 disabled:opacity-50"
+                  >
+                    {bookingInProgress ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <span>Confirm booking</span>}
+                  </button>
+                </form>
+              </div>
+
+              {/* Queue display panel */}
+              <div className="lg:col-span-2 space-y-6">
+                {loadingAppointments ? (
+                  <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm text-teal-500">
+                    <Loader className="w-8 h-8 animate-spin mx-auto" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Time-slot Appointments list */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
+                        <span>Scheduled slots</span>
+                        <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded font-bold">
+                          {appointments.filter((a) => a.type === 'SLOT').length}
+                        </span>
+                      </h3>
+
+                      <div className="space-y-2 max-h-[400px] overflow-y-auto divide-y divide-slate-50">
+                        {appointments.filter((a) => a.type === 'SLOT').length > 0 ? (
+                          appointments.filter((a) => a.type === 'SLOT').map((app) => (
+                            <div key={app.id} className="pt-2 pb-2.5 flex justify-between items-start text-xs">
+                              <div>
+                                <span className="text-[10px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded mr-1.5">
+                                  {new Date(app.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                <span className="font-bold text-slate-800">
+                                  {app.patient.firstName} {app.patient.lastName}
+                                </span>
+                                {app.isFollowUp && (
+                                  <span className="ml-1.5 text-[9px] bg-indigo-50 text-indigo-700 px-1 py-0.5 rounded font-bold uppercase tracking-wider">
+                                    Follow-up
+                                  </span>
+                                )}
+                                <p className="text-[10px] text-slate-400 mt-1">Status: <span className="font-semibold">{app.status}</span></p>
+                              </div>
+
+                              <select
+                                value={app.status}
+                                onChange={(e) => handleUpdateStatus(app.id, e.target.value)}
+                                className="bg-slate-50 border border-slate-200 rounded text-[10px] px-1.5 py-1 text-slate-600 focus:outline-none"
+                              >
+                                <option value="BOOKED">Booked</option>
+                                <option value="CHECKED_IN">Checked-In</option>
+                                <option value="IN_CONSULTATION">In-Consultation</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                                <option value="NO_SHOW">No-Show</option>
+                              </select>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-slate-400 text-xs italic py-4 text-center">No slots booked for this date</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Walk-in Queue list */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
+                        <span>Walk-in Queue</span>
+                        <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded font-bold">
+                          {appointments.filter((a) => a.type === 'WALK_IN').length}
+                        </span>
+                      </h3>
+
+                      <div className="space-y-2 max-h-[400px] overflow-y-auto divide-y divide-slate-50">
+                        {appointments.filter((a) => a.type === 'WALK_IN').length > 0 ? (
+                          appointments.filter((a) => a.type === 'WALK_IN').map((app) => (
+                            <div key={app.id} className="pt-2 pb-2.5 flex justify-between items-start text-xs">
+                              <div>
+                                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mr-1.5">
+                                  #{app.queueNumber}
+                                </span>
+                                <span className="font-bold text-slate-800">
+                                  {app.patient.firstName} {app.patient.lastName}
+                                </span>
+                                {app.isFollowUp && (
+                                  <span className="ml-1.5 text-[9px] bg-indigo-50 text-indigo-700 px-1 py-0.5 rounded font-bold uppercase tracking-wider">
+                                    Follow-up
+                                  </span>
+                                )}
+                                <p className="text-[10px] text-slate-400 mt-1">Status: <span className="font-semibold">{app.status}</span></p>
+                              </div>
+
+                              <select
+                                value={app.status}
+                                onChange={(e) => handleUpdateStatus(app.id, e.target.value)}
+                                className="bg-slate-50 border border-slate-200 rounded text-[10px] px-1.5 py-1 text-slate-600 focus:outline-none"
+                              >
+                                <option value="BOOKED">Booked</option>
+                                <option value="CHECKED_IN">Checked-In</option>
+                                <option value="IN_CONSULTATION">In-Consultation</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                                <option value="NO_SHOW">No-Show</option>
+                              </select>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-slate-400 text-xs italic py-4 text-center">No walk-in queue for today</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
