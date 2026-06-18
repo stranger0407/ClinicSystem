@@ -1,0 +1,269 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  OWNER
+  DOCTOR
+  STAFF
+  PATIENT
+}
+
+model Clinic {
+  id        String   @id @default(uuid())
+  name      String
+  subdomain String   @unique
+  address   String?
+  phone     String?
+  settings  Json?    // Tax configs, billing rules, branding styles
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users            User[]
+  patientProfiles  PatientProfile[]
+  appointments     Appointment[]
+  encounters       Encounter[]
+  prescriptions    Prescription[]
+  invoices         Invoice[]
+  medicines        Medicine[]
+  auditLogs        AuditLog[]
+}
+
+model User {
+  id           String    @id @default(uuid())
+  clinicId     String
+  email        String?
+  phone        String?
+  passwordHash String
+  role         UserRole  @default(PATIENT)
+  permissions  String[]  // Array of fine-grained permissions
+  firstName    String
+  lastName     String
+  isActive     Boolean   @default(true)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  clinic         Clinic          @relation(fields: [clinicId], references: [id])
+  patientProfile PatientProfile?
+  doctorProfile  DoctorProfile?
+  staffProfile   StaffProfile?
+  auditLogs      AuditLog[]
+
+  @@unique([clinicId, email])
+  @@unique([clinicId, phone])
+}
+
+model PatientProfile {
+  id                String            @id @default(uuid())
+  clinicId          String
+  userId            String?           @unique
+  phone             String
+  firstName         String
+  lastName          String
+  dob               DateTime
+  gender            String
+  address           String?
+  allergies         String[]
+  chronicConditions String[]
+  emergencyContact  Json?             // { name, relation, phone }
+  consentHistory    Json?             // Tracking patient privacy consents
+  mergedIntoId      String?           // Points to survivor PatientProfile if merged
+  deletedAt         DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  clinic       Clinic            @relation(fields: [clinicId], references: [id])
+  user         User?             @relation(fields: [userId], references: [id])
+  appointments Appointment[]
+  encounters   Encounter[]
+  invoices     Invoice[]
+  documents    MedicalDocument[]
+
+  @@index([clinicId, phone])
+  @@index([clinicId, firstName, lastName])
+}
+
+model DoctorProfile {
+  id          String   @id @default(uuid())
+  clinicId    String
+  userId      String   @unique
+  licenseNo   String
+  specialty   String
+  fees        Decimal  @default(0.0)
+  durationMin Int      @default(15) // Default slot duration in minutes
+  schedule    Json?    // Regular weekly availability schedule
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  appointments Appointment[]
+  encounters   Encounter[]
+}
+
+model StaffProfile {
+  id        String   @id @default(uuid())
+  clinicId  String
+  userId    String   @unique
+  roleTitle String   // E.g., Front Desk, Receptionist, Lead Admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Appointment {
+  id          String    @id @default(uuid())
+  clinicId    String
+  patientId   String
+  doctorId    String
+  type        String    // "SLOT" or "WALK_IN"
+  status      String    // "BOOKED", "CHECKED_IN", "IN_CONSULTATION", "COMPLETED", "CANCELLED", "NO_SHOW"
+  startTime   DateTime? // Mandatory for SLOT, optional for WALK_IN
+  endTime     DateTime? // Mandatory for SLOT, optional for WALK_IN
+  queueNumber Int?      // Booking sequence for walk-ins
+  isFollowUp  Boolean   @default(false)
+  notes       String?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  clinic       Clinic         @relation(fields: [clinicId], references: [id])
+  patient      PatientProfile @relation(fields: [patientId], references: [id])
+  doctor       DoctorProfile  @relation(fields: [doctorId], references: [id])
+  encounters   Encounter[]
+  invoices     Invoice[]
+}
+
+model Encounter {
+  id            String    @id @default(uuid())
+  clinicId      String
+  patientId     String
+  doctorId      String
+  appointmentId String
+  complaint     String
+  vitals        Json?     // { bp, pulse, temp, weight, height, sugar }
+  diagnosis     String
+  clinicalNotes String?
+  testsRequired String[]
+  followUpDate  DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  clinic        Clinic         @relation(fields: [clinicId], references: [id])
+  patient       PatientProfile @relation(fields: [patientId], references: [id])
+  doctor        DoctorProfile  @relation(fields: [doctorId], references: [id])
+  appointment   Appointment    @relation(fields: [appointmentId], references: [id])
+  prescriptions Prescription[]
+}
+
+model Prescription {
+  id          String    @id @default(uuid())
+  clinicId    String
+  encounterId String
+  notes       String?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  clinic    Clinic             @relation(fields: [clinicId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
+  items     PrescriptionItem[]
+}
+
+model PrescriptionItem {
+  id             String @id @default(uuid())
+  prescriptionId String
+  medicineId     String
+  dosage         String // e.g. "1-0-1" or "5ml"
+  instructions   String // e.g. "After food"
+  durationDays   Int
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id])
+  medicine     Medicine     @relation(fields: [medicineId], references: [id])
+}
+
+model Medicine {
+  id              String   @id @default(uuid())
+  clinicId        String
+  name            String
+  genericName     String?
+  dosageForm      String   // "TABLET", "SYRUP", "CAPSULE", etc.
+  strength        String   // "500mg", "10ml", etc.
+  defaultSchedule String?  // e.g. "1-0-1"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  clinic            Clinic             @relation(fields: [clinicId], references: [id])
+  prescriptionItems PrescriptionItem[]
+
+  @@index([clinicId, name])
+}
+
+model Invoice {
+  id            String    @id @default(uuid())
+  clinicId      String
+  patientId     String
+  appointmentId String?
+  invoiceNumber String    @unique
+  subtotal      Decimal
+  discount      Decimal   @default(0.0)
+  tax           Decimal   @default(0.0)
+  total         Decimal
+  status        String    // "PENDING", "PARTIALLY_PAID", "PAID"
+  items         Json      // Details of services rendered: [{ description, quantity, amount }]
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  clinic      Clinic         @relation(fields: [clinicId], references: [id])
+  patient     PatientProfile @relation(fields: [patientId], references: [id])
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
+  payments    Payment[]
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  invoiceId String
+  amount    Decimal
+  method    String   // "CASH", "UPI", "CARD"
+  notes     String?
+  createdAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model MedicalDocument {
+  id          String   @id @default(uuid())
+  patientId   String
+  fileName    String
+  filePath    String   // local relative filepath or S3 URL
+  fileType    String
+  uploadedBy  String   // userId
+  createdAt   DateTime @default(now())
+
+  patient PatientProfile @relation(fields: [patientId], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  clinicId   String
+  userId     String?
+  action     String   // "CREATE", "UPDATE", "DELETE", "MERGE"
+  entityName String   // e.g., "PatientProfile", "Encounter"
+  entityId   String
+  details    Json     // { oldValues: ..., newValues: ... }
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+}
