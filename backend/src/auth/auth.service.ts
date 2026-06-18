@@ -38,6 +38,24 @@ export class AuthService {
         },
       });
 
+      // Seed common medicines for this new clinic
+      const commonMedicines = [
+        { name: 'Paracetamol', genericName: 'Acetaminophen', dosageForm: 'TABLET', strength: '650mg', defaultSchedule: '1-0-1' },
+        { name: 'Amoxicillin', genericName: 'Amoxicillin Trihydrate', dosageForm: 'CAPSULE', strength: '500mg', defaultSchedule: '1-1-1' },
+        { name: 'Metformin', genericName: 'Metformin Hydrochloride', dosageForm: 'TABLET', strength: '500mg', defaultSchedule: '1-0-1' },
+        { name: 'Pantoprazole', genericName: 'Pantoprazole Sodium', dosageForm: 'TABLET', strength: '40mg', defaultSchedule: '1-0-0' },
+        { name: 'Cetirizine', genericName: 'Cetirizine Hydrochloride', dosageForm: 'TABLET', strength: '10mg', defaultSchedule: '0-0-1' },
+        { name: 'Ibuprofen', genericName: 'Ibuprofen', dosageForm: 'TABLET', strength: '400mg', defaultSchedule: '1-0-1' },
+        { name: 'Azithromycin', genericName: 'Azithromycin', dosageForm: 'TABLET', strength: '500mg', defaultSchedule: '1-0-0' },
+        { name: 'Atorvastatin', genericName: 'Atorvastatin Calcium', dosageForm: 'TABLET', strength: '10mg', defaultSchedule: '0-0-1' },
+        { name: 'Amlodipine', genericName: 'Amlodipine Besylate', dosageForm: 'TABLET', strength: '5mg', defaultSchedule: '1-0-0' },
+        { name: 'ORS Sachet', genericName: 'Oral Rehydration Salts', dosageForm: 'POWDER', strength: '21.8g', defaultSchedule: 'On demand' },
+      ].map((med) => ({ ...med, clinicId: clinic.id }));
+
+      await tx.medicine.createMany({
+        data: commonMedicines,
+      });
+
       // Check unique constraints for email/phone on OWNER user
       if (dto.email) {
         const existingEmail = await tx.user.findUnique({

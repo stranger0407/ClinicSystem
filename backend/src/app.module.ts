@@ -6,10 +6,11 @@ import { AuthModule } from './auth/auth.module';
 import { PatientModule } from './patient/patient.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { DoctorModule } from './doctor/doctor.module';
+import { EncounterModule } from './encounter/encounter.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
 @Module({
-  imports: [PrismaModule, AuthModule, PatientModule, AppointmentModule, DoctorModule],
+  imports: [PrismaModule, AuthModule, PatientModule, AppointmentModule, DoctorModule, EncounterModule],
   controllers: [AppController],
   providers: [AppService],
 })
