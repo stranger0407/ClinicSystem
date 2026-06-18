@@ -22,7 +22,8 @@ import {
   Phone,
   ChevronRight,
   TrendingUp,
-  Loader
+  Loader,
+  Plus
 } from 'lucide-react';
 
 export default function StaffDashboard() {
@@ -193,6 +194,138 @@ export default function StaffDashboard() {
       loadAppointments();
     } catch (err: any) {
       alert(err.message || 'Failed to update status');
+    }
+  };
+
+  // Billing & Ledger States
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'UPI' | 'CARD'>('CASH');
+  const [paymentNotes, setPaymentNotes] = useState('');
+  const [showCreateInvoiceForm, setShowCreateInvoiceForm] = useState(false);
+
+  // New Invoice Form State
+  const [invoicePatientSearch, setInvoicePatientSearch] = useState('');
+  const [invoicePatientResults, setInvoicePatientResults] = useState<any[]>([]);
+  const [invoicePatient, setInvoicePatient] = useState<any | null>(null);
+  const [invoiceDiscount, setInvoiceDiscount] = useState('0');
+  const [invoiceTax, setInvoiceTax] = useState('0');
+  const [invoiceItems, setInvoiceItems] = useState<any[]>([{ description: 'Consultation Fee', quantity: 1, amount: 250 }]);
+
+  // Load Invoices
+  const loadInvoices = async () => {
+    setLoadingInvoices(true);
+    try {
+      const data = await apiFetch('/billing/invoice');
+      setInvoices(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingInvoices(false);
+    }
+  };
+
+  // Trigger loading invoices when tab changes
+  useEffect(() => {
+    if (activeTab === 'billing') {
+      loadInvoices();
+    }
+  }, [activeTab]);
+
+  // Autocomplete patient search in billing
+  const searchBillingPatient = async (q: string) => {
+    setInvoicePatientSearch(q);
+    if (!q.trim()) {
+      setInvoicePatientResults([]);
+      return;
+    }
+    try {
+      const results = await apiFetch(`/patient/search?q=${encodeURIComponent(q.trim())}`);
+      setInvoicePatientResults(results);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Add Item to Invoice Draft
+  const addInvoiceItem = () => {
+    setInvoiceItems([...invoiceItems, { description: '', quantity: 1, amount: 0 }]);
+  };
+
+  // Remove Item from Invoice Draft
+  const removeInvoiceItem = (index: number) => {
+    setInvoiceItems(invoiceItems.filter((_, i) => i !== index));
+  };
+
+  // Update Item in Invoice Draft
+  const updateInvoiceItem = (index: number, key: string, val: any) => {
+    const updated = [...invoiceItems];
+    updated[index][key] = val;
+    setInvoiceItems(updated);
+  };
+
+  // Create Invoice request
+  const handleCreateInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!invoicePatient) {
+      alert('Please select a patient first.');
+      return;
+    }
+    try {
+      await apiFetch('/billing/invoice', {
+        method: 'POST',
+        body: JSON.stringify({
+          patientId: invoicePatient.id,
+          discount: parseFloat(invoiceDiscount) || 0,
+          tax: parseFloat(invoiceTax) || 0,
+          items: invoiceItems.map((it) => ({
+            description: it.description,
+            quantity: parseInt(it.quantity) || 1,
+            amount: parseFloat(it.amount) || 0,
+          })),
+        }),
+      });
+
+      setShowCreateInvoiceForm(false);
+      setInvoicePatient(null);
+      setInvoicePatientSearch('');
+      setInvoiceItems([{ description: 'Consultation Fee', quantity: 1, amount: 250 }]);
+      setInvoiceDiscount('0');
+      setInvoiceTax('0');
+      loadInvoices();
+    } catch (err: any) {
+      alert(err.message || 'Failed to generate invoice');
+    }
+  };
+
+  // Record Payment collection
+  const handleCollectPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoice) return;
+    try {
+      await apiFetch('/billing/payment', {
+        method: 'POST',
+        body: JSON.stringify({
+          invoiceId: selectedInvoice.id,
+          amount: parseFloat(paymentAmount) || 0,
+          method: paymentMethod,
+          notes: paymentNotes,
+        }),
+      });
+
+      setShowPaymentModal(false);
+      setPaymentAmount('');
+      setPaymentNotes('');
+      
+      // Reload details of active invoice
+      const updatedDetails = await apiFetch(`/billing/invoice/${selectedInvoice.id}`);
+      setSelectedInvoice(updatedDetails);
+      loadInvoices();
+    } catch (err: any) {
+      alert(err.message || 'Failed to log payment transaction');
     }
   };
 
@@ -1206,20 +1339,485 @@ export default function StaffDashboard() {
           </div>
         )}
 
-        {/* Placeholder for Billing Tab */}
+        {/* TAB 3: Ledger & Invoices */}
         {activeTab === 'billing' && (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Ledger & Invoices</h1>
-              <p className="text-slate-500 text-xs mt-0.5">Collect fees, invoice consultation charges, check payment splits, and print receipts.</p>
+          <div className="space-y-6 print:p-0 print:bg-white print:border-none print:shadow-none">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4 gap-4 print:hidden">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight">Ledger & Invoices</h1>
+                <p className="text-slate-500 text-xs mt-0.5">Generate receipts, record splits, and view payments logs.</p>
+              </div>
+              <button
+                onClick={() => setShowCreateInvoiceForm(true)}
+                className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center space-x-1.5 transition-colors shadow"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Generate Invoice</span>
+              </button>
             </div>
-            <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-sm">
-              <CreditCard className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-sm font-bold text-slate-700">Billing module ready to initialize</h3>
-              <p className="text-slate-400 text-xs max-w-sm mx-auto mt-1">
-                The billing ledger operations and printable invoicing layouts will be constructed in Phase 6.
-              </p>
+
+            {/* Invoicing Draft slide-out form */}
+            {showCreateInvoiceForm && (
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4 print:hidden">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center">
+                  <CreditCard className="w-4.5 h-4.5 mr-2 text-teal-600" />
+                  Create custom billing invoice
+                </h3>
+
+                <form onSubmit={handleCreateInvoice} className="space-y-4">
+                  {/* Select Patient Autocomplete */}
+                  <div className="space-y-1 relative max-w-md">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase">Patient</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={invoicePatient ? `${invoicePatient.firstName} ${invoicePatient.lastName} (${invoicePatient.phone})` : invoicePatientSearch}
+                        disabled={!!invoicePatient}
+                        onChange={(e) => searchBillingPatient(e.target.value)}
+                        placeholder="Search patient..."
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs disabled:bg-slate-100 disabled:text-slate-600"
+                      />
+                      {invoicePatient && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInvoicePatient(null);
+                            setInvoicePatientSearch('');
+                          }}
+                          className="absolute right-2.5 top-1.5 text-[10px] text-red-500 font-bold uppercase hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {!invoicePatient && invoicePatientResults.length > 0 && (
+                      <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto z-20 divide-y divide-slate-100">
+                        {invoicePatientResults.map((pat) => (
+                          <div
+                            key={pat.id}
+                            onClick={() => {
+                              setInvoicePatient(pat);
+                              setInvoicePatientResults([]);
+                            }}
+                            className="p-2 text-xs hover:bg-slate-50 cursor-pointer flex justify-between"
+                          >
+                            <span className="font-bold">{pat.firstName} {pat.lastName}</span>
+                            <span className="text-slate-400">{pat.phone}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Itemized Lists */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase block">Invoice items</label>
+                    <div className="space-y-2">
+                      {invoiceItems.map((item, index) => (
+                        <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                          <input
+                            type="text"
+                            value={item.description}
+                            placeholder="Description (e.g. Blood Test, Pharmacy sale)"
+                            required
+                            onChange={(e) => updateInvoiceItem(index, 'description', e.target.value)}
+                            className="col-span-6 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs"
+                          />
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            min={1}
+                            required
+                            onChange={(e) => updateInvoiceItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                            className="col-span-2 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs"
+                          />
+                          <input
+                            type="number"
+                            value={item.amount}
+                            min={0}
+                            required
+                            placeholder="Price"
+                            onChange={(e) => updateInvoiceItem(index, 'amount', parseFloat(e.target.value) || 0)}
+                            className="col-span-3 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeInvoiceItem(index)}
+                            disabled={invoiceItems.length === 1}
+                            className="col-span-1 text-red-500 hover:text-red-700 text-xs font-bold text-center disabled:opacity-30"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addInvoiceItem}
+                      className="text-[10px] text-teal-600 hover:underline font-bold uppercase tracking-wider mt-1.5 block"
+                    >
+                      + Add extra item
+                    </button>
+                  </div>
+
+                  {/* Calculations */}
+                  <div className="grid grid-cols-2 gap-4 max-w-sm border-t border-slate-100 pt-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-bold uppercase">Discount (₹)</label>
+                      <input
+                        type="number"
+                        value={invoiceDiscount}
+                        onChange={(e) => setInvoiceDiscount(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-bold uppercase">Tax (₹)</label>
+                      <input
+                        type="number"
+                        value={invoiceTax}
+                        onChange={(e) => setInvoiceTax(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2.5 pt-2">
+                    <button
+                      type="submit"
+                      className="bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg px-4 py-2 text-xs transition-colors"
+                    >
+                      Generate invoice
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateInvoiceForm(false)}
+                      className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg px-4 py-2 text-xs transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Split layout: Invoice ledger lists & printable invoice detail */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Ledger list */}
+              <div className="lg:col-span-2 space-y-4 print:hidden">
+                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                  <div className="bg-slate-50 border-b border-slate-100 px-4 py-3">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                      Invoice Ledger logs
+                    </span>
+                  </div>
+
+                  {loadingInvoices ? (
+                    <div className="p-12 text-center text-teal-500">
+                      <Loader className="w-8 h-8 animate-spin mx-auto" />
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-100 text-[10px] text-slate-500 font-bold uppercase">
+                            <th className="p-3">Invoice #</th>
+                            <th className="p-3">Patient</th>
+                            <th className="p-3">Total Amount</th>
+                            <th className="p-3">Status</th>
+                            <th className="p-3 text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {invoices.length > 0 ? (
+                            invoices.map((inv) => (
+                              <tr
+                                key={inv.id}
+                                className={`hover:bg-slate-50/50 cursor-pointer ${
+                                  selectedInvoice?.id === inv.id ? 'bg-teal-50/40 hover:bg-teal-50/50' : ''
+                                }`}
+                                onClick={async () => {
+                                  const details = await apiFetch(`/billing/invoice/${inv.id}`);
+                                  setSelectedInvoice(details);
+                                }}
+                              >
+                                <td className="p-3 font-bold text-slate-800">{inv.invoiceNumber}</td>
+                                <td className="p-3 text-slate-705">
+                                  {inv.patient.firstName} {inv.patient.lastName}
+                                </td>
+                                <td className="p-3 font-semibold text-slate-900">₹{parseFloat(inv.total).toFixed(2)}</td>
+                                <td className="p-3">
+                                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                                    inv.status === 'PAID' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                                  }`}>
+                                    {inv.status}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-center">
+                                  <ChevronRight className="w-4 h-4 mx-auto text-slate-400" />
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={5} className="p-8 text-center text-slate-400 italic">
+                                No invoice ledger records found.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Printable Invoice/Receipt Viewer panel */}
+              {selectedInvoice && (
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6 print:fixed print:inset-0 print:z-50 print:bg-white print:border-none print:p-0 print:shadow-none">
+                  {/* Action row (hide when printing) */}
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-3 print:hidden">
+                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                      Receipt details
+                    </h3>
+                    <div className="flex space-x-1.5">
+                      <button
+                        onClick={() => window.print()}
+                        className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold rounded px-2.5 py-1.5 transition-colors"
+                      >
+                        Print Receipt
+                      </button>
+                      {selectedInvoice.status !== 'PAID' && (
+                        <button
+                          onClick={() => {
+                            setPaymentAmount((parseFloat(selectedInvoice.total) - selectedInvoice.payments.reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0)).toString());
+                            setShowPaymentModal(true);
+                          }}
+                          className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold rounded px-2.5 py-1.5 transition-colors"
+                        >
+                          Collect Payment
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Print invoice wrapper */}
+                  <div className="space-y-6">
+                    {/* Header */}
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight block">
+                          {clinic?.name || 'Clinic OS'}
+                        </h2>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Receipt / Settlement Invoice</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[11px] font-bold text-slate-800 block">
+                          {selectedInvoice.invoiceNumber}
+                        </span>
+                        <span className="text-[9px] text-slate-400 block">
+                          Date: {new Date(selectedInvoice.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Patient summary */}
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-[10px] text-slate-650 grid grid-cols-2 gap-2 print:bg-slate-50">
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Billed Patient</span>
+                        <p className="font-bold text-slate-800">
+                          {selectedInvoice.patient.firstName} {selectedInvoice.patient.lastName}
+                        </p>
+                        <p>Phone: {selectedInvoice.patient.phone}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Payment status</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider inline-block mt-0.5 ${
+                          selectedInvoice.status === 'PAID' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
+                        }`}>
+                          {selectedInvoice.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Items table */}
+                    <div className="border border-slate-200 rounded-xl overflow-hidden">
+                      <table className="w-full text-left border-collapse text-[10px]">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200 text-[9px] text-slate-500 font-bold uppercase">
+                            <th className="p-2.5">Service item</th>
+                            <th className="p-2.5 text-center">Qty</th>
+                            <th className="p-2.5 text-right">Price</th>
+                            <th className="p-2.5 text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {selectedInvoice.items && Array.isArray(selectedInvoice.items) && selectedInvoice.items.map((item: any, i: number) => (
+                            <tr key={i} className="hover:bg-slate-50/20">
+                              <td className="p-2.5 font-bold text-slate-800">{item.description}</td>
+                              <td className="p-2.5 text-center text-slate-600">{item.quantity}</td>
+                              <td className="p-2.5 text-right text-slate-600">₹{parseFloat(item.amount).toFixed(2)}</td>
+                              <td className="p-2.5 text-right font-semibold text-slate-800">
+                                ₹{(item.quantity * item.amount).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Calculations */}
+                    <div className="border-t border-slate-150 pt-3 flex flex-col items-end space-y-1.5 text-xs">
+                      <div className="flex justify-between w-48 text-[11px] text-slate-500">
+                        <span>Subtotal:</span>
+                        <span>₹{parseFloat(selectedInvoice.subtotal).toFixed(2)}</span>
+                      </div>
+                      {parseFloat(selectedInvoice.discount) > 0 && (
+                        <div className="flex justify-between w-48 text-[11px] text-slate-500">
+                          <span>Discount applied:</span>
+                          <span>-₹{parseFloat(selectedInvoice.discount).toFixed(2)}</span>
+                        </div>
+                      )}
+                      {parseFloat(selectedInvoice.tax) > 0 && (
+                        <div className="flex justify-between w-48 text-[11px] text-slate-500">
+                          <span>Tax / Add-ons:</span>
+                          <span>+₹{parseFloat(selectedInvoice.tax).toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between w-48 font-black text-slate-900 border-t border-slate-200 pt-1.5 text-xs">
+                        <span>Total Due:</span>
+                        <span>₹{parseFloat(selectedInvoice.total).toFixed(2)}</span>
+                      </div>
+
+                      {/* Total Paid / Balance */}
+                      <div className="flex justify-between w-48 text-[10px] font-bold text-emerald-600">
+                        <span>Total Paid:</span>
+                        <span>
+                          ₹
+                          {selectedInvoice.payments
+                            .reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0)
+                            .toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between w-48 text-[10px] font-bold text-red-500">
+                        <span>Balance Due:</span>
+                        <span>
+                          ₹
+                          {(
+                            parseFloat(selectedInvoice.total) -
+                            selectedInvoice.payments.reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0)
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Payments ledger log list */}
+                    {selectedInvoice.payments?.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block border-b border-slate-100 pb-1">
+                          Transaction logs:
+                        </span>
+                        <div className="divide-y divide-slate-100 text-[10px]">
+                          {selectedInvoice.payments.map((p: any) => (
+                            <div key={p.id} className="py-1.5 flex justify-between text-slate-600">
+                              <span>
+                                Payment logged via <strong className="uppercase">{p.method}</strong>{' '}
+                                {p.notes && `(${p.notes})`}
+                              </span>
+                              <span className="font-bold text-slate-800">
+                                ₹{parseFloat(p.amount).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Collect Payment Modal overlay */}
+            {showPaymentModal && selectedInvoice && (
+              <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 print:hidden">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl max-w-sm w-full space-y-4">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center">
+                    <CreditCard className="w-4.5 h-4.5 mr-2 text-teal-600" />
+                    Record payment collection
+                  </h3>
+
+                  <form onSubmit={handleCollectPayment} className="space-y-4">
+                    <div className="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-lg p-3 space-y-1">
+                      <p>
+                        Invoice total: <strong className="text-slate-800">₹{parseFloat(selectedInvoice.total).toFixed(2)}</strong>
+                      </p>
+                      <p>
+                        Collected so far:{' '}
+                        <strong className="text-slate-800">
+                          ₹
+                          {selectedInvoice.payments
+                            .reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0)
+                            .toFixed(2)}
+                        </strong>
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-bold uppercase block">Collection amount (₹)</label>
+                      <input
+                        type="number"
+                        value={paymentAmount}
+                        max={(parseFloat(selectedInvoice.total) - selectedInvoice.payments.reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0)).toString()}
+                        required
+                        onChange={(e) => setPaymentAmount(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-bold uppercase block">Payment method</label>
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value as any)}
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1.5 text-xs text-slate-700"
+                      >
+                        <option value="CASH">Cash</option>
+                        <option value="UPI">UPI / GPay</option>
+                        <option value="CARD">Debit / Credit Card</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-bold uppercase block">Transaction notes</label>
+                      <input
+                        type="text"
+                        value={paymentNotes}
+                        onChange={(e) => setPaymentNotes(e.target.value)}
+                        placeholder="e.g. Transaction ID, split details..."
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+
+                    <div className="flex space-x-2 pt-2">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg py-2 text-xs transition-colors"
+                      >
+                        Record payment
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowPaymentModal(false)}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg px-4 py-2 text-xs transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
