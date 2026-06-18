@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -27,5 +27,11 @@ export class AdminController {
   @Get('staff')
   async listStaff(@ClinicId() clinicId: string) {
     return this.adminService.listStaff(clinicId);
+  }
+
+  @Roles(UserRole.OWNER)
+  @Put('clinic')
+  async updateClinic(@ClinicId() clinicId: string, @Body() body: any) {
+    return this.adminService.updateClinic(clinicId, body);
   }
 }

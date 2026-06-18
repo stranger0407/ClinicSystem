@@ -294,15 +294,27 @@ export class AuthService {
     return clinic;
   }
 
-  async resolveClinic(subdomain: string) {
+  async resolveClinic(subdomain?: string) {
     if (!subdomain) {
-      throw new BadRequestException('Subdomain parameter is required');
+      const clinic = await this.prisma.clinic.findFirst({
+        select: { id: true, name: true, subdomain: true },
+      });
+      if (!clinic) {
+        throw new NotFoundException('No clinic found');
+      }
+      return clinic;
     }
     const clinic = await this.prisma.clinic.findUnique({
       where: { subdomain: subdomain.toLowerCase() },
       select: { id: true, name: true, subdomain: true },
     });
     if (!clinic) {
+      const fallbackClinic = await this.prisma.clinic.findFirst({
+        select: { id: true, name: true, subdomain: true },
+      });
+      if (fallbackClinic) {
+        return fallbackClinic;
+      }
       throw new NotFoundException('Clinic subdomain not found');
     }
     return clinic;

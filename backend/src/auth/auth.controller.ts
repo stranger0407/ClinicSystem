@@ -12,7 +12,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Get('clinic/resolve')
-  async resolveClinic(@Query('subdomain') subdomain: string) {
+  async resolveClinic(@Query('subdomain') subdomain?: string) {
     return this.authService.resolveClinic(subdomain);
   }
 

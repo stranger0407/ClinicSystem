@@ -8,7 +8,6 @@ import { Activity, Globe, Shield, User, Key, CheckCircle, AlertCircle, Loader } 
 export default function RegisterPage() {
   const router = useRouter();
   const [clinicName, setClinicName] = useState('');
-  const [subdomain, setSubdomain] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [identifier, setIdentifier] = useState(''); // Email or Phone
@@ -22,20 +21,17 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
-    // Basic client validation
-    const subdomainRegex = /^[a-z0-9-]+$/;
-    if (!subdomainRegex.test(subdomain)) {
-      setError('Subdomain can only contain lowercase letters, numbers, and hyphens.');
-      setLoading(false);
-      return;
-    }
+    const generatedSubdomain = clinicName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') || 'clinic';
 
     try {
       const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
       const payload: any = {
         clinicName: clinicName.trim(),
-        subdomain: subdomain.trim().toLowerCase(),
+        subdomain: generatedSubdomain,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         password,
@@ -82,9 +78,6 @@ export default function RegisterPage() {
           <p className="text-slate-300 text-sm">
             Your clinic <span className="font-semibold text-teal-300">"{clinicName}"</span> has been initialized. You will be redirected to the login portal shortly.
           </p>
-          <div className="text-xs text-slate-500">
-            Redirecting to: <span className="underline">{subdomain}.clinicos.com</span>
-          </div>
         </div>
       </div>
     );
@@ -115,7 +108,7 @@ export default function RegisterPage() {
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="border-b border-slate-800 pb-3 mb-3">
             <h3 className="text-teal-400 text-xs font-bold uppercase tracking-wider mb-2">Clinic Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <div className="space-y-1">
                 <label className="text-slate-300 text-xs font-medium">Clinic Name</label>
                 <input
@@ -126,26 +119,6 @@ export default function RegisterPage() {
                   required
                   className="w-full bg-slate-950/80 border border-slate-700/50 focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500 focus:outline-none rounded-lg px-3 py-2 text-white placeholder-slate-600 text-xs transition-all"
                 />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-300 text-xs font-medium flex items-center">
-                  <Globe className="w-3.5 h-3.5 mr-1 text-teal-400" />
-                  Subdomain
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={subdomain}
-                    onChange={(e) => setSubdomain(e.target.value)}
-                    placeholder="e.g. apollo"
-                    required
-                    className="w-full bg-slate-950/80 border border-slate-700/50 focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500 focus:outline-none rounded-lg pl-3 pr-20 py-2 text-white placeholder-slate-600 text-xs transition-all"
-                  />
-                  <span className="absolute right-3 top-2 text-slate-500 text-xs font-medium">
-                    .clinicos.com
-                  </span>
-                </div>
               </div>
             </div>
           </div>

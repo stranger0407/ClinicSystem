@@ -84,4 +84,16 @@ export class AdminService {
       },
     });
   }
+
+  async updateClinic(clinicId: string, data: any) {
+    return this.prisma.clinic.update({
+      where: { id: clinicId },
+      data: {
+        name: data.name,
+        address: data.address,
+        phone: data.phone,
+        settings: data.settings,
+      },
+    });
+  }
 }

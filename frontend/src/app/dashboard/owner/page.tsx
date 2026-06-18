@@ -25,7 +25,8 @@ import {
   AlertCircle,
   CheckCircle,
   User,
-  Info
+  Info,
+  Settings
 } from 'lucide-react';
 
 interface Medicine {
@@ -57,7 +58,19 @@ export default function OwnerDashboard() {
   const router = useRouter();
 
   // Navigation tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'medicines' | 'audit' | 'personnel'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'medicines' | 'audit' | 'personnel' | 'settings'>('overview');
+
+  // Clinic Profile State
+  const [clinicDetail, setClinicDetail] = useState<any>(null);
+  const [submittingClinic, setSubmittingClinic] = useState(false);
+  const [clinicForm, setClinicForm] = useState({
+    name: '',
+    address: '',
+    phone: '',
+    whatsapp: '',
+    timings: '',
+    facilities: '',
+  });
 
   // Dashboard Stats State
   const [stats, setStats] = useState<any>({
@@ -136,12 +149,13 @@ export default function OwnerDashboard() {
     setLoading(true);
     setErrorMsg('');
     try {
-      const [statsData, auditData, medsData, doctorsData, staffData] = await Promise.all([
+      const [statsData, auditData, medsData, doctorsData, staffData, clinicData] = await Promise.all([
         apiFetch('/admin/stats'),
         apiFetch('/admin/audit-logs'),
         apiFetch('/medicine'),
         apiFetch('/doctor'),
-        apiFetch('/admin/staff')
+        apiFetch('/admin/staff'),
+        apiFetch('/auth/clinic')
       ]);
 
       setStats(statsData);
@@ -149,10 +163,53 @@ export default function OwnerDashboard() {
       setMedicines(medsData);
       setDoctors(doctorsData);
       setStaff(staffData);
+      setClinicDetail(clinicData);
+
+      setClinicForm({
+        name: clinicData.name || '',
+        address: clinicData.address || '',
+        phone: clinicData.phone || '',
+        whatsapp: clinicData.settings?.whatsapp || '',
+        timings: clinicData.settings?.timings || 'Mon - Sat: 9:00 AM - 5:00 PM',
+        facilities: Array.isArray(clinicData.settings?.facilities)
+          ? clinicData.settings.facilities.join(', ')
+          : 'General Consultation, Pharmacy, Vitals Checkup',
+      });
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to load dashboard statistics.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClinicSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingClinic(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const payload = {
+        name: clinicForm.name.trim(),
+        address: clinicForm.address.trim(),
+        phone: clinicForm.phone.trim(),
+        settings: {
+          whatsapp: clinicForm.whatsapp.trim(),
+          timings: clinicForm.timings.trim(),
+          facilities: clinicForm.facilities.split(',').map((f: string) => f.trim()).filter(Boolean),
+        }
+      };
+
+      const updated = await apiFetch('/admin/clinic', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+
+      setClinicDetail(updated);
+      setSuccessMsg('Clinic configuration updated successfully!');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to update clinic configuration.');
+    } finally {
+      setSubmittingClinic(false);
     }
   };
 
@@ -493,6 +550,17 @@ export default function OwnerDashboard() {
             >
               <Users className="h-5 w-5" />
               <span>Personnel Management</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-all font-medium whitespace-nowrap ${
+                activeTab === 'settings'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+              }`}
+            >
+              <Settings className="h-5 w-5" />
+              <span>Clinic Settings</span>
             </button>
           </nav>
         </aside>
@@ -984,6 +1052,98 @@ export default function OwnerDashboard() {
                       )}
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* TAB 5: CLINIC SETTINGS */}
+              {activeTab === 'settings' && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                      <Settings className="h-5 w-5 text-indigo-400" />
+                      <span>Clinic Settings</span>
+                    </h2>
+                    <p className="text-slate-400 text-xs mt-1">
+                      Configure your clinic's public profile, working hours, timings, and services.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleClinicSubmit} className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md max-w-2xl space-y-4">
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Clinic Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={clinicForm.name}
+                        onChange={(e) => setClinicForm({ ...clinicForm, name: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Clinic Address</label>
+                      <input
+                        type="text"
+                        value={clinicForm.address}
+                        onChange={(e) => setClinicForm({ ...clinicForm, address: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Phone Number</label>
+                        <input
+                          type="text"
+                          value={clinicForm.phone}
+                          onChange={(e) => setClinicForm({ ...clinicForm, phone: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">WhatsApp Number</label>
+                        <input
+                          type="text"
+                          value={clinicForm.whatsapp}
+                          onChange={(e) => setClinicForm({ ...clinicForm, whatsapp: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Clinic Timings (Text description)</label>
+                      <input
+                        type="text"
+                        value={clinicForm.timings}
+                        onChange={(e) => setClinicForm({ ...clinicForm, timings: e.target.value })}
+                        placeholder="e.g. Mon - Sat: 9:00 AM - 5:00 PM (Sunday closed)"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Facilities / Services (comma-separated)</label>
+                      <textarea
+                        value={clinicForm.facilities}
+                        onChange={(e) => setClinicForm({ ...clinicForm, facilities: e.target.value })}
+                        placeholder="e.g. General Consultation, Pharmacy, Laboratory, Diagnostics"
+                        rows={3}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                      />
+                    </div>
+
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={submittingClinic}
+                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 transition-colors rounded-lg text-sm font-semibold text-white shadow-md shadow-indigo-900/20"
+                      >
+                        {submittingClinic ? 'Saving changes...' : 'Save Configuration'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               )}
             </>

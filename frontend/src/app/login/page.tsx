@@ -9,7 +9,6 @@ import { Activity, Shield, Key, Globe, AlertCircle, Loader } from 'lucide-react'
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
-  const [subdomain, setSubdomain] = useState('');
   const [identifier, setIdentifier] = useState(''); // Email or Phone
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,9 +22,6 @@ export default function LoginPage() {
     try {
       const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-      // 1. Resolve Clinic ID from Subdomain
-      // We check via header first or query. Let's send a query to login endpoint
-      // We will make a direct fetch to bypass the normal apiFetch since we don't have clinicId in localStorage yet
       const payload: any = { password };
       if (identifier.includes('@')) {
         payload.email = identifier.trim();
@@ -33,38 +29,15 @@ export default function LoginPage() {
         payload.phone = identifier.trim();
       }
 
-      const response = await fetch(`${BASE_URL}/auth/login?clinicId=`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-clinic-id': '', // Will be resolved by subdomain
-        },
-        // To resolve the subdomain in the middleware, we pass it in the host or we can add a custom header
-        // Since we are on localhost, we pass the subdomain in a custom header the middleware can read,
-        // or we resolve it by first fetching the clinic by subdomain
-        body: JSON.stringify({ ...payload, subdomain }),
-      });
-
-      // Wait, let's implement a clean resolver. First, let's query the database to get the clinic by subdomain!
-      // Let's call a dedicated public endpoint on our backend to get the clinic by subdomain, OR pass x-clinic-id
-      // Let's check how the middleware resolves subdomain:
-      // const parts = host.split('.'); if parts.length > 1 -> clinic subdomain.
-      // But in localhost, we can also pass subdomain as a query parameter or header!
-      // In our TenantMiddleware, we checked:
-      // 1) req.headers['x-clinic-id']
-      // 2) req.query.clinicId
-      // 3) subdomain from host
-      // Let's first make a quick GET request to a public clinic resolver endpoint, or we can just pass the subdomain.
-      // Wait, let's create a small public endpoint or simply query our database.
-      // To make it extremely robust, let's do:
-      // GET /auth/clinic-resolve?subdomain=apollo
-      const resolveRes = await fetch(`${BASE_URL}/auth/clinic/resolve?subdomain=${subdomain.trim().toLowerCase()}`);
+      // 1. Resolve Clinic ID from default configuration
+      const resolveRes = await fetch(`${BASE_URL}/auth/clinic/resolve`);
       if (!resolveRes.ok) {
-        throw new Error('Clinic subdomain not found. Please check and try again.');
+        throw new Error('Clinic configuration not found. Please verify the system is seeded.');
       }
       const clinicData = await resolveRes.json();
       const resolvedClinicId = clinicData.id;
       const resolvedClinicName = clinicData.name;
+      const resolvedSubdomain = clinicData.subdomain;
 
       // 2. Perform the Login request with the resolved clinicId
       const loginRes = await fetch(`${BASE_URL}/auth/login`, {
@@ -89,7 +62,7 @@ export default function LoginPage() {
         loginData.user,
         resolvedClinicId,
         resolvedClinicName,
-        subdomain.trim().toLowerCase()
+        resolvedSubdomain
       );
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
@@ -123,26 +96,6 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleLogin} className="space-y-5">
-          {/* Subdomain Input */}
-          <div className="space-y-1.5">
-            <label className="text-slate-300 text-xs font-semibold uppercase tracking-wider flex items-center">
-              <Globe className="w-3.5 h-3.5 mr-1.5 text-teal-400" />
-              Clinic Subdomain
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={subdomain}
-                onChange={(e) => setSubdomain(e.target.value)}
-                placeholder="e.g. apollo"
-                required
-                className="w-full bg-slate-950/80 border border-slate-700/50 focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500 focus:outline-none rounded-lg px-3 py-2.5 text-white placeholder-slate-500 text-sm transition-all"
-              />
-              <span className="absolute right-3 top-2.5 text-slate-500 text-sm font-medium">
-                .clinicos.com
-              </span>
-            </div>
-          </div>
 
           {/* Identifier Input */}
           <div className="space-y-1.5">

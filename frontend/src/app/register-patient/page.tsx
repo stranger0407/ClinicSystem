@@ -7,7 +7,6 @@ import { Activity, Globe, Shield, User, Key, CheckCircle, AlertCircle, Loader, C
 
 export default function RegisterPatientPage() {
   const router = useRouter();
-  const [subdomain, setSubdomain] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -18,18 +17,12 @@ export default function RegisterPatientPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [resolvedClinicName, setResolvedClinicName] = useState('');
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    const subdomainRegex = /^[a-z0-9-]+$/;
-    if (!subdomainRegex.test(subdomain)) {
-      setError('Clinic subdomain can only contain lowercase letters, numbers, and hyphens.');
-      setLoading(false);
-      return;
-    }
 
     if (!phone || phone.length < 10) {
       setError('Please enter a valid phone number.');
@@ -41,12 +34,13 @@ export default function RegisterPatientPage() {
       const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
       // 1. Resolve clinic subdomain
-      const resolveRes = await fetch(`${BASE_URL}/auth/clinic/resolve?subdomain=${subdomain.trim().toLowerCase()}`);
+      const resolveRes = await fetch(`${BASE_URL}/auth/clinic/resolve`);
       if (!resolveRes.ok) {
-        throw new Error('Clinic subdomain not found. Please verify the name and try again.');
+        throw new Error('Clinic context not found. Please verify the name and try again.');
       }
       const clinicData = await resolveRes.json();
       const resolvedClinicId = clinicData.id;
+      setResolvedClinicName(clinicData.name);
 
       // 2. Register patient user
       const payload = {
@@ -94,7 +88,7 @@ export default function RegisterPatientPage() {
           </div>
           <h2 className="text-2xl font-bold text-white">Patient Portal Registered!</h2>
           <p className="text-slate-300 text-sm">
-            Your patient portal credentials have been successfully registered under <span className="font-semibold text-teal-300">"{subdomain}.clinicos.com"</span>.
+            Your patient portal credentials have been successfully registered under <span className="font-semibold text-teal-300">"{resolvedClinicName}"</span>.
           </p>
           <p className="text-xs text-slate-400">
             If you have existing visit history under this mobile number, your records have been automatically linked. Redirecting to login portal...
@@ -129,27 +123,6 @@ export default function RegisterPatientPage() {
         )}
 
         <form onSubmit={handleRegister} className="space-y-4 text-slate-300">
-          {/* Subdomain context */}
-          <div className="space-y-1">
-            <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider flex items-center">
-              <Globe className="w-3.5 h-3.5 mr-1.5 text-teal-400" />
-              Clinic Subdomain *
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={subdomain}
-                onChange={(e) => setSubdomain(e.target.value)}
-                placeholder="e.g. apollo"
-                required
-                className="w-full bg-slate-950/80 border border-slate-700/50 focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500 focus:outline-none rounded-lg px-3 py-2 text-white placeholder-slate-500 text-xs transition-all"
-              />
-              <span className="absolute right-3 top-2 text-slate-500 text-xs font-semibold">
-                .clinicos.com
-              </span>
-            </div>
-            <span className="text-[9px] text-slate-450 block">Must match the clinic subdomain you visit.</span>
-          </div>
 
           {/* Names */}
           <div className="grid grid-cols-2 gap-3">

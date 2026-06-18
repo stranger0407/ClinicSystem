@@ -40,6 +40,15 @@ export class TenantMiddleware implements NestMiddleware {
       }
     }
 
+    if (!clinicId) {
+      const clinic = await this.prisma.clinic.findFirst({
+        select: { id: true },
+      });
+      if (clinic) {
+        clinicId = clinic.id;
+      }
+    }
+
     if (clinicId) {
       req.clinicId = clinicId;
     }

@@ -1,106 +1,803 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Activity, Shield, CheckCircle, Users, FileText, ArrowRight } from 'lucide-react';
+import {
+  Activity,
+  Calendar,
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  Award,
+  Check,
+  User,
+  ChevronRight,
+  Lock,
+  Key,
+  AlertCircle,
+  CheckCircle,
+  ArrowRight,
+  Loader,
+  Star,
+  BookOpen,
+  HelpCircle,
+  Sparkles,
+  MessageSquare
+} from 'lucide-react';
 
-export default function LandingPage() {
+export default function PublicClinicLanding() {
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+  // State definitions
+  const [clinic, setClinic] = useState<any>(null);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Booking Modal States
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingStep, setBookingStep] = useState<1 | 2 | 3>(1); // 1: Select Doc & Date, 2: Info & Submit, 3: Confirmation
+  
+  // Booking Form State
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
+  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [bookingType, setBookingType] = useState<'SLOT' | 'WALK_IN'>('SLOT');
+  const [selectedSlot, setSelectedSlot] = useState<any | null>(null);
+  const [notes, setNotes] = useState('');
+
+  // Patient Info Form State
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState('MALE');
+  const [createAccount, setCreateAccount] = useState(false);
+  const [password, setPassword] = useState('');
+
+  // Slots State
+  const [slots, setSlots] = useState<any[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
+  const [bookingSuccessData, setBookingSuccessData] = useState<any | null>(null);
+  const [bookingError, setBookingError] = useState('');
+
+  // Load clinic & doctors
+  const loadPublicData = async () => {
+    setLoading(true);
+    try {
+      const clinicRes = await fetch(`${BASE_URL}/public/clinic`);
+      if (!clinicRes.ok) throw new Error('Failed to load clinic details');
+      const clinicData = await clinicRes.json();
+      setClinic(clinicData);
+
+      const doctorsRes = await fetch(`${BASE_URL}/public/doctors`);
+      if (!doctorsRes.ok) throw new Error('Failed to load doctors list');
+      const doctorsData = await doctorsRes.json();
+      setDoctors(doctorsData);
+
+      if (doctorsData.length > 0) {
+        setSelectedDoctorId(doctorsData[0].id);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Failed to connect to clinic service');
+      // Fallbacks for offline seed rendering
+      setClinic({
+        name: 'Apollo Family Clinic',
+        address: '102, Residency Road, Bangalore, Karnataka',
+        phone: '080-45678901',
+        settings: {
+          whatsapp: '9876543210',
+          timings: 'Mon - Sat: 9:00 AM - 5:00 PM (Sunday closed)',
+          facilities: ['General Medicine', 'Paediatric Checkups', 'Cardiology Consultations', 'Pharmacy Store', 'Diagnostics']
+        }
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPublicData();
+  }, []);
+
+  // Fetch slots when doctor, date or type changes
+  const fetchAvailableSlots = async () => {
+    if (!selectedDoctorId || !bookingDate || bookingType !== 'SLOT') {
+      setSlots([]);
+      return;
+    }
+    setSlotsLoading(true);
+    setSelectedSlot(null);
+    try {
+      const res = await fetch(`${BASE_URL}/public/doctor/${selectedDoctorId}/slots?date=${bookingDate}`);
+      if (!res.ok) throw new Error('Failed to fetch slots');
+      const data = await res.json();
+      setSlots(data);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableSlots();
+  }, [selectedDoctorId, bookingDate, bookingType]);
+
+  const handleOpenBooking = (doctorId?: string) => {
+    if (doctorId) {
+      setSelectedDoctorId(doctorId);
+    } else if (doctors.length > 0) {
+      setSelectedDoctorId(doctors[0].id);
+    }
+    setBookingModalOpen(true);
+    setBookingStep(1);
+    setBookingError('');
+    setBookingSuccessData(null);
+  };
+
+  const handleCloseBooking = () => {
+    setBookingModalOpen(false);
+    setBookingStep(1);
+    setSelectedSlot(null);
+    setNotes('');
+    setFirstName('');
+    setLastName('');
+    setPhone('');
+    setEmail('');
+    setDob('');
+    setGender('MALE');
+    setCreateAccount(false);
+    setPassword('');
+    setBookingSuccessData(null);
+  };
+
+  const handleNextStep = () => {
+    if (bookingType === 'SLOT' && !selectedSlot) {
+      setBookingError('Please choose a preferred time slot to continue');
+      return;
+    }
+    setBookingError('');
+    setBookingStep(2);
+  };
+
+  const handleBookSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBookingInProgress(true);
+    setBookingError('');
+
+    if (!firstName || !lastName || !phone || !dob || !gender) {
+      setBookingError('Please fill out all required personal fields.');
+      setBookingInProgress(false);
+      return;
+    }
+
+    try {
+      const payload = {
+        doctorId: selectedDoctorId,
+        type: bookingType,
+        startTime: bookingType === 'SLOT' ? selectedSlot.startTime : undefined,
+        notes,
+        firstName,
+        lastName,
+        phone,
+        email: email || undefined,
+        dob,
+        gender,
+        createAccount,
+        password: createAccount ? password : undefined,
+      };
+
+      const res = await fetch(`${BASE_URL}/public/book`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Booking encountered an error.');
+      }
+
+      const data = await res.json();
+      setBookingSuccessData(data);
+      setBookingStep(3);
+    } catch (err: any) {
+      setBookingError(err.message || 'Failed to complete booking. Please try again.');
+    } finally {
+      setBookingInProgress(false);
+    }
+  };
+
+  // Helper selectors
+  const activeDoctor = doctors.find(d => d.id === selectedDoctorId);
+
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col selection:bg-teal-500 selection:text-slate-900 font-sans font-medium">
+      {/* Dynamic Background Gradients */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-950/40 backdrop-blur px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-2.5">
+      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/10">
             <Activity className="w-5.5 h-5.5 text-white" />
           </div>
-          <span className="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-teal-200 to-emerald-400">
-            Clinic OS
-          </span>
+          <div>
+            <span className="text-lg font-black tracking-tight block leading-none">
+              {clinic?.name || 'Apollo Clinic'}
+            </span>
+            <span className="text-[9px] text-teal-400 font-bold tracking-widest uppercase block mt-0.5">
+              Care & Comfort
+            </span>
+          </div>
         </div>
+
         <div className="flex items-center space-x-4">
           <Link
             href="/login"
             className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
           >
-            Sign In
+            Access Portal
           </Link>
-          <Link
-            href="/register"
-            className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white text-sm font-bold rounded-lg transition-all"
+          <button
+            onClick={() => handleOpenBooking()}
+            className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-teal-950/20 active:scale-95"
           >
-            Onboard Clinic
-          </Link>
+            Book Appointment
+          </button>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center text-center px-4 py-16 max-w-4xl mx-auto relative">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Hero Banner */}
+      <section className="relative py-20 px-6 max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+        <div className="flex-1 space-y-6 text-center lg:text-left">
+          <div className="inline-flex items-center space-x-2 bg-teal-500/10 border border-teal-500/20 rounded-full px-3.5 py-1.5 text-teal-400 text-xs font-bold">
+            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+            <span>Modern Single Clinic Digital Operating System</span>
+          </div>
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+            Trustworthy Care, <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-400">
+              Simplified Booking.
+            </span>
+          </h1>
+          <p className="text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed">
+            Welcome to {clinic?.name || 'Apollo Family Clinic'}. Book appointments, check live doctor schedules, and claim your patient records file directly.
+          </p>
 
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6">
-          The Digital Operating System for{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-400">
-            Solo Doctors & Clinics
-          </span>
-        </h1>
-        <p className="text-slate-400 text-lg sm:text-xl max-w-2xl mb-8 leading-relaxed">
-          Manage appointments, write secure prescriptions, coordinate billing, and maintain complete patient history—scaffolded for high-frequency Indian clinic environments.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 w-full max-w-sm sm:max-w-md">
-          <Link
-            href="/register"
-            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold rounded-xl transition-all flex items-center justify-center space-x-2 group"
-          >
-            <span>Register Your Clinic</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <Link
-            href="/login"
-            className="w-full sm:w-auto px-8 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700/50 text-white font-bold rounded-xl transition-all text-center"
-          >
-            Access Portal
-          </Link>
-        </div>
-
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left w-full mt-8">
-          <div className="p-6 bg-slate-950/40 border border-slate-800/80 rounded-xl">
-            <div className="w-10 h-10 bg-teal-500/10 rounded-lg flex items-center justify-center mb-4">
-              <Shield className="w-5 h-5 text-teal-400" />
-            </div>
-            <h3 className="font-bold text-white text-base mb-2">Secure Multi-Tenancy</h3>
-            <p className="text-slate-400 text-sm">
-              Strict database isolation keeps clinical data protected and segregated per clinic.
-            </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+            <button
+              onClick={() => handleOpenBooking()}
+              className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/10 flex items-center justify-center space-x-2 group active:scale-[0.98]"
+            >
+              <span>Schedule Booking</span>
+              <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            <Link
+              href="/register-patient"
+              className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 font-bold rounded-xl transition-all text-center"
+            >
+              Claim Patient Portal
+            </Link>
           </div>
 
-          <div className="p-6 bg-slate-950/40 border border-slate-800/80 rounded-xl">
-            <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-4">
-              <Users className="w-5 h-5 text-emerald-400" />
+          {/* Quick timing widget */}
+          <div className="flex items-center space-x-3 bg-slate-900/40 border border-slate-900 rounded-xl p-4 w-fit mx-auto lg:mx-0">
+            <Clock className="w-5 h-5 text-teal-400" />
+            <div className="text-left">
+              <span className="text-[10px] text-slate-450 uppercase font-black tracking-wider block">OPD Working Hours</span>
+              <span className="text-xs text-slate-300 font-medium">{clinic?.settings?.timings || 'Mon - Sat: 9:00 AM - 5:00 PM'}</span>
             </div>
-            <h3 className="font-bold text-white text-base mb-2">Walk-ins & Slots</h3>
-            <p className="text-slate-400 text-sm">
-              Supports scheduled online slots alongside direct walk-in queue numbers.
-            </p>
-          </div>
-
-          <div className="p-6 bg-slate-950/40 border border-slate-800/80 rounded-xl">
-            <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center mb-4">
-              <FileText className="w-5 h-5 text-indigo-400" />
-            </div>
-            <h3 className="font-bold text-white text-base mb-2">Unified Timeline</h3>
-            <p className="text-slate-400 text-sm">
-              One-click patient health charts consolidate history, vitals, and billing ledger.
-            </p>
           </div>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800 py-6 text-center text-slate-500 text-xs">
-        <p>© {new Date().getFullYear()} Clinic OS. Built for modern digital healthcare.</p>
+        {/* Dynamic Card */}
+        <div className="flex-1 w-full max-w-md bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl relative">
+          <div className="absolute -top-3 -right-3 w-16 h-16 bg-teal-500/10 rounded-full blur-xl animate-pulse"></div>
+          <div className="flex items-center space-x-2 mb-6 border-b border-slate-800 pb-4">
+            <Award className="w-5 h-5 text-teal-400" />
+            <h3 className="font-extrabold text-base">Services & Facilities</h3>
+          </div>
+          <ul className="space-y-3.5">
+            {clinic?.settings?.facilities ? (
+              clinic.settings.facilities.map((fac: string, idx: number) => (
+                <li key={idx} className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-teal-500/10 rounded-md flex items-center justify-center">
+                    <Check className="w-3.5 h-3.5 text-teal-400" />
+                  </div>
+                  <span className="text-sm text-slate-350">{fac}</span>
+                </li>
+              ))
+            ) : (
+              ['General Diagnostics OPD', 'Pharmacy Dispensation', 'In-House Vitals & Blood Tests', 'Vaccinations & Immunization', 'Doctor Consultations'].map((fac, idx) => (
+                <li key={idx} className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-teal-500/10 rounded-md flex items-center justify-center">
+                    <Check className="w-3.5 h-3.5 text-teal-400" />
+                  </div>
+                  <span className="text-sm text-slate-350">{fac}</span>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+      </section>
+
+      {/* Doctors List Section */}
+      <section className="py-20 bg-slate-950/60 border-t border-slate-900 px-6">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center space-y-2">
+            <span className="text-xs text-teal-400 font-bold uppercase tracking-widest">Medical Panel</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white">Consult Our Doctors</h2>
+            <p className="text-slate-400 text-sm max-w-md mx-auto">
+              Book timed consultation slots or register as a walk-in directly with our experienced medical professionals.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {doctors.map((doc) => (
+              <div key={doc.id} className="bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all rounded-2xl p-6 shadow-md flex flex-col justify-between group">
+                <div className="space-y-4">
+                  <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <User className="w-6 h-6 text-teal-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-lg text-white">Dr. {doc.user.firstName} {doc.user.lastName}</h3>
+                    <p className="text-xs text-teal-400 font-semibold">{doc.specialty}</p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-800 flex justify-between text-xs text-slate-400">
+                    <span>License No:</span>
+                    <span className="text-slate-200 font-mono">{doc.licenseNo}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-400">
+                    <span>Consultation Fee:</span>
+                    <span className="text-teal-400 font-bold">₹{parseFloat(doc.fees).toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <button
+                    onClick={() => handleOpenBooking(doc.id)}
+                    className="w-full py-2.5 bg-slate-800 hover:bg-teal-600 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center space-x-1"
+                  >
+                    <span>Check Availability</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Location / Timings Footer Section */}
+      <section className="py-16 bg-slate-950 border-t border-slate-900 px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+          <div className="space-y-4">
+            <h4 className="font-bold text-base text-white">Clinic Address</h4>
+            <div className="flex items-start justify-center md:justify-start space-x-3 text-sm text-slate-400">
+              <MapPin className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
+              <span>{clinic?.address || '102, Residency Road, Bangalore, Karnataka'}</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-bold text-base text-white">Call / Contact Details</h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-center md:justify-start space-x-3 text-sm text-slate-400">
+                <Phone className="w-4.5 h-4.5 text-teal-400" />
+                <span>{clinic?.phone || '080-45678901'}</span>
+              </div>
+              {clinic?.settings?.whatsapp && (
+                <div className="flex items-center justify-center md:justify-start space-x-3 text-sm text-slate-400">
+                  <MessageSquare className="w-4.5 h-4.5 text-teal-400" />
+                  <span>WhatsApp: {clinic.settings.whatsapp}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-bold text-base text-white">Unified Access</h4>
+            <div className="flex flex-col space-y-2 items-center md:items-start text-sm">
+              <Link href="/login" className="text-teal-400 hover:text-teal-300 transition-colors">
+                Doctor & Staff Portal login
+              </Link>
+              <Link href="/login" className="text-teal-400 hover:text-teal-300 transition-colors">
+                Patient Portal Sign In
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer copyright */}
+      <footer className="py-6 border-t border-slate-900 text-center text-xs text-slate-500 bg-slate-950">
+        <p>© {new Date().getFullYear()} {clinic?.name || 'Apollo Clinic'}. Built on Clinic OS.</p>
       </footer>
+
+      {/* ==================== APPOINTMENT BOOKING MODAL ==================== */}
+      {bookingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
+            
+            {/* Close button */}
+            <button
+              onClick={handleCloseBooking}
+              className="absolute top-4 right-4 p-1.5 bg-slate-850 hover:bg-red-500/20 hover:text-red-400 rounded-full text-slate-400 transition-all z-10"
+            >
+              <XIcon className="w-4 h-4" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-slate-850 bg-slate-900">
+              <span className="text-[9px] text-teal-400 font-bold uppercase tracking-wider block">Online Scheduling</span>
+              <h3 className="text-lg font-black text-white">Book Clinic Appointment</h3>
+            </div>
+
+            {/* Modal Error Alert */}
+            {bookingError && (
+              <div className="m-4 mx-6 flex items-start space-x-2.5 bg-red-950/45 border border-red-800 rounded-xl p-3.5 text-red-300 text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{bookingError}</span>
+              </div>
+            )}
+
+            {/* Step 1: Doctor/Date/Slot Setup */}
+            {bookingStep === 1 && (
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Select Doctor */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Doctor</label>
+                    <select
+                      value={selectedDoctorId}
+                      onChange={(e) => setSelectedDoctorId(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                    >
+                      {doctors.map(d => (
+                        <option key={d.id} value={d.id}>
+                          Dr. {d.user.firstName} {d.user.lastName} ({d.specialty})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Visit Date */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Preferred Date</label>
+                    <input
+                      type="date"
+                      value={bookingDate}
+                      required
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => setBookingDate(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Booking Mode */}
+                <div className="space-y-1">
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase">Consultation Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setBookingType('SLOT')}
+                      className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                        bookingType === 'SLOT'
+                          ? 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-950/20'
+                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-850'
+                      }`}
+                    >
+                      Scheduled Slot Time
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingType('WALK_IN')}
+                      className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                        bookingType === 'WALK_IN'
+                          ? 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-950/20'
+                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-850'
+                      }`}
+                    >
+                      Walk-in (Queue Number)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Slots display */}
+                {bookingType === 'SLOT' && (
+                  <div className="space-y-2 pt-2">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase">
+                      Available Time Slots
+                    </label>
+                    {slotsLoading ? (
+                      <div className="text-center py-6 text-slate-500 text-xs">
+                        <Loader className="w-5 h-5 animate-spin mx-auto text-teal-400 mb-1" />
+                        Calculating available clinic slots...
+                      </div>
+                    ) : slots.length === 0 ? (
+                      <div className="text-center py-6 border border-dashed border-slate-800 rounded-xl text-slate-500 text-xs">
+                        Doctor is not available on this date or schedule not configured.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-4 gap-2">
+                        {slots.map((s, idx) => (
+                          <button
+                            key={idx}
+                            disabled={!s.available}
+                            type="button"
+                            onClick={() => setSelectedSlot(s)}
+                            className={`py-2 rounded-lg text-xs font-semibold text-center border transition-all ${
+                              !s.available
+                                ? 'bg-slate-950/40 text-slate-700 border-slate-950/50 cursor-not-allowed line-through'
+                                : selectedSlot?.time === s.time
+                                ? 'bg-teal-500 border-teal-500 text-slate-950 font-bold shadow-md shadow-teal-500/10'
+                                : 'bg-slate-955 text-slate-300 border-slate-800 hover:border-slate-700'
+                            }`}
+                          >
+                            {s.time}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {bookingType === 'WALK_IN' && (
+                  <div className="bg-slate-950 border border-slate-850 rounded-2xl p-4 text-xs text-slate-400 space-y-1">
+                    <p className="font-bold text-slate-300">Queue Number Booking Rules:</p>
+                    <p>• The visit date is mandatory; time slots are ignored.</p>
+                    <p>• You will be checked in as a walk-in at the reception desk.</p>
+                    <p>• Live queue number will be assigned at the clinic lobby.</p>
+                  </div>
+                )}
+
+                <div className="space-y-1 pt-2">
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase">Symptoms / Notes</label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Short description of symptoms (e.g. fever, headache, routine checkup)"
+                    rows={2}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-slate-850 flex justify-end">
+                  <button
+                    onClick={handleNextStep}
+                    className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-teal-955/20 transition-all"
+                  >
+                    <span>Patient Details</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Patient Registration Info */}
+            {bookingStep === 2 && (
+              <form onSubmit={handleBookSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase">First Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Rahul"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Last Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Kumar"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Phone Number *</label>
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="10-digit mobile"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Email (Optional)</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="rahul@example.com"
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Date of Birth *</label>
+                    <input
+                      type="date"
+                      required
+                      value={dob}
+                      onChange={(e) => setDob(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Gender *</label>
+                    <select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                    >
+                      <option value="MALE">Male</option>
+                      <option value="FEMALE">Female</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Create patient account option */}
+                <div className="border-t border-slate-850 pt-4 space-y-3">
+                  <label className="flex items-center space-x-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={createAccount}
+                      onChange={(e) => setCreateAccount(e.target.checked)}
+                      className="w-4 h-4 bg-slate-955 border-slate-800 rounded text-teal-600 focus:ring-0 focus:ring-offset-0"
+                    />
+                    <span className="text-xs text-slate-300 font-medium select-none">
+                      Create portal account to view prescriptions & receipts online
+                    </span>
+                  </label>
+
+                  {createAccount && (
+                    <div className="space-y-1">
+                      <label className="block text-[10px] text-teal-400 font-bold uppercase">Choose Password *</label>
+                      <input
+                        type="password"
+                        required={createAccount}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-slate-850 flex space-x-3">
+                  <button
+                    type="submit"
+                    disabled={bookingInProgress}
+                    className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-teal-950/20 transition-all"
+                  >
+                    {bookingInProgress ? (
+                      <>
+                        <Loader className="w-3.5 h-3.5 animate-spin" />
+                        <span>Reserving Appointment...</span>
+                      </>
+                    ) : (
+                      <span>Confirm & Schedule</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingStep(1)}
+                    className="px-5 py-3 bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold rounded-xl text-xs transition-colors"
+                  >
+                    Back
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Step 3: Success Confirmation */}
+            {bookingStep === 3 && bookingSuccessData && (
+              <div className="p-8 text-center space-y-6">
+                <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-400">
+                  <CheckCircle className="w-9 h-9" />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <h3 className="text-xl font-bold text-white">Appointment Confirmed!</h3>
+                  <p className="text-slate-400 text-xs">
+                    Your request has been registered in the clinic schedule ledger.
+                  </p>
+                </div>
+
+                {/* Receipt details */}
+                <div className="bg-slate-955 border border-slate-850 rounded-2xl p-5 text-left text-xs space-y-2.5 max-w-sm mx-auto">
+                  <div className="flex justify-between border-b border-slate-900 pb-2">
+                    <span className="text-slate-550 font-medium">Doctor:</span>
+                    <span className="text-white font-bold">
+                      Dr. {activeDoctor?.user.firstName} {activeDoctor?.user.lastName}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-900 pb-2">
+                    <span className="text-slate-555 font-medium">Patient:</span>
+                    <span className="text-white font-bold">
+                      {bookingSuccessData.patientProfile.firstName} {bookingSuccessData.patientProfile.lastName}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-900 pb-2">
+                    <span className="text-slate-555 font-medium">Visit Date:</span>
+                    <span className="text-white font-bold">{new Date(bookingDate).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-555 font-medium">Timing / Mode:</span>
+                    <span className="text-teal-400 font-black">
+                      {bookingSuccessData.appointment.type === 'SLOT' 
+                        ? selectedSlot?.time 
+                        : `Walk-in (Queue #${bookingSuccessData.appointment.queueNumber})`
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                {createAccount && (
+                  <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                    Use your mobile number <span className="font-semibold text-slate-300">{phone}</span> and selected password to log in to the Patient Portal to view history/prescriptions.
+                  </p>
+                )}
+
+                <div className="pt-4 border-t border-slate-850">
+                  <button
+                    onClick={handleCloseBooking}
+                    className="w-full py-3 bg-slate-800 hover:bg-slate-750 text-slate-205 font-bold rounded-xl text-xs transition-all"
+                  >
+                    Close & Finish
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+// Small helper icon component
+function XIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  );
+};
