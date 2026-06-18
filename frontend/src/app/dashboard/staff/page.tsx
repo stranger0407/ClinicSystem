@@ -333,7 +333,7 @@ export default function StaffDashboard() {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        router.push('/login');
+        router.push('/portal-login');
       } else if (user.role !== 'STAFF' && user.role !== 'OWNER') {
         // Redirect doctors/patients to their own dashboard
         router.push(`/dashboard/${user.role.toLowerCase()}`);

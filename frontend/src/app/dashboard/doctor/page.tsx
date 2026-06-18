@@ -68,7 +68,7 @@ export default function DoctorDashboard() {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        router.push('/login');
+        router.push('/portal-login');
       } else if (user.role !== 'DOCTOR' && user.role !== 'OWNER') {
         router.push(`/dashboard/${user.role.toLowerCase()}`);
       }

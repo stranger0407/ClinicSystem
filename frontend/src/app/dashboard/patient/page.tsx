@@ -75,7 +75,11 @@ export default function PatientDashboard() {
   };
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading) {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
       if (user.role !== 'PATIENT') {
         // Route non-patients out of the patient dashboard
         router.push('/login');

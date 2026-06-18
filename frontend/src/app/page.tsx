@@ -407,10 +407,10 @@ export default function PublicClinicLanding() {
             <h4 className="font-bold text-base text-white">Unified Access</h4>
             <div className="flex flex-col space-y-2 items-center md:items-start text-sm">
               <Link href="/login" className="text-teal-400 hover:text-teal-300 transition-colors">
-                Doctor & Staff Portal login
-              </Link>
-              <Link href="/login" className="text-teal-400 hover:text-teal-300 transition-colors">
                 Patient Portal Sign In
+              </Link>
+              <Link href="/register-patient" className="text-teal-400 hover:text-teal-300 transition-colors">
+                Patient Portal Registration
               </Link>
             </div>
           </div>

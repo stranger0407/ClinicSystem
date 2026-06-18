@@ -137,7 +137,7 @@ export default function OwnerDashboard() {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        router.push('/login');
+        router.push('/portal-login');
       } else if (user.role !== 'OWNER') {
         router.push(`/dashboard/${user.role.toLowerCase()}`);
       }
