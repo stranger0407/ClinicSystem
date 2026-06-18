@@ -464,17 +464,26 @@ export default function StaffDashboard() {
       {/* Sidebar */}
       <aside className="w-full md:w-64 bg-slate-900 text-white flex flex-col justify-between shrink-0 p-5 border-r border-slate-800">
         <div className="space-y-8">
-          {/* Logo */}
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 bg-teal-500 rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
+          {/* Logo & Logout */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 bg-teal-500 rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="font-bold text-base block tracking-tight">Clinic OS</span>
+                <span className="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">
+                  {clinic?.name || 'Default Clinic'}
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="font-bold text-base block tracking-tight">Clinic OS</span>
-              <span className="text-[10px] text-slate-400 font-medium block uppercase tracking-wider">
-                {clinic?.name || 'Default Clinic'}
-              </span>
-            </div>
+            <button
+              onClick={logout}
+              title="Logout"
+              className="p-1.5 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 rounded-lg text-slate-400 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* User badge */}
@@ -578,7 +587,7 @@ export default function StaffDashboard() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search by first/last name or phone number..."
-                      className="flex-1 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs transition-all placeholder-slate-400"
+                      className="flex-1 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs transition-all placeholder-slate-400 text-slate-900"
                     />
                     <button
                       type="submit"
@@ -856,7 +865,7 @@ export default function StaffDashboard() {
                           required
                           onChange={(e) => setNewPatient({ ...newPatient, firstName: e.target.value })}
                           placeholder="Rajesh"
-                          className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs"
+                          className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                         />
                       </div>
                       <div className="space-y-1">
@@ -867,7 +876,7 @@ export default function StaffDashboard() {
                           required
                           onChange={(e) => setNewPatient({ ...newPatient, lastName: e.target.value })}
                           placeholder="Kumar"
-                          className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs"
+                          className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                         />
                       </div>
                     </div>
@@ -880,7 +889,7 @@ export default function StaffDashboard() {
                         required
                         onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
                         placeholder="9876543210"
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                       />
                     </div>
 
@@ -892,7 +901,7 @@ export default function StaffDashboard() {
                           value={newPatient.dob}
                           required
                           onChange={(e) => setNewPatient({ ...newPatient, dob: e.target.value })}
-                          className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs"
+                          className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                         />
                       </div>
                       <div className="space-y-1">
@@ -900,7 +909,7 @@ export default function StaffDashboard() {
                         <select
                           value={newPatient.gender}
                           onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
-                          className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2 py-1.5 text-xs text-slate-700"
+                          className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2 py-1.5 text-xs text-slate-900"
                         >
                           <option value="MALE">Male</option>
                           <option value="FEMALE">Female</option>
@@ -916,7 +925,7 @@ export default function StaffDashboard() {
                         value={newPatient.allergies}
                         onChange={(e) => setNewPatient({ ...newPatient, allergies: e.target.value })}
                         placeholder="e.g. Penicillin, Peanuts"
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                       />
                     </div>
 
@@ -927,7 +936,7 @@ export default function StaffDashboard() {
                         value={newPatient.chronicConditions}
                         onChange={(e) => setNewPatient({ ...newPatient, chronicConditions: e.target.value })}
                         placeholder="e.g. Asthma, Diabetes"
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                       />
                     </div>
 
@@ -938,7 +947,7 @@ export default function StaffDashboard() {
                         onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
                         placeholder="Residential address details..."
                         rows={2}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                       />
                     </div>
 
@@ -1000,7 +1009,7 @@ export default function StaffDashboard() {
                     required
                     onChange={(e) => setMergeSourceId(e.target.value)}
                     placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-                    className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-900"
                   />
                   <span className="text-[9px] text-slate-400">
                     All visits, prescribing details, vitals, and billing ledger on this profile will be moved.
@@ -1017,7 +1026,7 @@ export default function StaffDashboard() {
                     required
                     onChange={(e) => setMergeTargetId(e.target.value)}
                     placeholder="e.g. 627192a0-481b-4cd4-b718-446655440111"
-                    className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-900"
                   />
                   <span className="text-[9px] text-slate-400">
                     This profile will survive the merge. Check details carefully.
@@ -1062,7 +1071,7 @@ export default function StaffDashboard() {
                   <select
                     value={selectedDoctorId}
                     onChange={(e) => setSelectedDoctorId(e.target.value)}
-                    className="bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-700"
+                    className="bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                   >
                     {doctors.map((doc) => (
                       <option key={doc.id} value={doc.id}>
@@ -1077,7 +1086,7 @@ export default function StaffDashboard() {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1 text-xs text-slate-700"
+                    className="bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1 text-xs text-slate-900"
                   />
                 </div>
               </div>
@@ -1116,7 +1125,7 @@ export default function StaffDashboard() {
                         disabled={!!bookingPatient}
                         onChange={(e) => searchBookingPatient(e.target.value)}
                         placeholder="Search patient by name or phone..."
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs disabled:bg-slate-100 disabled:text-slate-600"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs disabled:bg-slate-100 disabled:text-slate-600 text-slate-900"
                       />
                       {bookingPatient && (
                         <button
@@ -1190,7 +1199,7 @@ export default function StaffDashboard() {
                         value={bookingTime}
                         required={bookingType === 'SLOT'}
                         onChange={(e) => setBookingTime(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-700"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                       />
                     </div>
                   )}
@@ -1215,7 +1224,7 @@ export default function StaffDashboard() {
                       onChange={(e) => setBookingNotes(e.target.value)}
                       placeholder="e.g. Cough and cold, review reports..."
                       rows={2}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs text-slate-900"
                     />
                   </div>
 
@@ -1268,7 +1277,7 @@ export default function StaffDashboard() {
                               <select
                                 value={app.status}
                                 onChange={(e) => handleUpdateStatus(app.id, e.target.value)}
-                                className="bg-slate-50 border border-slate-200 rounded text-[10px] px-1.5 py-1 text-slate-600 focus:outline-none"
+                                className="bg-slate-50 border border-slate-200 rounded text-[10px] px-1.5 py-1 text-slate-900 focus:outline-none"
                               >
                                 <option value="BOOKED">Booked</option>
                                 <option value="CHECKED_IN">Checked-In</option>
@@ -1316,7 +1325,7 @@ export default function StaffDashboard() {
                               <select
                                 value={app.status}
                                 onChange={(e) => handleUpdateStatus(app.id, e.target.value)}
-                                className="bg-slate-50 border border-slate-200 rounded text-[10px] px-1.5 py-1 text-slate-600 focus:outline-none"
+                                className="bg-slate-50 border border-slate-200 rounded text-[10px] px-1.5 py-1 text-slate-900 focus:outline-none"
                               >
                                 <option value="BOOKED">Booked</option>
                                 <option value="CHECKED_IN">Checked-In</option>
@@ -1375,7 +1384,7 @@ export default function StaffDashboard() {
                         disabled={!!invoicePatient}
                         onChange={(e) => searchBillingPatient(e.target.value)}
                         placeholder="Search patient..."
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs disabled:bg-slate-100 disabled:text-slate-600"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-xs disabled:bg-slate-100 disabled:text-slate-600 text-slate-900"
                       />
                       {invoicePatient && (
                         <button
@@ -1422,7 +1431,7 @@ export default function StaffDashboard() {
                             placeholder="Description (e.g. Blood Test, Pharmacy sale)"
                             required
                             onChange={(e) => updateInvoiceItem(index, 'description', e.target.value)}
-                            className="col-span-6 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs"
+                            className="col-span-6 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs text-slate-900"
                           />
                           <input
                             type="number"
@@ -1430,7 +1439,7 @@ export default function StaffDashboard() {
                             min={1}
                             required
                             onChange={(e) => updateInvoiceItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                            className="col-span-2 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs"
+                            className="col-span-2 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs text-slate-900"
                           />
                           <input
                             type="number"
@@ -1439,7 +1448,7 @@ export default function StaffDashboard() {
                             required
                             placeholder="Price"
                             onChange={(e) => updateInvoiceItem(index, 'amount', parseFloat(e.target.value) || 0)}
-                            className="col-span-3 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs"
+                            className="col-span-3 bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs text-slate-900"
                           />
                           <button
                             type="button"
@@ -1469,7 +1478,7 @@ export default function StaffDashboard() {
                         type="number"
                         value={invoiceDiscount}
                         onChange={(e) => setInvoiceDiscount(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1478,7 +1487,7 @@ export default function StaffDashboard() {
                         type="number"
                         value={invoiceTax}
                         onChange={(e) => setInvoiceTax(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                       />
                     </div>
                   </div>
@@ -1771,7 +1780,7 @@ export default function StaffDashboard() {
                         max={(parseFloat(selectedInvoice.total) - selectedInvoice.payments.reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0)).toString()}
                         required
                         onChange={(e) => setPaymentAmount(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1.5 text-xs"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1.5 text-xs text-slate-900"
                       />
                     </div>
 
@@ -1780,7 +1789,7 @@ export default function StaffDashboard() {
                       <select
                         value={paymentMethod}
                         onChange={(e) => setPaymentMethod(e.target.value as any)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1.5 text-xs text-slate-700"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1.5 text-xs text-slate-900"
                       >
                         <option value="CASH">Cash</option>
                         <option value="UPI">UPI / GPay</option>
@@ -1795,7 +1804,7 @@ export default function StaffDashboard() {
                         value={paymentNotes}
                         onChange={(e) => setPaymentNotes(e.target.value)}
                         placeholder="e.g. Transaction ID, split details..."
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1.5 text-xs"
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1.5 text-xs text-slate-900"
                       />
                     </div>
 

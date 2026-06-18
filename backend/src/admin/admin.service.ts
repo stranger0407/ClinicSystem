@@ -73,4 +73,15 @@ export class AdminService {
       take: 100,
     });
   }
+
+  async listStaff(clinicId: string) {
+    return this.prisma.staffProfile.findMany({
+      where: { clinicId },
+      include: {
+        user: {
+          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+        },
+      },
+    });
+  }
 }

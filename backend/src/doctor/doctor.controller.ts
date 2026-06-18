@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { DoctorService } from './doctor.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -19,11 +19,21 @@ export class DoctorController {
 
   @Roles(UserRole.DOCTOR, UserRole.OWNER)
   @Patch('profile')
-  async updateProfile(
+  async updateSelfProfile(
     @ClinicId() clinicId: string,
     @CurrentUser() user: any,
     @Body() body: any,
   ) {
     return this.doctorService.updateProfile(clinicId, user.id, body);
+  }
+
+  @Roles(UserRole.OWNER)
+  @Patch('profile/:userId')
+  async updateDoctorProfile(
+    @ClinicId() clinicId: string,
+    @Param('userId') targetUserId: string,
+    @Body() body: any,
+  ) {
+    return this.doctorService.updateProfile(clinicId, targetUserId, body);
   }
 }

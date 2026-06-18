@@ -373,7 +373,7 @@ export default function DoctorDashboard() {
                           value={vitals.bp}
                           onChange={(e) => setVitals({ ...vitals, bp: e.target.value })}
                           placeholder="e.g. 120/80"
-                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                         />
                       </div>
                       <div className="space-y-0.5">
@@ -383,7 +383,7 @@ export default function DoctorDashboard() {
                           value={vitals.pulse}
                           onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
                           placeholder="72"
-                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                         />
                       </div>
                       <div className="space-y-0.5">
@@ -393,7 +393,7 @@ export default function DoctorDashboard() {
                           value={vitals.temp}
                           onChange={(e) => setVitals({ ...vitals, temp: e.target.value })}
                           placeholder="98.6"
-                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                         />
                       </div>
                       <div className="space-y-0.5">
@@ -403,7 +403,7 @@ export default function DoctorDashboard() {
                           value={vitals.weight}
                           onChange={(e) => setVitals({ ...vitals, weight: e.target.value })}
                           placeholder="70"
-                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                         />
                       </div>
                       <div className="space-y-0.5">
@@ -413,7 +413,7 @@ export default function DoctorDashboard() {
                           value={vitals.height}
                           onChange={(e) => setVitals({ ...vitals, height: e.target.value })}
                           placeholder="170"
-                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                         />
                       </div>
                       <div className="space-y-0.5">
@@ -423,7 +423,7 @@ export default function DoctorDashboard() {
                           value={vitals.sugar}
                           onChange={(e) => setVitals({ ...vitals, sugar: e.target.value })}
                           placeholder="90"
-                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                          className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                         />
                       </div>
                     </div>
@@ -438,7 +438,7 @@ export default function DoctorDashboard() {
                       onChange={(e) => setComplaint(e.target.value)}
                       placeholder="Specify active symptoms (e.g. high fever since 2 days, chest pain...)"
                       rows={2}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-900"
                     />
                   </div>
 
@@ -451,7 +451,7 @@ export default function DoctorDashboard() {
                       required
                       onChange={(e) => setDiagnosis(e.target.value)}
                       placeholder="e.g. Viral Fever, Acute Bronchitis..."
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-900"
                     />
                   </div>
 
@@ -463,7 +463,7 @@ export default function DoctorDashboard() {
                       onChange={(e) => setClinicalNotes(e.target.value)}
                       placeholder="Details of physical examination, advice to patient..."
                       rows={2}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-900"
                     />
                   </div>
 
@@ -475,7 +475,7 @@ export default function DoctorDashboard() {
                       value={testsRequired}
                       onChange={(e) => setTestsRequired(e.target.value)}
                       placeholder="e.g. CBC, Chest X-Ray"
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-900"
                     />
                   </div>
 
@@ -485,7 +485,7 @@ export default function DoctorDashboard() {
                       type="date"
                       value={followUpDate}
                       onChange={(e) => setFollowUpDate(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-1.5 text-xs text-slate-700"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-1.5 text-xs text-slate-900"
                     />
                   </div>
                 </div>
@@ -513,7 +513,7 @@ export default function DoctorDashboard() {
                         disabled={!!selectedMed}
                         onChange={(e) => handleMedSearch(e.target.value)}
                         placeholder="Type medicine name (e.g. Paracetamol)..."
-                        className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs disabled:bg-slate-100 disabled:text-slate-650"
+                        className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2.5 py-1 text-xs disabled:bg-slate-100 disabled:text-slate-650 text-slate-900"
                       />
                       {selectedMed && (
                         <button
@@ -556,7 +556,7 @@ export default function DoctorDashboard() {
                         value={dosage}
                         onChange={(e) => setDosage(e.target.value)}
                         placeholder="1-0-1 or 5ml"
-                        className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                        className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                       />
                     </div>
 
@@ -568,7 +568,7 @@ export default function DoctorDashboard() {
                         value={durationDays}
                         onChange={(e) => setDurationDays(parseInt(e.target.value) || 1)}
                         min={1}
-                        className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                        className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                       />
                     </div>
 
@@ -580,7 +580,7 @@ export default function DoctorDashboard() {
                         value={instructions}
                         onChange={(e) => setInstructions(e.target.value)}
                         placeholder="After food, empty stomach..."
-                        className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs"
+                        className="w-full bg-white border border-slate-200 focus:border-teal-500 focus:outline-none rounded px-2 py-1 text-xs text-slate-900"
                       />
                     </div>
 

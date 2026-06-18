@@ -57,7 +57,7 @@ export default function OwnerDashboard() {
   const router = useRouter();
 
   // Navigation tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'medicines' | 'audit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'medicines' | 'audit' | 'personnel'>('overview');
 
   // Dashboard Stats State
   const [stats, setStats] = useState<any>({
@@ -67,6 +67,31 @@ export default function OwnerDashboard() {
     pendingDues: 0,
     doctorsCount: 0,
     staffCount: 0,
+  });
+
+  // Personnel State
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
+  const [personnelModalOpen, setPersonnelModalOpen] = useState(false);
+  const [submittingPersonnel, setSubmittingPersonnel] = useState(false);
+  const [personnelForm, setPersonnelForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'DOCTOR' as 'DOCTOR' | 'STAFF',
+    specialty: 'General Physician',
+    licenseNo: '',
+    fees: 200,
+    roleTitle: 'Receptionist'
+  });
+  const [editingDoctor, setEditingDoctor] = useState<any | null>(null);
+  const [submittingDoctorProfile, setSubmittingDoctorProfile] = useState(false);
+  const [doctorProfileForm, setDoctorProfileForm] = useState({
+    specialty: '',
+    licenseNo: '',
+    fees: 200,
   });
 
   // Medicines State
@@ -111,15 +136,19 @@ export default function OwnerDashboard() {
     setLoading(true);
     setErrorMsg('');
     try {
-      const [statsData, auditData, medsData] = await Promise.all([
+      const [statsData, auditData, medsData, doctorsData, staffData] = await Promise.all([
         apiFetch('/admin/stats'),
         apiFetch('/admin/audit-logs'),
-        apiFetch('/medicine')
+        apiFetch('/medicine'),
+        apiFetch('/doctor'),
+        apiFetch('/admin/staff')
       ]);
 
       setStats(statsData);
       setAuditLogs(auditData);
       setMedicines(medsData);
+      setDoctors(doctorsData);
+      setStaff(staffData);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to load dashboard statistics.');
     } finally {
@@ -132,6 +161,105 @@ export default function OwnerDashboard() {
       loadDashboardData();
     }
   }, [user, authLoading]);
+
+  // Submit Personnel Form
+  const handlePersonnelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!personnelForm.firstName || !personnelForm.lastName || !personnelForm.password) {
+      setErrorMsg('First Name, Last Name, and Password are required.');
+      return;
+    }
+    if (!personnelForm.email && !personnelForm.phone) {
+      setErrorMsg('Either Email or Phone must be provided.');
+      return;
+    }
+
+    setSubmittingPersonnel(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const payload = {
+        firstName: personnelForm.firstName,
+        lastName: personnelForm.lastName,
+        email: personnelForm.email || undefined,
+        phone: personnelForm.phone || undefined,
+        password: personnelForm.password,
+        role: personnelForm.role,
+      };
+
+      // Register user
+      const registeredUser = await apiFetch('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      // For doctors, if they entered custom profile details, update them
+      if (personnelForm.role === 'DOCTOR' && (personnelForm.specialty !== 'General Physician' || personnelForm.licenseNo || personnelForm.fees !== 200)) {
+        await apiFetch(`/doctor/profile/${registeredUser.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            specialty: personnelForm.specialty,
+            licenseNo: personnelForm.licenseNo || 'PENDING',
+            fees: Number(personnelForm.fees),
+          }),
+        });
+      }
+
+      setSuccessMsg(`Onboarded ${personnelForm.role.toLowerCase()} successfully.`);
+      setPersonnelModalOpen(false);
+      
+      // Reset form
+      setPersonnelForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        password: '',
+        role: 'DOCTOR',
+        specialty: 'General Physician',
+        licenseNo: '',
+        fees: 200,
+        roleTitle: 'Receptionist'
+      });
+
+      // Reload dashboard stats and personnel
+      await loadDashboardData();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to onboard personnel.');
+    } finally {
+      setSubmittingPersonnel(false);
+    }
+  };
+
+  // Submit Doctor Profile Update
+  const handleDoctorProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDoctor) return;
+
+    setSubmittingDoctorProfile(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      await apiFetch(`/doctor/profile/${editingDoctor.user.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          specialty: doctorProfileForm.specialty,
+          licenseNo: doctorProfileForm.licenseNo,
+          fees: Number(doctorProfileForm.fees),
+        }),
+      });
+
+      setSuccessMsg('Doctor profile updated successfully.');
+      setEditingDoctor(null);
+      await loadDashboardData();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to update doctor profile.');
+    } finally {
+      setSubmittingDoctorProfile(false);
+    }
+  };
 
   // Handle Medicine Create/Update Modal Open
   const openMedModal = (med: Medicine | null = null) => {
@@ -276,6 +404,15 @@ export default function OwnerDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      <style dangerouslySetInnerHTML={{__html: `
+        .scrollbar-hidden::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hidden {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}} />
       {/* Top Navigation Banner */}
       <header className="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between shadow-lg">
         <div className="flex items-center space-x-3">
@@ -345,6 +482,17 @@ export default function OwnerDashboard() {
             >
               <FileText className="h-5 w-5" />
               <span>System Audit Logs</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('personnel')}
+              className={`w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-all font-medium whitespace-nowrap ${
+                activeTab === 'personnel'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+              }`}
+            >
+              <Users className="h-5 w-5" />
+              <span>Personnel Management</span>
             </button>
           </nav>
         </aside>
@@ -612,16 +760,14 @@ export default function OwnerDashboard() {
                         placeholder="Search audit trail (User name, Entity ID, logs details)..."
                         value={searchAuditQuery}
                         onChange={(e) => setSearchAuditQuery(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                        className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
                       />
                     </div>
-                    {/* Action Filter */}
-                    <div className="flex items-center space-x-2 shrink-0 w-full md:w-auto">
-                      <Filter className="h-4 w-4 text-slate-400 hidden md:block" />
+                    <div className="flex flex-wrap items-center gap-3">
                       <select
                         value={selectedAuditAction}
                         onChange={(e) => setSelectedAuditAction(e.target.value)}
-                        className="w-full md:w-auto px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500"
+                        className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-350 focus:outline-none focus:border-indigo-500 transition-colors"
                       >
                         <option value="">All Actions</option>
                         <option value="CREATE">CREATE</option>
@@ -629,13 +775,10 @@ export default function OwnerDashboard() {
                         <option value="DELETE">DELETE</option>
                         <option value="MERGE">MERGE</option>
                       </select>
-                    </div>
-                    {/* Entity Filter */}
-                    <div className="w-full md:w-auto">
                       <select
                         value={selectedAuditEntity}
                         onChange={(e) => setSelectedAuditEntity(e.target.value)}
-                        className="w-full md:w-auto px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500"
+                        className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-350 focus:outline-none focus:border-indigo-500 transition-colors"
                       >
                         <option value="">All Entities</option>
                         {uniqueEntities.map((ent) => (
@@ -647,22 +790,22 @@ export default function OwnerDashboard() {
                     </div>
                   </div>
 
-                  {/* Audit logs timeline */}
-                  <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-md">
+                  {/* Audit Logs Table */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-md">
                     {filteredAuditLogs.length === 0 ? (
                       <div className="p-12 text-center text-slate-500">
-                        <FileText className="mx-auto h-12 w-12 text-slate-600 mb-3" />
-                        <p className="text-sm font-semibold">No audit logs matching your filters.</p>
+                        <AlertCircle className="h-8 w-8 mx-auto text-slate-600 mb-3" />
+                        <p className="font-semibold text-sm">No matching logs in audit trail.</p>
                       </div>
                     ) : (
                       <div className="overflow-x-auto">
-                        <table className="w-full border-collapse text-left">
+                        <table className="w-full text-left border-collapse">
                           <thead>
-                            <tr className="bg-slate-850 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase font-bold tracking-wider bg-slate-850">
                               <th className="px-6 py-4">Timestamp</th>
-                              <th className="px-6 py-4">User</th>
+                              <th className="px-6 py-4">Operator</th>
                               <th className="px-6 py-4">Action</th>
-                              <th className="px-6 py-4">Entity</th>
+                              <th className="px-6 py-4">Target Entity</th>
                               <th className="px-6 py-4">Entity ID</th>
                               <th className="px-6 py-4">IP Address</th>
                               <th className="px-6 py-4 text-right">Details</th>
@@ -722,6 +865,124 @@ export default function OwnerDashboard() {
                         </table>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: PERSONNEL MANAGEMENT */}
+              {activeTab === 'personnel' && (
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                        <Users className="h-5 w-5 text-indigo-400" />
+                        <span>Personnel Management</span>
+                      </h2>
+                      <p className="text-slate-400 text-xs mt-1">
+                        Onboard, view, and manage doctors and staff registered to your clinic subdomain.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setPersonnelModalOpen(true)}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 transition-colors rounded-lg text-sm font-semibold text-white flex items-center space-x-2 w-fit shadow-md shadow-indigo-900/20"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      <span>Onboard Personnel</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    {/* Doctors Section */}
+                    <div className="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-md">
+                      <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+                        <h3 className="font-bold text-white text-base flex items-center space-x-2">
+                          <span className="bg-indigo-950 p-1.5 rounded-lg border border-indigo-900/60 text-indigo-400">
+                            <User className="h-4 w-4" />
+                          </span>
+                          <span>Clinic Doctors ({doctors.length})</span>
+                        </h3>
+                      </div>
+                      
+                      {doctors.length === 0 ? (
+                        <div className="text-center py-8 text-slate-500">
+                          <p className="text-sm">No doctors registered yet.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                          {doctors.map((doc) => (
+                            <div key={doc.id} className="bg-slate-950 border border-slate-850 p-4 rounded-xl flex justify-between items-start hover:border-slate-700 transition-colors">
+                              <div>
+                                <p className="font-semibold text-white">Dr. {doc.user.firstName} {doc.user.lastName}</p>
+                                <div className="mt-1 space-y-1 text-xs text-slate-400">
+                                  <p className="flex items-center space-x-1">
+                                    <span className="font-medium text-slate-350">Specialty:</span>
+                                    <span className="text-indigo-350">{doc.specialty}</span>
+                                  </p>
+                                  <p>
+                                    <span className="font-medium text-slate-350">License No:</span> {doc.licenseNo}
+                                  </p>
+                                  <p>
+                                    <span className="font-medium text-slate-350">Consult Fee:</span> ₹{parseFloat(doc.fees).toFixed(2)}
+                                  </p>
+                                  <p className="text-[10px] text-slate-500 select-all font-mono mt-1">
+                                    Contact: {doc.user.email || 'No Email'} {doc.user.phone ? `| ${doc.user.phone}` : ''}
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setEditingDoctor(doc);
+                                  setDoctorProfileForm({
+                                    specialty: doc.specialty,
+                                    licenseNo: doc.licenseNo,
+                                    fees: parseFloat(doc.fees),
+                                  });
+                                }}
+                                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1 bg-indigo-950/40 hover:bg-indigo-950 border border-indigo-900/60 px-2 py-1 rounded-lg transition-colors mt-1 animate-pulse hover:animate-none"
+                              >
+                                <Edit className="h-3 w-3" />
+                                <span>Edit Profile</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Staff Section */}
+                    <div className="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-md">
+                      <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+                        <h3 className="font-bold text-white text-base flex items-center space-x-2">
+                          <span className="bg-teal-950 p-1.5 rounded-lg border border-teal-900/60 text-teal-400">
+                            <Users className="h-4 w-4" />
+                          </span>
+                          <span>Support Staff ({staff.length})</span>
+                        </h3>
+                      </div>
+
+                      {staff.length === 0 ? (
+                        <div className="text-center py-8 text-slate-500">
+                          <p className="text-sm">No staff registered yet.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                          {staff.map((stf) => (
+                            <div key={stf.id} className="bg-slate-950 border border-slate-850 p-4 rounded-xl hover:border-slate-700 transition-colors">
+                              <p className="font-semibold text-white">{stf.user.firstName} {stf.user.lastName}</p>
+                              <div className="mt-1 space-y-1 text-xs text-slate-400">
+                                <p className="flex items-center space-x-1">
+                                  <span className="font-medium text-slate-350">Title:</span>
+                                  <span className="text-teal-400">{stf.roleTitle}</span>
+                                </p>
+                                <p className="text-[10px] text-slate-500 select-all font-mono mt-1">
+                                  Contact: {stf.user.email || 'No Email'} {stf.user.phone ? `| ${stf.user.phone}` : ''}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -894,6 +1155,267 @@ export default function OwnerDashboard() {
                 Close Details
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ONBOARD PERSONNEL MODAL */}
+      {personnelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-850">
+              <h3 className="font-bold text-white text-base">Onboard Clinic Personnel</h3>
+              <button
+                onClick={() => setPersonnelModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handlePersonnelSubmit} className="p-6 space-y-3 overflow-y-auto max-h-[calc(90vh-70px)] scrollbar-hidden">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Select Role *
+                  </label>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center space-x-2 text-sm text-slate-200 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="DOCTOR"
+                        checked={personnelForm.role === 'DOCTOR'}
+                        onChange={() => setPersonnelForm({ ...personnelForm, role: 'DOCTOR' })}
+                        className="text-indigo-600 focus:ring-indigo-500 bg-slate-950 border-slate-800"
+                      />
+                      <span>Doctor</span>
+                    </label>
+                    <label className="flex items-center space-x-2 text-sm text-slate-200 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="STAFF"
+                        checked={personnelForm.role === 'STAFF'}
+                        onChange={() => setPersonnelForm({ ...personnelForm, role: 'STAFF' })}
+                        className="text-indigo-600 focus:ring-indigo-500 bg-slate-950 border-slate-800"
+                      />
+                      <span>Support Staff</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    First Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={personnelForm.firstName}
+                    onChange={(e) => setPersonnelForm({ ...personnelForm, firstName: e.target.value })}
+                    placeholder="e.g. Ashok"
+                    className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={personnelForm.lastName}
+                    onChange={(e) => setPersonnelForm({ ...personnelForm, lastName: e.target.value })}
+                    placeholder="e.g. Kumar"
+                    className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={personnelForm.email}
+                    onChange={(e) => setPersonnelForm({ ...personnelForm, email: e.target.value })}
+                    placeholder="e.g. doctor@clinic.com"
+                    className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={personnelForm.phone}
+                    onChange={(e) => setPersonnelForm({ ...personnelForm, phone: e.target.value })}
+                    placeholder="e.g. 9876543210"
+                    className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Login Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={personnelForm.password}
+                    onChange={(e) => setPersonnelForm({ ...personnelForm, password: e.target.value })}
+                    placeholder="Choose a strong password"
+                    className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                {personnelForm.role === 'DOCTOR' && (
+                  <>
+                    <div className="col-span-2 border-t border-slate-800 pt-4 mt-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3">
+                        Doctor Profile Configuration
+                      </h4>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Medical License No
+                      </label>
+                      <input
+                        type="text"
+                        value={personnelForm.licenseNo}
+                        onChange={(e) => setPersonnelForm({ ...personnelForm, licenseNo: e.target.value })}
+                        placeholder="e.g. MCI-12345"
+                        className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Consultation Fees (INR)
+                      </label>
+                      <input
+                        type="number"
+                        value={personnelForm.fees}
+                        onChange={(e) => setPersonnelForm({ ...personnelForm, fees: Number(e.target.value) })}
+                        placeholder="e.g. 200"
+                        className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Medical Specialty
+                      </label>
+                      <input
+                        type="text"
+                        value={personnelForm.specialty}
+                        onChange={(e) => setPersonnelForm({ ...personnelForm, specialty: e.target.value })}
+                        placeholder="e.g. General Physician, Pediatrician"
+                        className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-slate-800 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setPersonnelModalOpen(false)}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-750 transition-colors rounded-lg text-sm font-semibold text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingPersonnel}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 transition-colors rounded-lg text-sm font-semibold text-white flex items-center space-x-2"
+                >
+                  {submittingPersonnel && <Loader className="h-4 w-4 animate-spin" />}
+                  <span>Onboard Member</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT DOCTOR PROFILE MODAL */}
+      {editingDoctor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-850">
+              <h3 className="font-bold text-white text-base">
+                Edit Profile: Dr. {editingDoctor.user.firstName} {editingDoctor.user.lastName}
+              </h3>
+              <button
+                onClick={() => setEditingDoctor(null)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleDoctorProfileSubmit} className="p-6 space-y-3 overflow-y-auto max-h-[calc(85vh-70px)] scrollbar-hidden">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Medical Specialty *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={doctorProfileForm.specialty}
+                    onChange={(e) => setDoctorProfileForm({ ...doctorProfileForm, specialty: e.target.value })}
+                    placeholder="e.g. General Physician"
+                    className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Medical License No *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={doctorProfileForm.licenseNo}
+                    onChange={(e) => setDoctorProfileForm({ ...doctorProfileForm, licenseNo: e.target.value })}
+                    placeholder="e.g. MCI-12345"
+                    className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Consultation Fees (INR) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={doctorProfileForm.fees}
+                    onChange={(e) => setDoctorProfileForm({ ...doctorProfileForm, fees: Number(e.target.value) })}
+                    placeholder="e.g. 200"
+                    className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-sm text-slate-100 placeholder-slate-650 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-800 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingDoctor(null)}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-750 transition-colors rounded-lg text-sm font-semibold text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingDoctorProfile}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 transition-colors rounded-lg text-sm font-semibold text-white flex items-center space-x-2"
+                >
+                  {submittingDoctorProfile && <Loader className="h-4 w-4 animate-spin" />}
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

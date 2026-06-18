@@ -22,4 +22,10 @@ export class AdminController {
   async getAuditLogs(@ClinicId() clinicId: string) {
     return this.adminService.getAuditLogs(clinicId);
   }
+
+  @Roles(UserRole.OWNER)
+  @Get('staff')
+  async listStaff(@ClinicId() clinicId: string) {
+    return this.adminService.listStaff(clinicId);
+  }
 }
