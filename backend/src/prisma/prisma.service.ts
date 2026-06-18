@@ -23,7 +23,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     const softDeleteModels = ['User', 'PatientProfile', 'Appointment', 'Encounter', 'Prescription', 'Invoice'];
 
-    // Declare the reference variable first to avoid recursive initialization compile errors
     let extendedClient: any;
 
     extendedClient = (this as any).$extends({
@@ -52,6 +51,21 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
               args.where = args.where || {};
               if (args.where.deletedAt === undefined) {
                 args.where.deletedAt = null;
+
+                // Flatten compound unique keys (e.g. clinicId_email, clinicId_phone) for findFirst compatibility
+                const flatWhere = { ...args.where };
+                for (const key of Object.keys(flatWhere)) {
+                  if (
+                    typeof flatWhere[key] === 'object' &&
+                    flatWhere[key] !== null &&
+                    !Array.isArray(flatWhere[key])
+                  ) {
+                    Object.assign(flatWhere, flatWhere[key]);
+                    delete flatWhere[key];
+                  }
+                }
+                args.where = flatWhere;
+
                 // Run findFirst instead to support the non-unique deletedAt column filter
                 return extendedClient[model].findFirst(args);
               }
