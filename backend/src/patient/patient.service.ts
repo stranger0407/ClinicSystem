@@ -10,26 +10,49 @@ export class PatientService {
   async createPatient(clinicId: string, dto: CreatePatientDto, operatorId?: string) {
     const parsedDob = new Date(dto.dob);
 
-    // 1. Duplicate Patient Detection: check phone + DOB (ignoring soft-deleted profiles)
-    const duplicate = await this.prisma.patientProfile.findFirst({
+    // 1. Duplicate Patient Detection: check phone number
+    const duplicatePhone = await this.prisma.patientProfile.findFirst({
       where: {
         clinicId,
         phone: dto.phone.trim(),
-        dob: parsedDob,
         deletedAt: null,
       },
     });
 
-    if (duplicate) {
+    if (duplicatePhone) {
       throw new ConflictException({
-        message: 'A patient with the same phone number and Date of Birth already exists.',
+        message: `A patient with the mobile number ${dto.phone.trim()} already exists: ${duplicatePhone.firstName} ${duplicatePhone.lastName}.`,
         isDuplicate: true,
         existingPatient: {
-          id: duplicate.id,
-          firstName: duplicate.firstName,
-          lastName: duplicate.lastName,
-          phone: duplicate.phone,
-          dob: duplicate.dob,
+          id: duplicatePhone.id,
+          firstName: duplicatePhone.firstName,
+          lastName: duplicatePhone.lastName,
+          phone: duplicatePhone.phone,
+          dob: duplicatePhone.dob,
+        },
+      });
+    }
+
+    // 2. Duplicate Patient Detection: check first name + last name
+    const duplicateName = await this.prisma.patientProfile.findFirst({
+      where: {
+        clinicId,
+        firstName: { equals: dto.firstName.trim(), mode: 'insensitive' },
+        lastName: { equals: dto.lastName.trim(), mode: 'insensitive' },
+        deletedAt: null,
+      },
+    });
+
+    if (duplicateName) {
+      throw new ConflictException({
+        message: `A patient with the name ${dto.firstName.trim()} ${dto.lastName.trim()} already exists (Phone: ${duplicateName.phone}).`,
+        isDuplicate: true,
+        existingPatient: {
+          id: duplicateName.id,
+          firstName: duplicateName.firstName,
+          lastName: duplicateName.lastName,
+          phone: duplicateName.phone,
+          dob: duplicateName.dob,
         },
       });
     }

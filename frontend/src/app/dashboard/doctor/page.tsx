@@ -267,6 +267,7 @@ export default function DoctorDashboard() {
   const [registeringPatient, setRegisteringPatient] = useState(false);
   const [registerError, setRegisterError] = useState('');
   const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [duplicatePatient, setDuplicatePatient] = useState<any | null>(null);
 
   // Edit Patient Form State
   const [editingPatient, setEditingPatient] = useState<any | null>(null);
@@ -666,6 +667,7 @@ export default function DoctorDashboard() {
     e.preventDefault();
     setRegisterError('');
     setRegisterSuccess(false);
+    setDuplicatePatient(null);
     setRegisteringPatient(true);
     try {
       const payload = {
@@ -695,6 +697,9 @@ export default function DoctorDashboard() {
       setRegisterModalOpen(false);
     } catch (err: any) {
       setRegisterError(err.message || 'Failed to register patient');
+      if (err.data && err.data.isDuplicate && err.data.existingPatient) {
+        setDuplicatePatient(err.data.existingPatient);
+      }
     } finally {
       setRegisteringPatient(false);
     }
@@ -3018,7 +3023,30 @@ export default function DoctorDashboard() {
               </button>
             </div>
             <form onSubmit={handleRegisterPatient} className="p-6 space-y-4 text-xs overflow-y-auto">
-              {registerError && <p className="text-red-600 text-xs font-semibold">{registerError}</p>}
+              {registerError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
+                  <p className="text-red-700 text-xs font-semibold leading-relaxed">
+                    {registerError}
+                  </p>
+                  {duplicatePatient && (
+                    <div className="flex justify-start">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRegisterModalOpen(false);
+                          viewPatientTimeline(duplicatePatient.id);
+                          setBookingPatient(duplicatePatient);
+                          setDuplicatePatient(null);
+                        }}
+                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm shadow-indigo-600/10"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Open Profile & Check-In</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">First Name *</label>
