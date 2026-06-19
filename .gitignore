@@ -28,3 +28,10 @@ yarn-error.log*
 .DS_Store
 *.pem
 *.tsbuildinfo
+
+# deployment artifacts
+backend-deploy/
+backend-deploy.zip
+frontend-deploy/
+frontend-deploy.zip
+*_publish_profile.xml
