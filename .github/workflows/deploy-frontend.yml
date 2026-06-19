@@ -45,7 +45,14 @@ jobs:
           cp -r frontend/.next/standalone/. deploy/ 2>/dev/null || true
           
           # Patch Next.js standalone server to support iisnode Named Pipes on Windows
-          node -e "const fs = require('fs'); const file = 'deploy/frontend/server.js'; let content = fs.readFileSync(file, 'utf8'); content = content.replace('parseInt(process.env.PORT, 10)', 'process.env.PORT'); fs.writeFileSync(file, content, 'utf8');"
+          node << 'EOF'
+          const fs = require('fs');
+          const file = 'deploy/frontend/server.js';
+          let content = fs.readFileSync(file, 'utf8');
+          content = content.replace('parseInt(process.env.PORT, 10)', 'process.env.PORT');
+          content = content.replace("const hostname = process.env.HOSTNAME || '0.0.0.0'", "const hostname = (process.env.PORT && process.env.PORT.includes('pipe')) ? undefined : (process.env.HOSTNAME || '0.0.0.0')");
+          fs.writeFileSync(file, content, 'utf8');
+          EOF
           
           # Copy static assets
           mkdir -p deploy/frontend/.next/static
@@ -61,7 +68,7 @@ jobs:
           const path = require('path');
           process.chdir(path.join(__dirname, 'frontend'));
           process.env.PORT = process.env.PORT || '8080';
-          process.env.HOSTNAME = '0.0.0.0';
+          process.env.HOSTNAME = (process.env.PORT && process.env.PORT.includes('pipe')) ? '' : '0.0.0.0';
           require('./frontend/server.js');
           EOF
 
@@ -89,10 +96,35 @@ jobs:
                   </rule>
                 </rules>
               </rewrite>
-              <iisnode watchedFiles="web.config;*.js" node_env="production" devErrorsEnabled="true" loggingEnabled="true" logDirectory="iisnode" nodeProcessCommandLine="node.exe" />
+              <iisnode watchedFiles="web.config;*.js" node_env="production" devErrorsEnabled="true" loggingEnabled="true" logDirectory="C:\home\LogFiles\iisnode" nodeProcessCommandLine="C:\home\site\wwwroot\node_copy.exe" />
             </system.webServer>
           </configuration>
           EOF
+
+          # Create .deployment config to use custom deploy script
+          cat > deploy/.deployment << 'EOF'
+          [config]
+          command = deploy.cmd
+          EOF
+
+          # Create custom deploy.cmd to copy Node.js version and run KuduSync
+          cat > deploy/deploy.cmd << 'EOF'
+          @echo off
+          echo --- Custom Deployment Script ---
+
+          :: 1. Copy the active Node.js version to C:\home\site\wwwroot\node_copy.exe
+          echo Finding Node.js 22...
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "$nodePaths = where.exe node; $targetPath = $null; foreach ($path in $nodePaths) { if ($path -like '*\nodejs\2*') { $targetPath = $path; break } }; if (-not $targetPath) { $targetPath = $nodePaths[0] }; Write-Output ('Copying from ' + $targetPath + ' to C:\home\site\wwwroot\node_copy.exe'); Copy-Item -Path $targetPath -Destination 'C:\home\site\wwwroot\node_copy.exe' -Force -ErrorAction SilentlyContinue"
+
+          :: 2. Run Kudusync to copy the deployment files
+          echo Running KuduSync...
+          if "%IN_PLACE_DEPLOYMENT%" NEQ "1" (
+            "%KUDU_SYNC_CMD%" -v 50 -f "%DEPLOYMENT_SOURCE%" -t "%DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd"
+          )
+
+          echo Deployment completed successfully.
+          EOF
+
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
