@@ -389,6 +389,12 @@ export default function DoctorDashboard() {
   // ==========================================
   useEffect(() => {
     if (!authLoading && user) {
+      loadSettingsData().catch(err => console.error('Failed to prefetch settings:', err));
+    }
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    if (!authLoading && user) {
       if (activeTab === 'queue') {
         loadQueue();
       } else if (activeTab === 'billing') {
@@ -814,7 +820,7 @@ export default function DoctorDashboard() {
       setShowCreateInvoiceForm(false);
       setInvoicePatient(null);
       setInvoicePatientSearch('');
-      setInvoiceItems([{ description: 'Consultation Fee', quantity: 1, amount: 250 }]);
+      setInvoiceItems([{ description: 'Consultation Fee', quantity: 1, amount: Number(doctorProfile?.fees) || 250 }]);
       setInvoiceDiscount('0');
       setInvoiceTax('0');
       loadInvoices();
@@ -933,6 +939,7 @@ export default function DoctorDashboard() {
           fees: Number(myDoc.fees) || 200,
           durationMin: myDoc.durationMin || 15,
         });
+        setInvoiceItems([{ description: 'Consultation Fee', quantity: 1, amount: Number(myDoc.fees) || 250 }]);
       }
     } catch (err) {
       console.error(err);
