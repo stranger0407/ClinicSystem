@@ -1,0 +1,97 @@
+name: Deploy Backend to Azure
+
+on:
+  push:
+    branches:
+      - deployment-one-doc
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: clinicos-backend
+  NODE_VERSION: '20.x'
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --workspace=backend
+
+      - name: Generate Prisma Client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Build backend
+        run: npm run build --workspace=backend
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy
+          cp -r backend/dist deploy/dist
+          cp -r backend/node_modules deploy/node_modules 2>/dev/null || true
+          cp backend/package.json deploy/package.json
+          cp -r backend/prisma deploy/prisma
+          
+          # Create a startup entry point
+          cat > deploy/main.js << 'EOF'
+          // Azure App Service entry point
+          process.chdir(__dirname);
+          require('./dist/main.js');
+          EOF
+          
+          # Create web.config for IISNode (if needed)
+          cat > deploy/web.config << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <handlers>
+                <add name="iisnode" path="main.js" verb="*" modules="iisnode"/>
+              </handlers>
+              <rewrite>
+                <rules>
+                  <rule name="NodeInspector" patternSyntax="ECMAScript" stopProcessing="true">
+                    <match url="^main.js\/debug[\/]?" />
+                  </rule>
+                  <rule name="StaticContent">
+                    <action type="Rewrite" url="public{REQUEST_URI}"/>
+                  </rule>
+                  <rule name="DynamicContent">
+                    <conditions>
+                      <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
+                    </conditions>
+                    <action type="Rewrite" url="main.js"/>
+                  </rule>
+                </rules>
+              </rewrite>
+              <iisnode watchedFiles="web.config;*.js" node_env="production" />
+            </system.webServer>
+          </configuration>
+          EOF
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
+          package: deploy
+
+      - name: Run Prisma Migrations
+        if: success()
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma migrate deploy
