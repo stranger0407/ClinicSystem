@@ -9,6 +9,9 @@ import {
   Users,
   Clock,
   ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   Clipboard,
   Shield,
   FileText,
@@ -196,6 +199,11 @@ export default function DoctorDashboard() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
 
+  // Consultation Queue UI Customization States
+  const [showQueueSidebar, setShowQueueSidebar] = useState(true);
+  const [showHistorySidebar, setShowHistorySidebar] = useState(true);
+  const [consultationTab, setConsultationTab] = useState<'charting' | 'prescription' | 'outcome'>('charting');
+
   // ==========================================
   // AUTH GUARD CHECK
   // ==========================================
@@ -319,6 +327,7 @@ export default function DoctorDashboard() {
     setSelectedApp(app);
     setSuccessMsg('');
     setErrorMsg('');
+    setConsultationTab('charting');
 
     // Reset encounter fields
     setComplaint('');
@@ -920,6 +929,37 @@ export default function DoctorDashboard() {
             {activeTab === 'analytics' && 'Practice Overview & Audit Logs'}
           </h2>
           <div className="flex items-center space-x-3 text-xs">
+            {activeTab === 'queue' && (
+              <div className="flex items-center space-x-2 border-r border-slate-200 pr-3">
+                <button
+                  onClick={() => setShowQueueSidebar(!showQueueSidebar)}
+                  className={`p-1.5 rounded-lg border transition-all flex items-center justify-center space-x-1 font-bold ${
+                    showQueueSidebar
+                      ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
+                      : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+                  }`}
+                  title="Toggle Queue Sidebar (Left)"
+                >
+                  {showQueueSidebar ? <ChevronsLeft className="w-4 h-4" /> : <ChevronsRight className="w-4 h-4" />}
+                  <span className="text-[10px] uppercase tracking-wider">Queue</span>
+                </button>
+
+                {selectedApp && (
+                  <button
+                    onClick={() => setShowHistorySidebar(!showHistorySidebar)}
+                    className={`p-1.5 rounded-lg border transition-all flex items-center justify-center space-x-1 font-bold ${
+                      showHistorySidebar
+                        ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
+                        : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+                    }`}
+                    title="Toggle History Sidebar (Right)"
+                  >
+                    <span className="text-[10px] uppercase tracking-wider">History</span>
+                    {showHistorySidebar ? <ChevronsRight className="w-4 h-4" /> : <ChevronsLeft className="w-4 h-4" />}
+                  </button>
+                )}
+              </div>
+            )}
             <span className="bg-teal-50 border border-teal-200 text-teal-700 px-3 py-1.5 rounded-full font-bold uppercase tracking-wider flex items-center">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2 animate-ping"></span>
               Live Practice Mode
@@ -934,317 +974,424 @@ export default function DoctorDashboard() {
           {activeTab === 'queue' && (
             <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0">
               {/* Queue List Column */}
-              <div className="w-full lg:w-76 shrink-0 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm">
-                <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Queue Order</span>
-                  <button onClick={loadQueue} className="text-[10px] text-indigo-600 hover:underline font-bold uppercase tracking-wider">
-                    Refresh
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[calc(100vh-250px)]">
-                  {loadingQueue ? (
-                    <div className="p-8 flex justify-center"><Loader className="w-6 h-6 animate-spin text-indigo-500" /></div>
-                  ) : appointments.length > 0 ? (
-                    appointments.map((app) => (
-                      <div
-                        key={app.id}
-                        onClick={() => openConsultation(app)}
-                        className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors border-l-4 ${
-                          selectedApp?.id === app.id ? 'bg-slate-50/60 border-indigo-600' : 'border-transparent'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <h4 className="text-xs font-bold text-slate-800">
-                            {app.patient.firstName} {app.patient.lastName}
-                          </h4>
-                          <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                            app.status === 'CHECKED_IN' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
-                            app.status === 'IN_CONSULTATION' ? 'bg-indigo-50 text-indigo-650 border border-indigo-200' :
-                            app.status === 'COMPLETED' ? 'bg-slate-100 text-slate-500 border border-slate-300' :
-                            'bg-slate-50 text-slate-600 border border-slate-200'
-                          }`}>
-                            {app.status}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-[10px] text-slate-1000 mt-2">
-                          <span className="flex items-center">
-                            <Clock className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                            {app.type === 'SLOT' ? (
-                              new Date(app.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                            ) : (
-                              `Walk-in #${app.queueNumber}`
-                            )}
-                          </span>
-                          {app.isFollowUp && (
-                            <span className="text-[8px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold uppercase">
-                              Follow-up
+              {showQueueSidebar && (
+                <div className="w-full lg:w-76 shrink-0 bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm">
+                  <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Queue Order</span>
+                    <button onClick={loadQueue} className="text-[10px] text-indigo-600 hover:underline font-bold uppercase tracking-wider">
+                      Refresh
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[calc(100vh-250px)]">
+                    {loadingQueue ? (
+                      <div className="p-8 flex justify-center"><Loader className="w-6 h-6 animate-spin text-indigo-500" /></div>
+                    ) : appointments.length > 0 ? (
+                      appointments.map((app) => (
+                        <div
+                          key={app.id}
+                          onClick={() => openConsultation(app)}
+                          className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors border-l-4 ${
+                            selectedApp?.id === app.id ? 'bg-slate-50/60 border-indigo-600' : 'border-transparent'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <h4 className="text-xs font-bold text-slate-800">
+                              {app.patient.firstName} {app.patient.lastName}
+                            </h4>
+                            <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              app.status === 'CHECKED_IN' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
+                              app.status === 'IN_CONSULTATION' ? 'bg-indigo-50 text-indigo-650 border border-indigo-200' :
+                              app.status === 'COMPLETED' ? 'bg-slate-100 text-slate-500 border border-slate-300' :
+                              'bg-slate-50 text-slate-600 border border-slate-200'
+                            }`}>
+                              {app.status}
                             </span>
-                          )}
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] text-slate-1000 mt-2">
+                            <span className="flex items-center">
+                              <Clock className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                              {app.type === 'SLOT' ? (
+                                new Date(app.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                              ) : (
+                                `Walk-in #${app.queueNumber}`
+                              )}
+                            </span>
+                            {app.isFollowUp && (
+                              <span className="text-[8px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold uppercase">
+                                Follow-up
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-slate-500 text-xs italic p-6 text-center">No patients checked-in today.</p>
-                  )}
+                      ))
+                    ) : (
+                      <p className="text-slate-500 text-xs italic p-6 text-center">No patients checked-in today.</p>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Consultation Area */}
               <div className="flex-1 flex flex-col lg:flex-row gap-6 min-w-0">
                 {selectedApp ? (
                   <>
-                    <form onSubmit={handleSaveEncounter} className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6 overflow-y-auto max-h-[calc(100vh-200px)]">
-                      <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+                    <form onSubmit={handleSaveEncounter} className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6 overflow-y-auto max-h-[calc(100vh-200px)] flex flex-col text-slate-800">
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-4 shrink-0">
                         <div className="flex items-center space-x-3">
-                          <Clipboard className="w-5 h-5 text-indigo-655" />
-                          <h3 className="font-extrabold text-slate-800 text-base uppercase tracking-wider">Consultation Pad</h3>
+                          <Clipboard className="w-5 h-5 text-indigo-650" />
+                          <h3 className="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Consultation Pad</h3>
                         </div>
                         <span className="text-xs text-slate-500">
                           File: <span className="font-bold text-slate-800">{selectedApp.patient.firstName} {selectedApp.patient.lastName}</span>
                         </span>
                       </div>
 
-                      {/* Observations Vitals */}
-                      <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 space-y-3">
-                        <span className="text-[10px] text-indigo-700 font-bold uppercase tracking-wider block flex items-center">
-                          <Heart className="w-3.5 h-3.5 mr-1.5 text-indigo-600 animate-pulse" /> Vitals & Measurements
-                        </span>
-                        <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
-                          {['bp', 'pulse', 'temp', 'weight', 'height', 'sugar'].map((vital) => (
-                            <div key={vital} className="space-y-1">
-                              <label className="text-[9px] text-slate-500 font-bold uppercase block">{vital}</label>
-                              <input
-                                type="text"
-                                value={(vitals as any)[vital]}
-                                onChange={(e) => setVitals({ ...vitals, [vital]: e.target.value })}
-                                placeholder={vital === 'bp' ? '120/80' : vital === 'temp' ? '98.6' : '—'}
-                                className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-2.5 py-1 text-xs text-slate-800"
-                              />
-                            </div>
-                          ))}
-                        </div>
+                      {/* Tab Header Controls */}
+                      <div className="flex border-b border-slate-200 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setConsultationTab('charting')}
+                          className={`flex-1 py-3 px-4 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center space-x-2 ${
+                            consultationTab === 'charting'
+                              ? 'border-indigo-500 text-indigo-600'
+                              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          <Activity className="w-4 h-4" />
+                          <span>1. Clinical Charting</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConsultationTab('prescription')}
+                          className={`flex-1 py-3 px-4 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center space-x-2 ${
+                            consultationTab === 'prescription'
+                              ? 'border-indigo-500 text-indigo-600'
+                              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span>2. Prescription (Rx)</span>
+                          {prescriptionItems.length > 0 && (
+                            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                              {prescriptionItems.length}
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConsultationTab('outcome')}
+                          className={`flex-1 py-3 px-4 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center space-x-2 ${
+                            consultationTab === 'outcome'
+                              ? 'border-indigo-500 text-indigo-600'
+                              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          <span>3. Diagnosis & Plan</span>
+                        </button>
                       </div>
 
-                      {/* Complaint & Diagnosis */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Chief Complaint</label>
-                          <textarea
-                            rows={3}
-                            value={complaint}
-                            onChange={(e) => setComplaint(e.target.value)}
-                            placeholder="Symptoms, duration, trigger conditions..."
-                            className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Diagnosis & Assessment</label>
-                          <textarea
-                            rows={3}
-                            value={diagnosis}
-                            onChange={(e) => setDiagnosis(e.target.value)}
-                            placeholder="Primary diagnostic finding..."
-                            className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Clinical Notes */}
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Clinical Notes / Examination Remarks</label>
-                        <textarea
-                          rows={3}
-                          value={clinicalNotes}
-                          onChange={(e) => setClinicalNotes(e.target.value)}
-                          placeholder="Detailed inspection findings, history reviews, physical assessment remarks..."
-                          className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-
-                      {/* Prescription Builder */}
-                      <div className="border border-slate-200/80 rounded-2xl p-4 space-y-4">
-                        <span className="text-[10px] text-indigo-700 font-bold uppercase tracking-wider block flex items-center">
-                          <FileText className="w-3.5 h-3.5 mr-1.5 text-indigo-650" /> Prescription Builder
-                        </span>
+                      {/* Tab Contents */}
+                      <div className="flex-1 space-y-6">
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end bg-slate-50/50 p-3 border border-slate-100 rounded-xl">
-                          <div className="space-y-1.5 sm:col-span-2 relative">
-                            <label className="text-[9px] text-slate-500 font-bold uppercase block">Medicine Name</label>
-                            <input
-                              type="text"
-                              value={medQuery}
-                              onChange={(e) => handleMedSearch(e.target.value)}
-                              placeholder="Type medicine name..."
-                              className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
-                            />
-                            {medResults.length > 0 && (
-                              <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded shadow-lg z-30 max-h-40 overflow-y-auto mt-1 divide-y divide-slate-100">
-                                {medResults.map((med) => (
-                                  <div
-                                    key={med.id}
-                                    onClick={() => {
-                                      setSelectedMed(med);
-                                      setMedQuery(med.name);
-                                      setMedResults([]);
-                                    }}
-                                    className="p-2 hover:bg-slate-100 text-xs cursor-pointer text-slate-800 flex justify-between"
-                                  >
-                                    <span className="font-bold">{med.name}</span>
-                                    <span className="text-[10px] text-slate-400">{med.genericName} - {med.strength}</span>
+                        {/* TAB 1: CLINICAL CHARTING */}
+                        {consultationTab === 'charting' && (
+                          <div className="space-y-6">
+                            {/* Observations Vitals */}
+                            <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 space-y-3">
+                              <span className="text-[10px] text-indigo-700 font-bold uppercase tracking-wider block flex items-center">
+                                <Heart className="w-3.5 h-3.5 mr-1.5 text-indigo-600 animate-pulse" /> Vitals & Measurements
+                              </span>
+                              <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
+                                {['bp', 'pulse', 'temp', 'weight', 'height', 'sugar'].map((vital) => (
+                                  <div key={vital} className="space-y-1">
+                                    <label className="text-[9px] text-slate-500 font-bold uppercase block">{vital}</label>
+                                    <input
+                                      type="text"
+                                      value={(vitals as any)[vital]}
+                                      onChange={(e) => setVitals({ ...vitals, [vital]: e.target.value })}
+                                      placeholder={vital === 'bp' ? '120/80' : vital === 'temp' ? '98.6' : '—'}
+                                      className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-2.5 py-1.5 text-xs text-slate-800"
+                                    />
                                   </div>
                                 ))}
                               </div>
-                            )}
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[9px] text-slate-500 font-bold uppercase block">Dosage</label>
-                            <input
-                              type="text"
-                              value={dosage}
-                              onChange={(e) => setDosage(e.target.value)}
-                              placeholder="e.g. 1-0-1"
-                              className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[9px] text-slate-500 font-bold uppercase block">Instructions</label>
-                            <input
-                              type="text"
-                              value={instructions}
-                              onChange={(e) => setInstructions(e.target.value)}
-                              placeholder="e.g. After food"
-                              className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-[9px] text-slate-500 font-bold uppercase block">Duration (Days)</label>
-                            <input
-                              type="number"
-                              value={durationDays}
-                              onChange={(e) => setDurationDays(Number(e.target.value))}
-                              placeholder="5"
-                              className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
-                            />
-                          </div>
-                          <div className="sm:col-span-4 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={addPrescriptionItem}
-                              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-bold text-xs flex items-center space-x-1.5"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>Add to Prescription</span>
-                            </button>
-                          </div>
-                        </div>
+                            </div>
 
-                        {/* Prescription Items List */}
-                        {prescriptionItems.length > 0 && (
-                          <div className="border border-slate-100 rounded-xl overflow-hidden text-xs">
-                            <table className="w-full text-left border-collapse">
-                              <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-400 font-bold uppercase">
-                                  <th className="p-3">Medicine</th>
-                                  <th className="p-3">Form/Strength</th>
-                                  <th className="p-3">Dosage</th>
-                                  <th className="p-3">Instructions</th>
-                                  <th className="p-3 text-center">Days</th>
-                                  <th className="p-3 text-right">Remove</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100 text-slate-800">
-                                {prescriptionItems.map((item, index) => (
-                                  <tr key={index}>
-                                    <td className="p-3 font-semibold text-slate-800">{item.medicineName}</td>
-                                    <td className="p-3 text-slate-500">{item.dosageForm} {item.strength}</td>
-                                    <td className="p-3 font-semibold">{item.dosage}</td>
-                                    <td className="p-3">{item.instructions}</td>
-                                    <td className="p-3 text-center font-bold">{item.durationDays}</td>
-                                    <td className="p-3 text-right">
-                                      <button type="button" onClick={() => removePrescriptionItem(index)} className="text-red-500 hover:text-red-700">
-                                        <Trash2 className="w-4 h-4 inline" />
-                                      </button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                            {/* Chief Complaint */}
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Chief Complaint</label>
+                              <textarea
+                                rows={4}
+                                value={complaint}
+                                onChange={(e) => setComplaint(e.target.value)}
+                                placeholder="Symptoms, duration, trigger conditions..."
+                                className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
+                              />
+                            </div>
+
+                            {/* Clinical Notes */}
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Clinical Notes / Examination Remarks</label>
+                              <textarea
+                                rows={4}
+                                value={clinicalNotes}
+                                onChange={(e) => setClinicalNotes(e.target.value)}
+                                placeholder="Detailed inspection findings, history reviews, physical assessment remarks..."
+                                className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
+                              />
+                            </div>
+
+                            <div className="flex justify-end pt-4 border-t border-slate-100">
+                              <button
+                                type="button"
+                                onClick={() => setConsultationTab('prescription')}
+                                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs flex items-center space-x-1.5 transition-all shadow-sm"
+                              >
+                                <span>Go to Prescription</span>
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         )}
-                      </div>
 
-                      {/* Follow-up & Tests */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Follow-up Date</label>
-                          <input
-                            type="date"
-                            value={followUpDate}
-                            onChange={(e) => setFollowUpDate(e.target.value)}
-                            className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Recommended Lab Tests</label>
-                          <input
-                            type="text"
-                            value={testsRequired}
-                            onChange={(e) => setTestsRequired(e.target.value)}
-                            placeholder="e.g. CBC, Lipid Profile, Thyroid Panel"
-                            className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
-                          />
-                        </div>
-                      </div>
+                        {/* TAB 2: PRESCRIPTION (Rx) */}
+                        {consultationTab === 'prescription' && (
+                          <div className="space-y-6">
+                            <div className="border border-slate-200/80 rounded-2xl p-4 space-y-4">
+                              <span className="text-[10px] text-indigo-700 font-bold uppercase tracking-wider block flex items-center">
+                                <FileText className="w-3.5 h-3.5 mr-1.5 text-indigo-600" /> Prescription Builder
+                              </span>
+                              
+                              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end bg-slate-50/50 p-3 border border-slate-100 rounded-xl">
+                                <div className="space-y-1.5 sm:col-span-2 relative">
+                                  <label className="text-[9px] text-slate-500 font-bold uppercase block">Medicine Name</label>
+                                  <input
+                                    type="text"
+                                    value={medQuery}
+                                    onChange={(e) => handleMedSearch(e.target.value)}
+                                    placeholder="Type medicine name..."
+                                    className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
+                                  />
+                                  {medResults.length > 0 && (
+                                    <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded shadow-lg z-30 max-h-40 overflow-y-auto mt-1 divide-y divide-slate-100">
+                                      {medResults.map((med) => (
+                                        <div
+                                          key={med.id}
+                                          onClick={() => {
+                                            setSelectedMed(med);
+                                            setMedQuery(med.name);
+                                            setMedResults([]);
+                                          }}
+                                          className="p-2 hover:bg-slate-100 text-xs cursor-pointer text-slate-800 flex justify-between"
+                                        >
+                                          <span className="font-bold">{med.name}</span>
+                                          <span className="text-[10px] text-slate-400">{med.genericName} - {med.strength}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] text-slate-500 font-bold uppercase block">Dosage</label>
+                                  <input
+                                    type="text"
+                                    value={dosage}
+                                    onChange={(e) => setDosage(e.target.value)}
+                                    placeholder="e.g. 1-0-1"
+                                    className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] text-slate-500 font-bold uppercase block">Instructions</label>
+                                  <input
+                                    type="text"
+                                    value={instructions}
+                                    onChange={(e) => setInstructions(e.target.value)}
+                                    placeholder="e.g. After food"
+                                    className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[9px] text-slate-500 font-bold uppercase block">Duration (Days)</label>
+                                  <input
+                                    type="number"
+                                    value={durationDays}
+                                    onChange={(e) => setDurationDays(Number(e.target.value))}
+                                    placeholder="5"
+                                    className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
+                                  />
+                                </div>
+                                <div className="sm:col-span-4 flex justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={addPrescriptionItem}
+                                    className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-bold text-xs flex items-center space-x-1.5"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Add to Prescription</span>
+                                  </button>
+                                </div>
+                              </div>
 
-                      {/* Error & Success Messages */}
-                      {errorMsg && <p className="text-red-600 text-xs font-semibold">{errorMsg}</p>}
-                      {successMsg && <p className="text-emerald-600 text-xs font-bold">{successMsg}</p>}
+                              {/* Prescription Items List */}
+                              {prescriptionItems.length > 0 && (
+                                <div className="border border-slate-100 rounded-xl overflow-hidden text-xs">
+                                  <table className="w-full text-left border-collapse">
+                                    <thead>
+                                      <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-400 font-bold uppercase">
+                                        <th className="p-3">Medicine</th>
+                                        <th className="p-3">Form/Strength</th>
+                                        <th className="p-3">Dosage</th>
+                                        <th className="p-3">Instructions</th>
+                                        <th className="p-3 text-center">Days</th>
+                                        <th className="p-3 text-right">Remove</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-slate-800">
+                                      {prescriptionItems.map((item, index) => (
+                                        <tr key={index}>
+                                          <td className="p-3 font-semibold text-slate-800">{item.medicineName}</td>
+                                          <td className="p-3 text-slate-500">{item.dosageForm} {item.strength}</td>
+                                          <td className="p-3 font-semibold">{item.dosage}</td>
+                                          <td className="p-3">{item.instructions}</td>
+                                          <td className="p-3 text-center font-bold">{item.durationDays}</td>
+                                          <td className="p-3 text-right">
+                                            <button type="button" onClick={() => removePrescriptionItem(index)} className="text-red-500 hover:text-red-700">
+                                              <Trash2 className="w-4 h-4 inline" />
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
 
-                      <div className="pt-4 border-t border-slate-100 flex justify-end">
-                        <button
-                          type="submit"
-                          disabled={savingEncounter}
-                          className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-teal-650 hover:from-indigo-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-indigo-500/10 disabled:opacity-50"
-                        >
-                          {savingEncounter && <Loader className="h-4 w-4 animate-spin" />}
-                          <span>Sign & Complete Consultation</span>
-                        </button>
+                            <div className="flex justify-between pt-4 border-t border-slate-100">
+                              <button
+                                type="button"
+                                onClick={() => setConsultationTab('charting')}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition-all"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                                <span>Back to Charting</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConsultationTab('outcome')}
+                                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs flex items-center space-x-1.5 transition-all shadow-sm"
+                              >
+                                <span>Go to Diagnosis & Plan</span>
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* TAB 3: DIAGNOSIS & ASSESSMENT */}
+                        {consultationTab === 'outcome' && (
+                          <div className="space-y-6">
+                            {/* Diagnosis */}
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Diagnosis & Assessment</label>
+                              <textarea
+                                rows={4}
+                                value={diagnosis}
+                                onChange={(e) => setDiagnosis(e.target.value)}
+                                placeholder="Primary diagnostic finding..."
+                                className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
+                              />
+                            </div>
+
+                            {/* Follow-up & Tests */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Follow-up Date</label>
+                                <input
+                                  type="date"
+                                  value={followUpDate}
+                                  onChange={(e) => setFollowUpDate(e.target.value)}
+                                  className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Recommended Lab Tests</label>
+                                <input
+                                  type="text"
+                                  value={testsRequired}
+                                  onChange={(e) => setTestsRequired(e.target.value)}
+                                  placeholder="e.g. CBC, Lipid Profile, Thyroid Panel"
+                                  className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Error & Success Messages */}
+                            {errorMsg && <p className="text-red-650 text-xs font-semibold">{errorMsg}</p>}
+                            {successMsg && <p className="text-emerald-600 text-xs font-bold">{successMsg}</p>}
+
+                            <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                              <button
+                                type="button"
+                                onClick={() => setConsultationTab('prescription')}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition-all"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                                <span>Back to Prescription</span>
+                              </button>
+
+                              <button
+                                type="submit"
+                                disabled={savingEncounter}
+                                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-teal-650 hover:from-indigo-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-indigo-500/10 disabled:opacity-50"
+                              >
+                                {savingEncounter && <Loader className="h-4 w-4 animate-spin" />}
+                                <span>Sign & Complete Consultation</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
                       </div>
                     </form>
 
                     {/* Historical Timeline sidebar */}
-                    <aside className="w-full lg:w-76 shrink-0 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm overflow-y-auto max-h-[calc(100vh-200px)] space-y-4">
-                      <h4 className="text-[10px] text-slate-500 font-black uppercase tracking-wider border-b border-slate-100 pb-2">
-                        Patient History Timeline
-                      </h4>
-                      {loadingTimeline ? (
-                        <div className="flex justify-center py-10"><Loader className="w-5 h-5 animate-spin text-slate-400" /></div>
-                      ) : patientTimeline?.encounters?.length > 0 ? (
-                        <div className="relative border-l border-slate-100 pl-4 space-y-5">
-                          {patientTimeline.encounters.map((enc: any) => (
-                            <div key={enc.id} className="relative text-xs">
-                              {/* marker */}
-                              <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full border border-indigo-400 bg-white shadow-sm"></span>
-                              <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold">
-                                <span>{new Date(enc.createdAt).toLocaleDateString()}</span>
-                              </div>
-                              <p className="font-bold text-slate-800 mt-1">Dx: {enc.diagnosis || 'General visit'}</p>
-                              {enc.complaint && <p className="text-slate-1000 text-[11px] mt-0.5">Compl: {enc.complaint}</p>}
-                              {enc.prescription && (
-                                <div className="mt-1 bg-slate-50 border border-slate-100 p-2 rounded text-[10px] space-y-0.5">
-                                  <span className="font-semibold text-indigo-750 uppercase tracking-wider text-[8px] block">Rx:</span>
-                                  {enc.prescription.items.map((it: any, i: number) => (
-                                    <div key={i}>{it.medicineName} {it.strength} — {it.dosage} ({it.durationDays}d)</div>
-                                  ))}
+                    {showHistorySidebar && (
+                      <aside className="w-full lg:w-76 shrink-0 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm overflow-y-auto max-h-[calc(100vh-200px)] space-y-4">
+                        <h4 className="text-[10px] text-slate-500 font-black uppercase tracking-wider border-b border-slate-100 pb-2">
+                          Patient History Timeline
+                        </h4>
+                        {loadingTimeline ? (
+                          <div className="flex justify-center py-10"><Loader className="w-5 h-5 animate-spin text-slate-400" /></div>
+                        ) : patientTimeline?.encounters?.length > 0 ? (
+                          <div className="relative border-l border-slate-100 pl-4 space-y-5">
+                            {patientTimeline.encounters.map((enc: any) => (
+                              <div key={enc.id} className="relative text-xs">
+                                {/* marker */}
+                                <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full border border-indigo-400 bg-white shadow-sm"></span>
+                                <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold">
+                                  <span>{new Date(enc.createdAt).toLocaleDateString()}</span>
                                 </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-slate-400 text-xs italic text-center">No past visits recorded.</p>
-                      )}
-                    </aside>
+                                <p className="font-bold text-slate-800 mt-1">Dx: {enc.diagnosis || 'General visit'}</p>
+                                {enc.complaint && <p className="text-slate-1000 text-[11px] mt-0.5">Compl: {enc.complaint}</p>}
+                                {enc.prescription && (
+                                  <div className="mt-1 bg-slate-50 border border-slate-100 p-2 rounded text-[10px] space-y-0.5">
+                                    <span className="font-semibold text-indigo-750 uppercase tracking-wider text-[8px] block">Rx:</span>
+                                    {enc.prescription.items.map((it: any, i: number) => (
+                                      <div key={i}>{it.medicineName} {it.strength} — {it.dosage} ({it.durationDays}d)</div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-slate-400 text-xs italic text-center">No past visits recorded.</p>
+                        )}
+                      </aside>
+                    )}
                   </>
                 ) : (
                   <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-16 shadow-sm text-center flex flex-col items-center justify-center space-y-3">
