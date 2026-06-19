@@ -141,6 +141,7 @@ export class AppController {
     });
 
     const disabledSlots = schedule?.disabledWeekly?.[dayName] || [];
+    const disabledForDate = schedule?.disabledDates?.[dateStr] || [];
 
     for (const slot of slots) {
       const slotStart = new Date(slot.startTime);
@@ -152,9 +153,10 @@ export class AppController {
         return slotStart < bEnd && slotEnd > bStart;
       });
 
-      const isDisabled = disabledSlots.includes(slot.time);
+      const isDisabledWeekly = disabledSlots.includes(slot.time);
+      const isDisabledDate = disabledForDate.includes(slot.time);
 
-      if (isBooked || isDisabled) {
+      if (isBooked || isDisabledWeekly || isDisabledDate) {
         slot.available = false;
       }
     }

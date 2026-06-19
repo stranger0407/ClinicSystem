@@ -342,6 +342,8 @@ export default function DoctorDashboard() {
     schedule: {} as any,
   });
   const [submittingDoctorProfile, setSubmittingDoctorProfile] = useState(false);
+  const [slotOverrideMode, setSlotOverrideMode] = useState<'weekly' | 'date'>('weekly');
+  const [overrideDate, setOverrideDate] = useState(new Date().toISOString().split('T')[0]);
 
   // ==========================================
   // TAB 6: PRACTICE ANALYTICS & AUDIT LOGS
@@ -2612,71 +2614,167 @@ export default function DoctorDashboard() {
                         onChange={(e) => setDoctorForm({ ...doctorForm, durationMin: Number(e.target.value) })}
                         className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2"
                       />
-                    </div>
-                  </div>
-
-                  {/* Customize Weekly Slots Availability Section */}
-                  <div className="space-y-2 border-t border-slate-100 pt-4">
-                    <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px] block">Customize Weekly Slots Availability</label>
-                    <p className="text-[10px] text-slate-400 leading-normal mb-2">
-                      Toggle individual time slots below to enable or disable them from being booked by public users. Red/Strikethrough slots are disabled.
+                           {/* Customize Weekly/Date Slots Availability Section */}
+                  <div className="space-y-3 border-t border-slate-100 pt-4">
+                    <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px] block">Customize Slots Availability</label>
+                    <p className="text-[10px] text-slate-400 leading-normal mb-3">
+                      Configure weekly slot templates or block off slots on specific calendar dates. Disabled slots are crossed out.
                     </p>
                     
-                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 border border-slate-100 rounded-xl p-3 bg-slate-50/40">
-                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
-                        const weeklyRanges = doctorForm.schedule?.weekly || {};
-                        const disabledSlotsForDay = doctorForm.schedule?.disabledWeekly?.[day] || [];
-                        const generatedSlots = generateWeeklySlotsForDay(day, weeklyRanges, doctorForm.durationMin);
-                        
-                        if (generatedSlots.length === 0) return null;
-                        
-                        return (
-                          <div key={day} className="space-y-1.5 pb-2.5 border-b border-slate-150 last:border-0 last:pb-0">
-                            <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider block capitalize">
-                              {day}
-                            </span>
-                            <div className="grid grid-cols-4 gap-2">
-                              {generatedSlots.map(timeStr => {
-                                const isDisabled = disabledSlotsForDay.includes(timeStr);
-                                return (
-                                  <button
-                                    key={timeStr}
-                                    type="button"
-                                    onClick={() => {
-                                      const updatedDisabled = [...disabledSlotsForDay];
-                                      if (isDisabled) {
-                                        const index = updatedDisabled.indexOf(timeStr);
-                                        if (index > -1) updatedDisabled.splice(index, 1);
-                                      } else {
-                                        updatedDisabled.push(timeStr);
-                                      }
-                                      
-                                      setDoctorForm({
-                                        ...doctorForm,
-                                        schedule: {
-                                          ...doctorForm.schedule,
-                                          disabledWeekly: {
-                                            ...(doctorForm.schedule?.disabledWeekly || {}),
-                                            [day]: updatedDisabled,
-                                          }
-                                        }
-                                      });
-                                    }}
-                                    className={`py-1.5 rounded-lg text-xs font-semibold text-center border transition-all ${
-                                      isDisabled
-                                        ? 'bg-red-50 text-red-500 border-red-250 line-through'
-                                        : 'bg-white text-slate-750 border-slate-200 hover:border-slate-350 hover:bg-slate-50'
-                                    }`}
-                                  >
-                                    {timeStr}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
+                    {/* Mode Selector Tabs */}
+                    <div className="flex bg-slate-100 rounded-lg p-0.5 max-w-xs mb-3">
+                      <button
+                        type="button"
+                        onClick={() => setSlotOverrideMode('weekly')}
+                        className={`flex-1 py-1 text-center text-[10px] font-bold rounded-md transition-all ${
+                          slotOverrideMode === 'weekly' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        Weekly Pattern
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSlotOverrideMode('date')}
+                        className={`flex-1 py-1 text-center text-[10px] font-bold rounded-md transition-all ${
+                          slotOverrideMode === 'date' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        Specific Date Override
+                      </button>
                     </div>
+
+                    {slotOverrideMode === 'weekly' ? (
+                      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 border border-slate-100 rounded-xl p-3 bg-slate-50/40">
+                        {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
+                          const weeklyRanges = doctorForm.schedule?.weekly || {};
+                          const disabledSlotsForDay = doctorForm.schedule?.disabledWeekly?.[day] || [];
+                          const generatedSlots = generateWeeklySlotsForDay(day, weeklyRanges, doctorForm.durationMin);
+                          
+                          if (generatedSlots.length === 0) return null;
+                          
+                          return (
+                            <div key={day} className="space-y-1.5 pb-2.5 border-b border-slate-150 last:border-0 last:pb-0">
+                              <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider block capitalize">
+                                {day}
+                              </span>
+                              <div className="grid grid-cols-4 gap-2">
+                                {generatedSlots.map(timeStr => {
+                                  const isDisabled = disabledSlotsForDay.includes(timeStr);
+                                  return (
+                                    <button
+                                      key={timeStr}
+                                      type="button"
+                                      onClick={() => {
+                                        const updatedDisabled = [...disabledSlotsForDay];
+                                        if (isDisabled) {
+                                          const index = updatedDisabled.indexOf(timeStr);
+                                          if (index > -1) updatedDisabled.splice(index, 1);
+                                        } else {
+                                          updatedDisabled.push(timeStr);
+                                        }
+                                        
+                                        setDoctorForm({
+                                          ...doctorForm,
+                                          schedule: {
+                                            ...doctorForm.schedule,
+                                            disabledWeekly: {
+                                              ...(doctorForm.schedule?.disabledWeekly || {}),
+                                              [day]: updatedDisabled,
+                                            }
+                                          }
+                                        });
+                                      }}
+                                      className={`py-1.5 rounded-lg text-xs font-semibold text-center border transition-all ${
+                                        isDisabled
+                                          ? 'bg-red-50 text-red-500 border-red-250 line-through'
+                                          : 'bg-white text-slate-750 border-slate-200 hover:border-slate-350 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      {timeStr}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="space-y-3 border border-slate-100 rounded-xl p-3 bg-slate-50/40">
+                        <div className="flex items-center space-x-3">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Select Override Date:</label>
+                          <input
+                            type="date"
+                            value={overrideDate}
+                            onChange={(e) => setOverrideDate(e.target.value)}
+                            className="bg-white border border-slate-200 focus:outline-none rounded-lg px-3 py-1 text-xs"
+                          />
+                        </div>
+
+                        {(() => {
+                          const dateObj = new Date(overrideDate);
+                          if (isNaN(dateObj.getTime())) {
+                            return <p className="text-[10px] text-slate-400">Please select a valid date</p>;
+                          }
+                          const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                          const dayName = weekdays[dateObj.getDay()];
+                          const weeklyRanges = doctorForm.schedule?.weekly || {};
+                          const disabledForDate = doctorForm.schedule?.disabledDates?.[overrideDate] || [];
+                          const generatedSlots = generateWeeklySlotsForDay(dayName, weeklyRanges, doctorForm.durationMin);
+
+                          if (generatedSlots.length === 0) {
+                            return <p className="text-[10px] text-slate-400 italic">Practitioner has no weekly schedule template defined for {dayName}s.</p>;
+                          }
+
+                          return (
+                            <div className="space-y-2 pt-2 border-t border-slate-150">
+                              <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider block">
+                                Slots for {dateObj.toLocaleDateString(undefined, { dateStyle: 'medium' })} ({dayName})
+                              </span>
+                              <div className="grid grid-cols-4 gap-2">
+                                {generatedSlots.map(timeStr => {
+                                  const isDisabled = disabledForDate.includes(timeStr);
+                                  return (
+                                    <button
+                                      key={timeStr}
+                                      type="button"
+                                      onClick={() => {
+                                        const updatedDisabled = [...disabledForDate];
+                                        if (isDisabled) {
+                                          const index = updatedDisabled.indexOf(timeStr);
+                                          if (index > -1) updatedDisabled.splice(index, 1);
+                                        } else {
+                                          updatedDisabled.push(timeStr);
+                                        }
+                                        
+                                        setDoctorForm({
+                                          ...doctorForm,
+                                          schedule: {
+                                            ...doctorForm.schedule,
+                                            disabledDates: {
+                                              ...(doctorForm.schedule?.disabledDates || {}),
+                                              [overrideDate]: updatedDisabled,
+                                            }
+                                          }
+                                        });
+                                      }}
+                                      className={`py-1.5 rounded-lg text-xs font-semibold text-center border transition-all ${
+                                        isDisabled
+                                          ? 'bg-red-50 text-red-500 border-red-255 line-through'
+                                          : 'bg-white text-slate-750 border-slate-200 hover:border-slate-350 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      {timeStr}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>               </div>
                   </div>
 
                   <div className="flex justify-end pt-2">
