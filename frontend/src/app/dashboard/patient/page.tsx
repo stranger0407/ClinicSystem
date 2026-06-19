@@ -25,7 +25,9 @@ import {
   X,
   Layers,
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  ArrowRightLeft,
+  ArrowRight
 } from 'lucide-react';
 
 export default function PatientDashboard() {
@@ -52,6 +54,31 @@ export default function PatientDashboard() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [bookingInProgress, setBookingInProgress] = useState(false);
+  
+  const [slots, setSlots] = useState<any[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<any | null>(null);
+
+  const getLocalDateString = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const isMorningSlot = (timeStr: string) => {
+    const lower = timeStr.toLowerCase();
+    if (lower.includes('am')) return true;
+    if (lower.includes('pm')) {
+      if (timeStr.startsWith('12')) return false;
+      return false;
+    }
+    const hour = parseInt(timeStr.split(':')[0], 10);
+    return hour < 12;
+  };
+
+  const morningSlots = slots.filter(s => isMorningSlot(s.time));
+  const afternoonSlots = slots.filter(s => !isMorningSlot(s.time));
 
   // Load patient data
   const loadPatientData = async () => {
@@ -89,6 +116,27 @@ export default function PatientDashboard() {
     }
   }, [user, authLoading]);
 
+  const fetchAvailableSlots = async () => {
+    if (!selectedDoctorId || !bookingDate || bookingType !== 'SLOT') {
+      setSlots([]);
+      return;
+    }
+    setSlotsLoading(true);
+    setSelectedSlot(null);
+    try {
+      const data = await apiFetch(`/public/doctor/${selectedDoctorId}/slots?date=${bookingDate}`);
+      setSlots(data);
+    } catch (err: any) {
+      console.error('Failed to fetch doctor slots:', err);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableSlots();
+  }, [selectedDoctorId, bookingDate, bookingType]);
+
   const handleBookAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.profileId) return;
@@ -106,10 +154,10 @@ export default function PatientDashboard() {
       };
 
       if (bookingType === 'SLOT') {
-        if (!bookingTime) {
-          throw new Error('Please select a booking time');
+        if (!selectedSlot) {
+          throw new Error('Please select a time slot');
         }
-        payload.startTime = new Date(`${bookingDate}T${bookingTime}`).toISOString();
+        payload.startTime = selectedSlot.startTime;
       } else {
         payload.startTime = new Date(`${bookingDate}T00:00:00`).toISOString();
       }
@@ -122,6 +170,7 @@ export default function PatientDashboard() {
       setBookingSuccess(true);
       setBookingNotes('');
       setBookingTime('');
+      setSelectedSlot(null);
       setActiveTab('overview');
       loadPatientData();
     } catch (err: any) {
@@ -550,31 +599,159 @@ export default function PatientDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-slate-500 font-bold uppercase">Date of Visit</label>
-                    <input
-                      type="date"
-                      value={bookingDate}
-                      required
-                      onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-900"
-                    />
+                {/* Horizontal Date Swiper */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">Choose Appointment Date</label>
+                  <div className="flex space-x-2 overflow-x-auto pb-2 pt-0.5 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                    {Array.from({ length: 7 }).map((_, idx) => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + idx);
+                      const isoStr = getLocalDateString(d);
+                      const isSelected = bookingDate === isoStr;
+                      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+                      const dayNum = d.getDate();
+                      const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+                      
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setBookingDate(isoStr)}
+                          className={`flex-shrink-0 w-16 py-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                            isSelected
+                              ? 'bg-teal-600 border-teal-600 text-white font-bold shadow-lg shadow-teal-500/20'
+                              : 'bg-slate-50 border-slate-200 hover:border-slate-350 text-slate-700'
+                          }`}
+                        >
+                          <span className={`text-[9px] font-bold uppercase ${isSelected ? 'text-white/80' : 'text-slate-405'}`}>{dayName}</span>
+                          <span className="text-sm font-black leading-tight my-0.5">{dayNum}</span>
+                          <span className={`text-[8px] font-medium ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>{monthName}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-
-                  {bookingType === 'SLOT' && (
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-slate-500 font-bold uppercase">Preferred Time Slot</label>
-                      <input
-                        type="time"
-                        value={bookingTime}
-                        required={bookingType === 'SLOT'}
-                        onChange={(e) => setBookingTime(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-900"
-                      />
-                    </div>
-                  )}
                 </div>
+
+                {/* Slots display */}
+                {bookingType === 'SLOT' && (
+                  <div className="space-y-3 pt-1">
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                      Available Time Slots
+                    </label>
+                    {slotsLoading ? (
+                      <div className="text-center py-6 text-slate-500 text-xs">
+                        <Loader className="w-5 h-5 animate-spin mx-auto text-teal-600 mb-1" />
+                        Calculating available clinic slots...
+                      </div>
+                    ) : slots.length === 0 ? (
+                      <div className="text-center py-6 border border-dashed border-slate-200 rounded-2xl text-slate-550 text-xs space-y-2">
+                        <p>Doctor is not available on this date or schedule not configured.</p>
+                        <button
+                          type="button"
+                          onClick={() => setBookingType('WALK_IN')}
+                          className="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 font-bold rounded-xl text-xs transition-all"
+                        >
+                          Book Walk-in Queue Ticket
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {/* Morning Section */}
+                        {morningSlots.length > 0 && (
+                          <div className="space-y-1.5">
+                            <span className="text-[9px] text-teal-600 font-bold uppercase tracking-wider flex items-center space-x-1">
+                              <span>☀️ Morning</span>
+                            </span>
+                            <div className="grid grid-cols-4 gap-2">
+                              {morningSlots.map((s, idx) => (
+                                <button
+                                  key={`morning-${idx}`}
+                                  disabled={!s.available}
+                                  type="button"
+                                  onClick={() => setSelectedSlot(s)}
+                                  className={`py-2 rounded-xl text-xs font-semibold text-center border transition-all ${
+                                    !s.available
+                                      ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed line-through'
+                                      : selectedSlot?.time === s.time
+                                      ? 'bg-teal-600 border-teal-600 text-white font-bold shadow-md shadow-teal-500/10'
+                                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-350'
+                                  }`}
+                                >
+                                  {s.time}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Afternoon Section */}
+                        {afternoonSlots.length > 0 && (
+                          <div className="space-y-1.5">
+                            <span className="text-[9px] text-teal-600 font-bold uppercase tracking-wider flex items-center space-x-1">
+                              <span>🌙 Afternoon & Evening</span>
+                            </span>
+                            <div className="grid grid-cols-4 gap-2">
+                              {afternoonSlots.map((s, idx) => (
+                                <button
+                                  key={`afternoon-${idx}`}
+                                  disabled={!s.available}
+                                  type="button"
+                                  onClick={() => setSelectedSlot(s)}
+                                  className={`py-2 rounded-xl text-xs font-semibold text-center border transition-all ${
+                                    !s.available
+                                      ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed line-through'
+                                      : selectedSlot?.time === s.time
+                                      ? 'bg-teal-600 border-teal-600 text-white font-bold shadow-md shadow-teal-500/10'
+                                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-350'
+                                  }`}
+                                >
+                                  {s.time}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="text-center pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setBookingType('WALK_IN')}
+                            className="text-[11px] text-slate-500 hover:text-teal-600 transition-colors font-medium"
+                          >
+                            Prefer booking a walk-in queue ticket? Switch to Walk-in
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Walk-in Booking Active */}
+                {bookingType === 'WALK_IN' && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs text-slate-600 space-y-2.5 shadow-inner">
+                    <div className="flex items-center space-x-2 text-teal-600 font-bold">
+                      <ArrowRightLeft className="w-4 h-4 shrink-0" />
+                      <span>Walk-in Queue Mode Active</span>
+                    </div>
+                    <div className="space-y-1 pl-5 border-l border-slate-200">
+                      <p>• The preferred date is reserved; specific appointment times are skipped.</p>
+                      <p>• Check in at the clinic front desk to confirm your arrival.</p>
+                      <p>• Live queue number will be assigned automatically at the lobby.</p>
+                    </div>
+                    <div className="pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBookingType('SLOT');
+                          fetchAvailableSlots();
+                        }}
+                        className="text-xs text-teal-600 hover:text-teal-700 font-semibold underline underline-offset-4"
+                      >
+                        Prefer slot scheduling? Switch to Time Slots
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <label className="text-[10px] text-slate-500 font-bold uppercase">Active Symptoms / notes</label>
