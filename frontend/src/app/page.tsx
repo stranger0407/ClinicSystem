@@ -305,7 +305,7 @@ export default function PublicClinicLanding() {
         <div className="flex-1 space-y-6 text-center lg:text-left">
           <div className="inline-flex items-center space-x-2 bg-teal-500/10 border border-teal-500/20 rounded-full px-3.5 py-1.5 text-teal-400 text-xs font-bold shadow-sm">
             <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-            <span>Modern Single Clinic Digital Operating System</span>
+            <span>Trusted Cardiology & General Family Practice</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
             Trustworthy Care, <br />
@@ -568,7 +568,7 @@ export default function PublicClinicLanding() {
 
       {/* Footer copyright */}
       <footer className="py-6 border-t border-slate-900 text-center text-xs text-slate-500 bg-slate-950">
-        <p>© {new Date().getFullYear()} {clinic?.name || 'Apollo Clinic'}. Built on Clinic OS.</p>
+        <p>© {new Date().getFullYear()} {clinic?.name || 'Apollo Clinic'}. All rights reserved.</p>
       </footer>
 
       {/* ==================== APPOINTMENT BOOKING MODAL ==================== */}
