@@ -761,6 +761,8 @@ export default function DoctorDashboard() {
     try {
       const data = await apiFetch('/billing/invoice');
       setInvoices(data);
+      // Prefetch clinic settings and doctor profile for printable invoices
+      loadSettingsData().catch(err => console.error(err));
     } catch (err) {
       console.error(err);
     } finally {
@@ -2260,6 +2262,194 @@ export default function DoctorDashboard() {
                       >
                         Close
                       </button>
+                    </div>
+
+                    {/* CSS styles to hide everything except the print area during printing */}
+                    <style dangerouslySetInnerHTML={{__html: `
+                      @media print {
+                        body * {
+                          visibility: hidden !important;
+                        }
+                        #invoice-print-area, #invoice-print-area * {
+                          visibility: visible !important;
+                        }
+                        #invoice-print-area {
+                          position: absolute !important;
+                          left: 0 !important;
+                          top: 0 !important;
+                          width: 100% !important;
+                          padding: 1.5cm !important;
+                          margin: 0 !important;
+                          border: none !important;
+                          box-shadow: none !important;
+                          background: white !important;
+                        }
+                      }
+                    `}} />
+
+                    {/* Real-world printable invoice markup */}
+                    <div id="invoice-print-area" className="hidden print:block bg-white text-slate-955 font-sans text-[11px] leading-relaxed">
+                      {/* Header block */}
+                      <div className="flex justify-between items-start border-b border-slate-800 pb-3 mb-4">
+                        <div>
+                          <h1 className="text-lg font-black uppercase text-slate-950 tracking-tight">{clinicForm?.name || (clinic as any)?.name || 'Clinic'}</h1>
+                          <p className="text-[10px] text-slate-500 font-semibold mt-0.5 max-w-xs">{clinicForm?.address || (clinic as any)?.address}</p>
+                          <p className="text-[10px] text-slate-500 font-semibold">Phone: {clinicForm?.phone || (clinic as any)?.phone}</p>
+                        </div>
+                        <div className="text-right">
+                          <h2 className="text-md font-bold uppercase text-slate-800 tracking-wider">Invoice / Receipt</h2>
+                          <div className="text-[10px] text-slate-500 font-semibold space-y-0.5 mt-1.5">
+                            <div>Bill No: <span className="font-bold text-slate-900">{selectedInvoice.invoiceNumber}</span></div>
+                            <div>Date: <span className="font-bold text-slate-900">{new Date(selectedInvoice.createdAt).toLocaleDateString()}</span></div>
+                            <div>Status: <span className={`font-extrabold uppercase ${selectedInvoice.status === 'PAID' ? 'text-emerald-700' : 'text-amber-700'}`}>{selectedInvoice.status}</span></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Info grid */}
+                      <div className="grid grid-cols-2 gap-4 mb-4 text-[10.5px]">
+                        <div className="bg-slate-50 p-3 border border-slate-200/60 rounded-lg space-y-1">
+                          <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Patient Details</span>
+                          <div className="font-bold text-slate-950">{selectedInvoice.patient?.firstName} {selectedInvoice.patient?.lastName}</div>
+                          {selectedInvoice.patient?.phone && <div>Phone: <span className="font-medium text-slate-850">{selectedInvoice.patient.phone}</span></div>}
+                          {selectedInvoice.patient?.address && <div className="text-[9.5px]">Address: <span className="font-medium text-slate-850">{selectedInvoice.patient.address}</span></div>}
+                          {(selectedInvoice.patient?.dob || selectedInvoice.patient?.gender) && (
+                            <div className="text-[9.5px]">
+                              {selectedInvoice.patient?.gender && <span>Gender: <span className="font-medium text-slate-850 uppercase mr-2.5">{selectedInvoice.patient.gender}</span></span>}
+                              {selectedInvoice.patient?.dob && <span>Age: <span className="font-medium text-slate-850">{new Date().getFullYear() - new Date(selectedInvoice.patient.dob).getFullYear()} Yrs</span></span>}
+                            </div>
+                          )}
+                        </div>
+                        <div className="bg-slate-50 p-3 border border-slate-200/60 rounded-lg space-y-1">
+                          <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Provider Details</span>
+                          <div className="font-bold text-slate-950">Dr. {user?.firstName} {user?.lastName}</div>
+                          {doctorProfile?.specialty && <div>Specialty: <span className="font-medium text-slate-850">{doctorProfile.specialty}</span></div>}
+                          {doctorProfile?.licenseNo && <div>License No: <span className="font-medium text-slate-850">{doctorProfile.licenseNo}</span></div>}
+                          <div>Designation: <span className="font-medium text-slate-850">Consultant Physician</span></div>
+                        </div>
+                      </div>
+
+                      {/* Items table */}
+                      <div className="border border-slate-200 rounded-lg overflow-hidden mb-4">
+                        <table className="w-full text-left text-[10px] border-collapse">
+                          <thead>
+                            <tr className="bg-slate-100 border-b border-slate-200 text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">
+                              <th className="p-2 text-center w-8">#</th>
+                              <th className="p-2">Description</th>
+                              <th className="p-2 text-center w-12">Qty</th>
+                              <th className="p-2 text-right w-24">Price</th>
+                              <th className="p-2 text-right w-24">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-150 text-slate-850">
+                            {selectedInvoice.items && (typeof selectedInvoice.items === 'string'
+                              ? JSON.parse(selectedInvoice.items)
+                              : selectedInvoice.items
+                            ).map((item: any, i: number) => (
+                              <tr key={i}>
+                                <td className="p-2 text-center text-slate-400">{i + 1}</td>
+                                <td className="p-2 font-semibold text-slate-900">{item.description}</td>
+                                <td className="p-2 text-center">{item.quantity}</td>
+                                <td className="p-2 text-right">₹{parseFloat(item.amount).toFixed(2)}</td>
+                                <td className="p-2 text-right font-bold text-slate-950">₹{(item.quantity * parseFloat(item.amount)).toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Footer calculation blocks */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Payments log */}
+                        <div>
+                          {selectedInvoice.payments && selectedInvoice.payments.length > 0 && (
+                            <div className="space-y-1">
+                              <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Payment Transactions</span>
+                              <div className="border border-slate-200 rounded overflow-hidden">
+                                <table className="w-full text-[9px] text-left border-collapse">
+                                  <thead>
+                                    <tr className="bg-slate-50 border-b border-slate-150 text-[7.5px] text-slate-400 font-bold uppercase">
+                                      <th className="p-1 px-2">Date</th>
+                                      <th className="p-1 px-2">Method</th>
+                                      <th className="p-1 px-2 text-right">Amount</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-100 text-slate-600">
+                                    {selectedInvoice.payments.map((p: any, idx: number) => (
+                                      <tr key={idx}>
+                                        <td className="p-1 px-2">{new Date(p.createdAt).toLocaleDateString()}</td>
+                                        <td className="p-1 px-2 font-bold uppercase text-[7.5px]">{p.method}</td>
+                                        <td className="p-1 px-2 text-right font-semibold text-slate-800">₹{parseFloat(p.amount).toFixed(2)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Breakdown calculations */}
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1 text-[10px] w-64 ml-auto">
+                          <div className="flex justify-between items-center text-slate-500">
+                            <span>Subtotal:</span>
+                            <span className="font-semibold text-slate-900">₹{parseFloat(selectedInvoice.subtotal).toFixed(2)}</span>
+                          </div>
+                          {parseFloat(selectedInvoice.discount) > 0 && (
+                            <div className="flex justify-between items-center text-emerald-700 font-semibold">
+                              <span>Discount:</span>
+                              <span>-₹{parseFloat(selectedInvoice.discount).toFixed(2)}</span>
+                            </div>
+                          )}
+                          {parseFloat(selectedInvoice.tax) > 0 && (
+                            <div className="flex justify-between items-center text-slate-500">
+                              <span>Tax / GST:</span>
+                              <span className="font-semibold text-slate-900">+₹{parseFloat(selectedInvoice.tax).toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center text-slate-955 border-t border-slate-350 pt-1 text-[11px] font-black">
+                            <span>Total Bill:</span>
+                            <span className="text-[12px] font-black text-slate-950">₹{parseFloat(selectedInvoice.total).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between items-center border-t border-dashed border-slate-200 pt-1 text-slate-500">
+                            <span>Total Paid:</span>
+                            <span className="font-bold text-slate-800">
+                              ₹{selectedInvoice.payments 
+                                ? selectedInvoice.payments.reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0).toFixed(2)
+                                : (selectedInvoice.status === 'PAID' ? parseFloat(selectedInvoice.total).toFixed(2) : '0.00')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center border-t border-slate-350 pt-1 text-slate-950 font-black">
+                            <span>Balance Due:</span>
+                            <span className={`font-black ${parseFloat(selectedInvoice.total) - (selectedInvoice.payments ? selectedInvoice.payments.reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0) : (selectedInvoice.status === 'PAID' ? parseFloat(selectedInvoice.total) : 0)) > 0 ? 'text-red-700' : 'text-emerald-700'}`}>
+                              ₹{(parseFloat(selectedInvoice.total) - (selectedInvoice.payments ? selectedInvoice.payments.reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0) : (selectedInvoice.status === 'PAID' ? parseFloat(selectedInvoice.total) : 0))).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Signatures */}
+                      <div className="grid grid-cols-2 gap-8 mt-12 pt-4 border-t border-slate-200">
+                        <div className="flex flex-col justify-end">
+                          <div className="border-t border-slate-300 w-36 text-center pt-1 text-[8px] text-slate-400 font-bold uppercase tracking-wider">
+                            Patient Signature / Date
+                          </div>
+                        </div>
+                        <div className="flex flex-col justify-end items-end text-right">
+                          <div className="text-center">
+                            <div className="font-extrabold text-slate-900 text-[10px] uppercase">Dr. {user?.firstName} {user?.lastName}</div>
+                            <div className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">{doctorProfile?.specialty || 'Consultant Physician'}</div>
+                            <div className="border-t border-slate-300 w-36 mx-auto mt-2 pt-1 text-[8px] text-slate-400 font-bold uppercase tracking-wider">
+                              Authorized Signature
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer note */}
+                      <div className="text-center text-[8px] text-slate-400 font-bold mt-12 uppercase tracking-wider">
+                        Thank you for your visit. Wish you good health!
+                      </div>
                     </div>
                   </div>
                 ) : (
