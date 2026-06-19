@@ -36,7 +36,10 @@ export class BillingController {
 
   @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Get('invoice/:id')
-  async getInvoiceDetails(@ClinicId() clinicId: string, @Param('id') id: string) {
+  async getInvoiceDetails(
+    @ClinicId() clinicId: string,
+    @Param('id') id: string,
+  ) {
     return this.billingService.getInvoiceDetails(clinicId, id);
   }
 

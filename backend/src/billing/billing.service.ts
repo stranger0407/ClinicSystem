@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { RecordPaymentDto } from './dto/record-payment.dto';
@@ -8,15 +12,24 @@ import { Prisma } from '@prisma/client';
 export class BillingService {
   constructor(private prisma: PrismaService) {}
 
-  async createInvoice(clinicId: string, dto: CreateInvoiceDto, operatorId?: string) {
+  async createInvoice(
+    clinicId: string,
+    dto: CreateInvoiceDto,
+    operatorId?: string,
+  ) {
     // 1. Calculate Ledger amounts
-    const subtotal = dto.items.reduce((acc, item) => acc + item.quantity * item.amount, 0);
+    const subtotal = dto.items.reduce(
+      (acc, item) => acc + item.quantity * item.amount,
+      0,
+    );
     const discount = dto.discount || 0;
     const tax = dto.tax || 0;
     const total = subtotal - discount + tax;
 
     if (total < 0) {
-      throw new BadRequestException('Discount cannot exceed the subtotal amount');
+      throw new BadRequestException(
+        'Discount cannot exceed the subtotal amount',
+      );
     }
 
     // 2. Generate random unique invoice number sequence
@@ -55,7 +68,11 @@ export class BillingService {
     return invoice;
   }
 
-  async recordPayment(clinicId: string, dto: RecordPaymentDto, operatorId?: string) {
+  async recordPayment(
+    clinicId: string,
+    dto: RecordPaymentDto,
+    operatorId?: string,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       // 1. Resolve Invoice
       const invoice = await tx.invoice.findFirst({
@@ -80,7 +97,10 @@ export class BillingService {
         where: { invoiceId: dto.invoiceId },
       });
 
-      const totalPaid = allPayments.reduce((acc, pay) => acc + parseFloat(pay.amount.toString()), 0);
+      const totalPaid = allPayments.reduce(
+        (acc, pay) => acc + parseFloat(pay.amount.toString()),
+        0,
+      );
       const invoiceTotal = parseFloat(invoice.total.toString());
 
       // 4. Resolve status
@@ -123,7 +143,14 @@ export class BillingService {
       where: { id: invoiceId, clinicId, deletedAt: null },
       include: {
         patient: {
-          select: { firstName: true, lastName: true, phone: true, address: true, dob: true, gender: true },
+          select: {
+            firstName: true,
+            lastName: true,
+            phone: true,
+            address: true,
+            dob: true,
+            gender: true,
+          },
         },
         payments: true,
       },

@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 
@@ -6,7 +11,11 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 export class AppointmentService {
   constructor(private prisma: PrismaService) {}
 
-  async createAppointment(clinicId: string, dto: CreateAppointmentDto, operatorId?: string) {
+  async createAppointment(
+    clinicId: string,
+    dto: CreateAppointmentDto,
+    operatorId?: string,
+  ) {
     // 1. Fetch Doctor Profile to retrieve duration and config
     const doctor = await this.prisma.doctorProfile.findFirst({
       where: { id: dto.doctorId, clinicId },
@@ -27,7 +36,15 @@ export class AppointmentService {
         startTime = new Date();
       }
 
-      const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const weekdays = [
+        'sunday',
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+      ];
       const dayName = weekdays[startTime.getDay()];
 
       // Local Date YYYY-MM-DD
@@ -44,7 +61,10 @@ export class AppointmentService {
       const disabledWeekly = schedule?.disabledWeekly?.[dayName] || [];
       const disabledDatesForDate = schedule?.disabledDates?.[dateStr] || [];
 
-      const daySlots = weekly[dayName] !== undefined ? weekly[dayName] : [`${workStart}-${workEnd}`];
+      const daySlots =
+        weekly[dayName] !== undefined
+          ? weekly[dayName]
+          : [`${workStart}-${workEnd}`];
       const isCancelled = cancelledDates.includes(dateStr);
 
       if (isCancelled || daySlots.length === 0) {
@@ -57,11 +77,15 @@ export class AppointmentService {
         const isDisabledDate = disabledDatesForDate.includes(slotTimeStr);
 
         if (isDisabledWeekly || isDisabledDate) {
-          throw new ConflictException('The selected time slot is disabled by the doctor.');
+          throw new ConflictException(
+            'The selected time slot is disabled by the doctor.',
+          );
         }
 
         // Add doctor slot duration (minutes)
-        endTime = new Date(startTime.getTime() + doctor.durationMin * 60 * 1000);
+        endTime = new Date(
+          startTime.getTime() + doctor.durationMin * 60 * 1000,
+        );
 
         // Enforce No-Double-Booking Constraint
         const overlapping = await tx.appointment.findFirst({
@@ -79,7 +103,9 @@ export class AppointmentService {
         });
 
         if (overlapping) {
-          throw new ConflictException('The selected time slot is already booked for this doctor');
+          throw new ConflictException(
+            'The selected time slot is already booked for this doctor',
+          );
         }
       } else {
         // WALK-IN booking
@@ -181,7 +207,13 @@ export class AppointmentService {
       where: whereClause,
       include: {
         patient: {
-          select: { id: true, firstName: true, lastName: true, phone: true, dob: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            dob: true,
+          },
         },
         doctor: {
           select: {
@@ -191,15 +223,28 @@ export class AppointmentService {
         },
       },
       orderBy: [
-        { type: 'asc' },       // SLOT first, then WALK_IN
-        { startTime: 'asc' },   // Sort slots by start time
+        { type: 'asc' }, // SLOT first, then WALK_IN
+        { startTime: 'asc' }, // Sort slots by start time
         { queueNumber: 'asc' }, // Sort walk-ins by queue number
       ],
     });
   }
 
-  async updateStatus(clinicId: string, appointmentId: string, status: string, operatorId: string) {
-    const allowedStatuses = ['BOOKED', 'CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED', 'NO_SHOW', 'RESCHEDULED'];
+  async updateStatus(
+    clinicId: string,
+    appointmentId: string,
+    status: string,
+    operatorId: string,
+  ) {
+    const allowedStatuses = [
+      'BOOKED',
+      'CHECKED_IN',
+      'IN_CONSULTATION',
+      'COMPLETED',
+      'CANCELLED',
+      'NO_SHOW',
+      'RESCHEDULED',
+    ];
     if (!allowedStatuses.includes(status)) {
       throw new BadRequestException(`Invalid appointment status: ${status}`);
     }
@@ -233,5 +278,4 @@ export class AppointmentService {
 
     return updated;
   }
-
 }

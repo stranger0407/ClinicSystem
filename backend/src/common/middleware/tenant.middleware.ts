@@ -28,7 +28,12 @@ export class TenantMiddleware implements NestMiddleware {
       const host = req.headers.host || '';
       const parts = host.split('.');
       // Check if we have a subdomain that is not www or localhost
-      if (parts.length > 1 && parts[0] !== 'www' && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+      if (
+        parts.length > 1 &&
+        parts[0] !== 'www' &&
+        !host.includes('localhost') &&
+        !host.includes('127.0.0.1')
+      ) {
         const subdomain = parts[0];
         const clinic = await this.prisma.clinic.findUnique({
           where: { subdomain },

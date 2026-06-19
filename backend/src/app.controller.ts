@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Query, Param, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Param,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { AppointmentService } from './appointment/appointment.service';
@@ -82,7 +92,15 @@ export class AppController {
       throw new BadRequestException('Invalid date format');
     }
 
-    const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const weekdays = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
     const dayName = weekdays[date.getDay()];
 
     const schedule = doctor.schedule as any;
@@ -94,7 +112,10 @@ export class AppController {
     const weekly = schedule?.weekly || {};
     const workStart = schedule?.workStart || '09:00';
     const workEnd = schedule?.workEnd || '17:00';
-    const daySlots = weekly[dayName] !== undefined ? weekly[dayName] : [`${workStart}-${workEnd}`];
+    const daySlots =
+      weekly[dayName] !== undefined
+        ? weekly[dayName]
+        : [`${workStart}-${workEnd}`];
 
     const slots: { time: string; startTime: string; available: boolean }[] = [];
     const durationMin = doctor.durationMin || 15;
@@ -180,7 +201,15 @@ export class AppController {
     }
 
     // 1. Validate fields
-    if (!body.doctorId || !body.type || !body.firstName || !body.lastName || !body.phone || !body.dob || !body.gender) {
+    if (
+      !body.doctorId ||
+      !body.type ||
+      !body.firstName ||
+      !body.lastName ||
+      !body.phone ||
+      !body.dob ||
+      !body.gender
+    ) {
       throw new BadRequestException('Missing mandatory booking fields');
     }
 
@@ -194,12 +223,20 @@ export class AppController {
 
       if (body.createAccount) {
         if (!body.password) {
-          throw new BadRequestException('Password is required for creating a patient portal account');
+          throw new BadRequestException(
+            'Password is required for creating a patient portal account',
+          );
         }
 
         // Check if user already exists
-        let existingUser = await tx.user.findFirst({
-          where: { clinicId: clinic.id, OR: [{ phone: body.phone }, body.email ? { email: body.email } : {}] },
+        const existingUser = await tx.user.findFirst({
+          where: {
+            clinicId: clinic.id,
+            OR: [
+              { phone: body.phone },
+              body.email ? { email: body.email } : {},
+            ],
+          },
         });
 
         if (existingUser) {
@@ -207,7 +244,9 @@ export class AppController {
             // Account already claimed, do not overwrite
             userId = existingUser.id;
           } else {
-            throw new ConflictException('A portal account with this phone or email already exists');
+            throw new ConflictException(
+              'A portal account with this phone or email already exists',
+            );
           }
         } else {
           // Create new user account

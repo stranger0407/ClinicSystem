@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsOptional,
+  IsBoolean,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateAppointmentDto {
   @IsString()

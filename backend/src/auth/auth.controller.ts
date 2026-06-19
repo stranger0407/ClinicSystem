@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Body, Query, UseGuards, Request, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Query,
+  UseGuards,
+  Request,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterClinicDto } from './dto/register-clinic.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -29,7 +39,9 @@ export class AuthController {
   @Post('login')
   async login(@ClinicId() clinicId: string, @Body() dto: LoginDto) {
     if (!dto.email && !dto.phone) {
-      throw new BadRequestException('Either email or phone must be provided for login');
+      throw new BadRequestException(
+        'Either email or phone must be provided for login',
+      );
     }
     return this.authService.login(clinicId, dto);
   }

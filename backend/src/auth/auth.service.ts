@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterClinicDto } from './dto/register-clinic.dto';
@@ -40,16 +46,76 @@ export class AuthService {
 
       // Seed common medicines for this new clinic
       const commonMedicines = [
-        { name: 'Paracetamol', genericName: 'Acetaminophen', dosageForm: 'TABLET', strength: '650mg', defaultSchedule: '1-0-1' },
-        { name: 'Amoxicillin', genericName: 'Amoxicillin Trihydrate', dosageForm: 'CAPSULE', strength: '500mg', defaultSchedule: '1-1-1' },
-        { name: 'Metformin', genericName: 'Metformin Hydrochloride', dosageForm: 'TABLET', strength: '500mg', defaultSchedule: '1-0-1' },
-        { name: 'Pantoprazole', genericName: 'Pantoprazole Sodium', dosageForm: 'TABLET', strength: '40mg', defaultSchedule: '1-0-0' },
-        { name: 'Cetirizine', genericName: 'Cetirizine Hydrochloride', dosageForm: 'TABLET', strength: '10mg', defaultSchedule: '0-0-1' },
-        { name: 'Ibuprofen', genericName: 'Ibuprofen', dosageForm: 'TABLET', strength: '400mg', defaultSchedule: '1-0-1' },
-        { name: 'Azithromycin', genericName: 'Azithromycin', dosageForm: 'TABLET', strength: '500mg', defaultSchedule: '1-0-0' },
-        { name: 'Atorvastatin', genericName: 'Atorvastatin Calcium', dosageForm: 'TABLET', strength: '10mg', defaultSchedule: '0-0-1' },
-        { name: 'Amlodipine', genericName: 'Amlodipine Besylate', dosageForm: 'TABLET', strength: '5mg', defaultSchedule: '1-0-0' },
-        { name: 'ORS Sachet', genericName: 'Oral Rehydration Salts', dosageForm: 'POWDER', strength: '21.8g', defaultSchedule: 'On demand' },
+        {
+          name: 'Paracetamol',
+          genericName: 'Acetaminophen',
+          dosageForm: 'TABLET',
+          strength: '650mg',
+          defaultSchedule: '1-0-1',
+        },
+        {
+          name: 'Amoxicillin',
+          genericName: 'Amoxicillin Trihydrate',
+          dosageForm: 'CAPSULE',
+          strength: '500mg',
+          defaultSchedule: '1-1-1',
+        },
+        {
+          name: 'Metformin',
+          genericName: 'Metformin Hydrochloride',
+          dosageForm: 'TABLET',
+          strength: '500mg',
+          defaultSchedule: '1-0-1',
+        },
+        {
+          name: 'Pantoprazole',
+          genericName: 'Pantoprazole Sodium',
+          dosageForm: 'TABLET',
+          strength: '40mg',
+          defaultSchedule: '1-0-0',
+        },
+        {
+          name: 'Cetirizine',
+          genericName: 'Cetirizine Hydrochloride',
+          dosageForm: 'TABLET',
+          strength: '10mg',
+          defaultSchedule: '0-0-1',
+        },
+        {
+          name: 'Ibuprofen',
+          genericName: 'Ibuprofen',
+          dosageForm: 'TABLET',
+          strength: '400mg',
+          defaultSchedule: '1-0-1',
+        },
+        {
+          name: 'Azithromycin',
+          genericName: 'Azithromycin',
+          dosageForm: 'TABLET',
+          strength: '500mg',
+          defaultSchedule: '1-0-0',
+        },
+        {
+          name: 'Atorvastatin',
+          genericName: 'Atorvastatin Calcium',
+          dosageForm: 'TABLET',
+          strength: '10mg',
+          defaultSchedule: '0-0-1',
+        },
+        {
+          name: 'Amlodipine',
+          genericName: 'Amlodipine Besylate',
+          dosageForm: 'TABLET',
+          strength: '5mg',
+          defaultSchedule: '1-0-0',
+        },
+        {
+          name: 'ORS Sachet',
+          genericName: 'Oral Rehydration Salts',
+          dosageForm: 'POWDER',
+          strength: '21.8g',
+          defaultSchedule: 'On demand',
+        },
       ].map((med) => ({ ...med, clinicId: clinic.id }));
 
       await tx.medicine.createMany({
@@ -62,7 +128,9 @@ export class AuthService {
           where: { clinicId_email: { clinicId: clinic.id, email: dto.email } },
         });
         if (existingEmail) {
-          throw new ConflictException('An owner with this email already exists in this clinic');
+          throw new ConflictException(
+            'An owner with this email already exists in this clinic',
+          );
         }
       }
       if (dto.phone) {
@@ -70,7 +138,9 @@ export class AuthService {
           where: { clinicId_phone: { clinicId: clinic.id, phone: dto.phone } },
         });
         if (existingPhone) {
-          throw new ConflictException('An owner with this phone already exists in this clinic');
+          throw new ConflictException(
+            'An owner with this phone already exists in this clinic',
+          );
         }
       }
 
@@ -113,7 +183,9 @@ export class AuthService {
 
   async registerUser(clinicId: string, dto: RegisterUserDto) {
     if (!clinicId) {
-      throw new BadRequestException('Clinic tenant context is required to register users');
+      throw new BadRequestException(
+        'Clinic tenant context is required to register users',
+      );
     }
 
     // Verify email or phone is unique in this clinic
@@ -122,7 +194,9 @@ export class AuthService {
         where: { clinicId_email: { clinicId, email: dto.email } },
       });
       if (existingEmail) {
-        throw new ConflictException('A user with this email already exists in this clinic');
+        throw new ConflictException(
+          'A user with this email already exists in this clinic',
+        );
       }
     }
     if (dto.phone) {
@@ -130,7 +204,9 @@ export class AuthService {
         where: { clinicId_phone: { clinicId, phone: dto.phone } },
       });
       if (existingPhone) {
-        throw new ConflictException('A user with this phone already exists in this clinic');
+        throw new ConflictException(
+          'A user with this phone already exists in this clinic',
+        );
       }
     }
 
@@ -153,14 +229,16 @@ export class AuthService {
       // Handle role-specific profiles
       if (dto.role === UserRole.PATIENT) {
         // Look for an unclaimed patient profile with the same phone in the clinic
-        const existingProfile = dto.phone ? await tx.patientProfile.findFirst({
-          where: {
-            clinicId,
-            phone: dto.phone.trim(),
-            userId: null,
-            deletedAt: null,
-          },
-        }) : null;
+        const existingProfile = dto.phone
+          ? await tx.patientProfile.findFirst({
+              where: {
+                clinicId,
+                phone: dto.phone.trim(),
+                userId: null,
+                deletedAt: null,
+              },
+            })
+          : null;
 
         if (existingProfile) {
           // Link existing profile to this user instead of creating a duplicate
@@ -224,7 +302,9 @@ export class AuthService {
 
   async login(clinicId: string, dto: LoginDto) {
     if (!clinicId) {
-      throw new BadRequestException('Clinic tenant context is required to login');
+      throw new BadRequestException(
+        'Clinic tenant context is required to login',
+      );
     }
 
     let user = null;
@@ -240,10 +320,15 @@ export class AuthService {
     }
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid credentials or inactive account');
+      throw new UnauthorizedException(
+        'Invalid credentials or inactive account',
+      );
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -251,13 +336,19 @@ export class AuthService {
     // Get specific profile details
     let profileId = null;
     if (user.role === UserRole.PATIENT) {
-      const patient = await this.prisma.patientProfile.findUnique({ where: { userId: user.id } });
+      const patient = await this.prisma.patientProfile.findUnique({
+        where: { userId: user.id },
+      });
       profileId = patient?.id;
     } else if (user.role === UserRole.DOCTOR) {
-      const doctor = await this.prisma.doctorProfile.findUnique({ where: { userId: user.id } });
+      const doctor = await this.prisma.doctorProfile.findUnique({
+        where: { userId: user.id },
+      });
       profileId = doctor?.id;
     } else if (user.role === UserRole.STAFF) {
-      const staff = await this.prisma.staffProfile.findUnique({ where: { userId: user.id } });
+      const staff = await this.prisma.staffProfile.findUnique({
+        where: { userId: user.id },
+      });
       profileId = staff?.id;
     }
 

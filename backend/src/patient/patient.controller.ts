@@ -1,4 +1,15 @@
-import { Controller, Post, Patch, Get, Body, Param, Query, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Get,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PatientService } from './patient.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { MergePatientsDto } from './dto/merge-patients.dto';
@@ -38,9 +49,13 @@ export class PatientController {
     @CurrentUser() user: any,
   ) {
     if (user.role === UserRole.PATIENT) {
-      const patientProfile = await this.patientService.findProfileByUserId(user.id);
+      const patientProfile = await this.patientService.findProfileByUserId(
+        user.id,
+      );
       if (!patientProfile || patientProfile.id !== id) {
-        throw new ForbiddenException('You are not authorized to access this patient profile');
+        throw new ForbiddenException(
+          'You are not authorized to access this patient profile',
+        );
       }
     }
     return this.patientService.getPatientTimeline(clinicId, id);

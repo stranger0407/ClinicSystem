@@ -50,8 +50,11 @@ describe('Security Audit & E2E Validation (e2e)', () => {
         email: 'doctor@apollo.com',
         password: 'Password123',
       });
-    
-    console.log(`Doctor Login Status: ${docLogin.status}, Body:`, docLogin.body);
+
+    console.log(
+      `Doctor Login Status: ${docLogin.status}, Body:`,
+      docLogin.body,
+    );
     if (docLogin.status === 201 || docLogin.status === 200) {
       doctorToken = docLogin.body.accessToken;
     }
@@ -64,8 +67,11 @@ describe('Security Audit & E2E Validation (e2e)', () => {
         phone: '9876543210',
         password: 'Password123',
       });
-    
-    console.log(`Patient Login Status: ${patLogin.status}, Body:`, patLogin.body);
+
+    console.log(
+      `Patient Login Status: ${patLogin.status}, Body:`,
+      patLogin.body,
+    );
     if (patLogin.status === 201 || patLogin.status === 200) {
       patientToken = patLogin.body.accessToken;
     }
@@ -83,9 +89,7 @@ describe('Security Audit & E2E Validation (e2e)', () => {
         .expect(401);
 
       // 2. Try to load admin stats without token
-      await request(app.getHttpServer())
-        .get('/admin/stats')
-        .expect(401);
+      await request(app.getHttpServer()).get('/admin/stats').expect(401);
     });
 
     it('should deny PATIENT access to medical search and practice stats (RBAC check)', async () => {
@@ -156,12 +160,14 @@ describe('Security Audit & E2E Validation (e2e)', () => {
         });
 
       expect(res.status).toBe(201);
-      
+
       const createdPatient = res.body.patientProfile;
       expect(createdPatient.firstName).toBe(sqlInjectionName);
 
       // Clean up the created test patient profile to keep DB tidy
-      await prisma.appointment.deleteMany({ where: { patientId: createdPatient.id } });
+      await prisma.appointment.deleteMany({
+        where: { patientId: createdPatient.id },
+      });
       await prisma.patientProfile.delete({ where: { id: createdPatient.id } });
     });
   });
@@ -194,7 +200,9 @@ describe('Security Audit & E2E Validation (e2e)', () => {
       });
       const schedule = docProfile?.schedule as any;
       if (schedule && schedule.cancelledDates) {
-        schedule.cancelledDates = schedule.cancelledDates.filter((d: string) => d !== cancelDate);
+        schedule.cancelledDates = schedule.cancelledDates.filter(
+          (d: string) => d !== cancelDate,
+        );
         await prisma.doctorProfile.update({
           where: { id: doctorId },
           data: { schedule },

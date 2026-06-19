@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEncounterDto } from './dto/create-encounter.dto';
 
@@ -6,7 +10,11 @@ import { CreateEncounterDto } from './dto/create-encounter.dto';
 export class EncounterService {
   constructor(private prisma: PrismaService) {}
 
-  async createEncounter(clinicId: string, doctorUserId: string, dto: CreateEncounterDto) {
+  async createEncounter(
+    clinicId: string,
+    doctorUserId: string,
+    dto: CreateEncounterDto,
+  ) {
     // 1. Resolve Doctor Profile
     const doctor = await this.prisma.doctorProfile.findFirst({
       where: { userId: doctorUserId, clinicId },
@@ -19,13 +27,20 @@ export class EncounterService {
     return this.prisma.$transaction(async (tx) => {
       // Check if appointment exists and matches
       const appointment = await tx.appointment.findFirst({
-        where: { id: dto.appointmentId, clinicId, patientId: dto.patientId, deletedAt: null },
+        where: {
+          id: dto.appointmentId,
+          clinicId,
+          patientId: dto.patientId,
+          deletedAt: null,
+        },
       });
       if (!appointment) {
         throw new NotFoundException('Appointment record not found');
       }
 
-      const parsedFollowUpDate = dto.followUpDate ? new Date(dto.followUpDate) : null;
+      const parsedFollowUpDate = dto.followUpDate
+        ? new Date(dto.followUpDate)
+        : null;
 
       // Create clinical Encounter
       const encounter = await tx.encounter.create({

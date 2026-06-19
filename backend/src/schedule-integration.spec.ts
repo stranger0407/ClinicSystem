@@ -85,7 +85,9 @@ describe('Schedule & Slots Integration Tests', () => {
         disabledDates: {},
       },
     };
-    mockPrisma.doctorProfile.findUnique.mockResolvedValue(doctorWithEmptyWeekly);
+    mockPrisma.doctorProfile.findUnique.mockResolvedValue(
+      doctorWithEmptyWeekly,
+    );
     mockPrisma.appointment.findMany.mockResolvedValue([]);
 
     // June 20, 2026 is Saturday. Weekly is undefined, should fallback to 10:00-12:00
@@ -103,7 +105,7 @@ describe('Schedule & Slots Integration Tests', () => {
 
     // Mock a booked appointment on Monday, June 15, 2026 at 10:00 - 10:30
     const testDate = new Date('2026-06-15T00:00:00');
-    
+
     // Set local hours to match what the controller expects (10:00 local)
     const startTime = new Date(testDate);
     startTime.setHours(10, 0, 0, 0);

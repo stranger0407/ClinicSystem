@@ -5,7 +5,10 @@ import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private static pool: Pool;
   private static adapter: PrismaPg;
 
@@ -21,7 +24,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       adapter: PrismaService.adapter,
     });
 
-    const softDeleteModels = ['User', 'PatientProfile', 'Appointment', 'Encounter', 'Prescription', 'Invoice'];
+    const softDeleteModels = [
+      'User',
+      'PatientProfile',
+      'Appointment',
+      'Encounter',
+      'Prescription',
+      'Invoice',
+    ];
 
     let extendedClient: any;
 
@@ -103,7 +113,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       },
     });
 
-    return extendedClient as any;
+    return extendedClient;
   }
 
   async onModuleInit() {

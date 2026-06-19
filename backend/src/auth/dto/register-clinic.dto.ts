@@ -1,4 +1,11 @@
-import { IsString, IsEmail, IsNotEmpty, Length, IsOptional, Matches } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsNotEmpty,
+  Length,
+  IsOptional,
+  Matches,
+} from 'class-validator';
 
 export class RegisterClinicDto {
   @IsString()
@@ -7,7 +14,10 @@ export class RegisterClinicDto {
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[a-z0-9-]+$/, { message: 'Subdomain must contain only lowercase letters, numbers, and hyphens' })
+  @Matches(/^[a-z0-9-]+$/, {
+    message:
+      'Subdomain must contain only lowercase letters, numbers, and hyphens',
+  })
   subdomain: string;
 
   @IsEmail()

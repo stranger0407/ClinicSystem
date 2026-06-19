@@ -9,14 +9,16 @@ async function runTests() {
     // 1. Health check
     console.log('\n[1] Testing Health Check /health...');
     const healthRes = await fetch(`${BASE_URL}/health`);
-    const health = await healthRes.json() as any;
+    const health = await healthRes.json();
     console.log('Health check response:', health);
     if (health.status !== 'up') throw new Error('Health check failed');
 
     // 2. Resolve Clinic
     console.log('\n[2] Testing Subdomain Resolution for "apollo"...');
-    const resolveRes = await fetch(`${BASE_URL}/auth/clinic/resolve?subdomain=apollo`);
-    const clinic = await resolveRes.json() as any;
+    const resolveRes = await fetch(
+      `${BASE_URL}/auth/clinic/resolve?subdomain=apollo`,
+    );
+    const clinic = await resolveRes.json();
     console.log('Resolved clinic:', clinic);
     const clinicId = clinic.id;
     if (!clinicId) throw new Error('Clinic resolution failed');
@@ -34,21 +36,21 @@ async function runTests() {
         password: 'Password123',
       }),
     });
-    const authData = await loginRes.json() as any;
+    const authData = await loginRes.json();
     const token = authData.accessToken;
     console.log('Owner logged in successfully. Token length:', token?.length);
     if (!token) throw new Error('Owner login failed');
 
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'x-clinic-id': clinicId,
     };
 
     // 4. List Doctors
     console.log('\n[4] Listing Doctors...');
     const doctorsRes = await fetch(`${BASE_URL}/doctor`, { headers });
-    const doctors = await doctorsRes.json() as any;
+    const doctors = await doctorsRes.json();
     console.log(`Found ${doctors.length} doctors.`);
     const docProfileId = doctors[0]?.id;
     if (!docProfileId) throw new Error('No doctor profile found in list');
@@ -70,15 +72,17 @@ async function runTests() {
         chronicConditions: [],
       }),
     });
-    const patient = await patientRes.json() as any;
+    const patient = await patientRes.json();
     console.log('Patient registered successfully. ID:', patient.id);
     const patientId = patient.id;
     if (!patientId) throw new Error('Patient registration failed');
 
     // 6. Search Patient
     console.log('\n[6] Searching for registered patient...');
-    const searchRes = await fetch(`${BASE_URL}/patient/search?q=Test`, { headers });
-    const searchResults = await searchRes.json() as any;
+    const searchRes = await fetch(`${BASE_URL}/patient/search?q=Test`, {
+      headers,
+    });
+    const searchResults = await searchRes.json();
     console.log(`Search returned ${searchResults.length} results.`);
 
     // 7. Book Walk-in Appointment
@@ -94,7 +98,7 @@ async function runTests() {
         notes: 'API integration test walk-in',
       }),
     });
-    const appt = await apptRes.json() as any;
+    const appt = await apptRes.json();
     console.log('Appointment booked. Queue number:', appt.queueNumber);
     const appointmentId = appt.id;
     if (!appointmentId) throw new Error('Appointment booking failed');
@@ -102,8 +106,11 @@ async function runTests() {
     // 8. List Appointments
     const todayStr = new Date().toISOString().split('T')[0];
     console.log(`\n[8] Listing today's appointments for Doctor...`);
-    const apptsRes = await fetch(`${BASE_URL}/appointment?doctorId=${docProfileId}&date=${todayStr}`, { headers });
-    const appts = await apptsRes.json() as any;
+    const apptsRes = await fetch(
+      `${BASE_URL}/appointment?doctorId=${docProfileId}&date=${todayStr}`,
+      { headers },
+    );
+    const appts = await apptsRes.json();
     console.log(`Found ${appts.length} appointments for today.`);
 
     // 8.5 Login Doctor
@@ -119,21 +126,25 @@ async function runTests() {
         password: 'Password123',
       }),
     });
-    const docAuthData = await docLoginRes.json() as any;
+    const docAuthData = await docLoginRes.json();
     const docToken = docAuthData.accessToken;
     const docHeaders = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${docToken}`,
+      Authorization: `Bearer ${docToken}`,
       'x-clinic-id': clinicId,
     };
     if (!docToken) throw new Error('Doctor login failed');
 
     // 8.6 Fetch seeded medicines
     console.log('\n[8.6] Fetching clinic medicine catalog...');
-    const medsRes = await fetch(`${BASE_URL}/medicine`, { headers: docHeaders });
-    const meds = await medsRes.json() as any;
+    const medsRes = await fetch(`${BASE_URL}/medicine`, {
+      headers: docHeaders,
+    });
+    const meds = await medsRes.json();
     const medicineId = meds[0]?.id;
-    console.log(`Found ${meds.length} medicines. Using medicine ID: ${medicineId}`);
+    console.log(
+      `Found ${meds.length} medicines. Using medicine ID: ${medicineId}`,
+    );
     if (!medicineId) throw new Error('No medicines found in catalog');
 
     // 9. Start Consultation & Create Encounter
@@ -148,7 +159,13 @@ async function runTests() {
         diagnosis: 'Viral Fever',
         clinicalNotes: 'Rest and fluid intake advised.',
         testsRequired: ['CBC Test'],
-        vitals: { bp: '120/80', pulse: '76', temp: '99', weight: '65', height: '170' },
+        vitals: {
+          bp: '120/80',
+          pulse: '76',
+          temp: '99',
+          weight: '65',
+          height: '170',
+        },
         prescriptionItems: [
           {
             medicineId,
@@ -159,7 +176,7 @@ async function runTests() {
         ],
       }),
     });
-    const encounter = await encounterRes.json() as any;
+    const encounter = await encounterRes.json();
     console.log('Encounter Response:', encounter);
     console.log('Encounter created successfully. ID:', encounter.id);
     if (!encounter.id) throw new Error('Encounter creation failed');
@@ -180,8 +197,13 @@ async function runTests() {
         tax: 45.0,
       }),
     });
-    const invoice = await invoiceRes.json() as any;
-    console.log('Invoice generated. Invoice Number:', invoice.invoiceNumber, 'Total:', invoice.total);
+    const invoice = await invoiceRes.json();
+    console.log(
+      'Invoice generated. Invoice Number:',
+      invoice.invoiceNumber,
+      'Total:',
+      invoice.total,
+    );
     const invoiceId = invoice.id;
     if (!invoiceId) throw new Error('Invoice generation failed');
 
@@ -197,8 +219,13 @@ async function runTests() {
         notes: 'Paid cash at counter',
       }),
     });
-    const pay1 = await pay1Res.json() as any;
-    console.log('Payment 1 registered. Invoice Status:', pay1.invoice.status, 'Amount Collected:', pay1.payment.amount);
+    const pay1 = await pay1Res.json();
+    console.log(
+      'Payment 1 registered. Invoice Status:',
+      pay1.invoice.status,
+      'Amount Collected:',
+      pay1.payment.amount,
+    );
 
     const pay2Res = await fetch(`${BASE_URL}/billing/payment`, {
       method: 'POST',
@@ -210,28 +237,40 @@ async function runTests() {
         notes: 'UPI Scanner transaction',
       }),
     });
-    const pay2 = await pay2Res.json() as any;
+    const pay2 = await pay2Res.json();
     const finalInvoice = pay2.invoice;
     console.log('Payment 2 registered. Invoice status:', finalInvoice.status);
-    if (finalInvoice.status !== 'PAID') throw new Error('Invoice not fully paid');
+    if (finalInvoice.status !== 'PAID')
+      throw new Error('Invoice not fully paid');
 
     // 12. Owner Stats
     console.log('\n[12] Fetching Owner Statistics Reports...');
     const statsRes = await fetch(`${BASE_URL}/admin/stats`, { headers });
-    const stats = await statsRes.json() as any;
-    console.log('Today Visits:', stats.visitsCount, 'Today Revenue:', stats.todayRevenue, 'Payment Split:', stats.paymentSplit);
+    const stats = await statsRes.json();
+    console.log(
+      'Today Visits:',
+      stats.visitsCount,
+      'Today Revenue:',
+      stats.todayRevenue,
+      'Payment Split:',
+      stats.paymentSplit,
+    );
 
     // 13. System Audit Logs
     console.log('\n[13] Fetching System Audit Logs...');
     const logsRes = await fetch(`${BASE_URL}/admin/audit-logs`, { headers });
-    const logs = await logsRes.json() as any;
+    const logs = await logsRes.json();
     console.log(`Retrieved ${logs.length} audit trail logs.`);
-    console.log('Last action in audit log:', logs[0]?.action, 'on entity:', logs[0]?.entityName);
+    console.log(
+      'Last action in audit log:',
+      logs[0]?.action,
+      'on entity:',
+      logs[0]?.entityName,
+    );
 
     console.log('\n=================================================');
     console.log('✅ ALL API TESTS COMPLETED SUCCESSFULLY WITH ZERO ERRORS!');
     console.log('=================================================');
-
   } catch (err: any) {
     console.error('\n❌ TEST FAILED WITH ERROR:', err.message);
     process.exit(1);

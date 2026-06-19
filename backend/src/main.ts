@@ -8,7 +8,7 @@ async function bootstrap() {
 
   // Register global structured error logging filter
   app.useGlobalFilters(new GlobalExceptionFilter());
-  
+
   // Enable CORS for frontend integration
   app.enableCors({
     origin: '*',

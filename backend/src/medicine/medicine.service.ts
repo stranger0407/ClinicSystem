@@ -14,7 +14,13 @@ export class MedicineService {
 
   async createMedicine(
     clinicId: string,
-    data: { name: string; genericName?: string; dosageForm: string; strength: string; defaultSchedule?: string },
+    data: {
+      name: string;
+      genericName?: string;
+      dosageForm: string;
+      strength: string;
+      defaultSchedule?: string;
+    },
   ) {
     return this.prisma.medicine.create({
       data: {
@@ -31,7 +37,13 @@ export class MedicineService {
   async updateMedicine(
     clinicId: string,
     id: string,
-    data: { name?: string; genericName?: string; dosageForm?: string; strength?: string; defaultSchedule?: string },
+    data: {
+      name?: string;
+      genericName?: string;
+      dosageForm?: string;
+      strength?: string;
+      defaultSchedule?: string;
+    },
   ) {
     const med = await this.prisma.medicine.findFirst({
       where: { id, clinicId },

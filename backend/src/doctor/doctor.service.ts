@@ -10,7 +10,13 @@ export class DoctorService {
       where: { clinicId },
       include: {
         user: {
-          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+          },
         },
       },
     });
@@ -19,7 +25,13 @@ export class DoctorService {
   async updateProfile(
     clinicId: string,
     doctorUserId: string,
-    data: { licenseNo?: string; specialty?: string; fees?: number; durationMin?: number; schedule?: any },
+    data: {
+      licenseNo?: string;
+      specialty?: string;
+      fees?: number;
+      durationMin?: number;
+      schedule?: any;
+    },
   ) {
     const doctor = await this.prisma.doctorProfile.findFirst({
       where: { userId: doctorUserId, clinicId },

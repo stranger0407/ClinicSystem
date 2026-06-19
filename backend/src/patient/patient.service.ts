@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { MergePatientsDto } from './dto/merge-patients.dto';
@@ -7,7 +12,11 @@ import { MergePatientsDto } from './dto/merge-patients.dto';
 export class PatientService {
   constructor(private prisma: PrismaService) {}
 
-  async createPatient(clinicId: string, dto: CreatePatientDto, operatorId?: string) {
+  async createPatient(
+    clinicId: string,
+    dto: CreatePatientDto,
+    operatorId?: string,
+  ) {
     const parsedDob = new Date(dto.dob);
 
     // 1. Duplicate Patient Detection: check phone number
@@ -105,10 +114,7 @@ export class PatientService {
           { phone: { contains: cleanQuery } },
         ],
       },
-      orderBy: [
-        { firstName: 'asc' },
-        { lastName: 'asc' },
-      ],
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
       take: 50,
     });
   }
@@ -173,11 +179,17 @@ export class PatientService {
     return patient;
   }
 
-  async mergePatients(clinicId: string, operatorId: string, dto: MergePatientsDto) {
+  async mergePatients(
+    clinicId: string,
+    operatorId: string,
+    dto: MergePatientsDto,
+  ) {
     const { sourcePatientId, targetPatientId } = dto;
 
     if (sourcePatientId === targetPatientId) {
-      throw new BadRequestException('Source and target patient profiles cannot be the same');
+      throw new BadRequestException(
+        'Source and target patient profiles cannot be the same',
+      );
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -190,7 +202,9 @@ export class PatientService {
       });
 
       if (!source || !target) {
-        throw new NotFoundException('One or both patient records do not exist or have been deleted');
+        throw new NotFoundException(
+          'One or both patient records do not exist or have been deleted',
+        );
       }
 
       // 2. Re-link related tables
@@ -247,7 +261,12 @@ export class PatientService {
     });
   }
 
-  async updatePatient(clinicId: string, patientId: string, dto: Partial<CreatePatientDto>, operatorId: string) {
+  async updatePatient(
+    clinicId: string,
+    patientId: string,
+    dto: Partial<CreatePatientDto>,
+    operatorId: string,
+  ) {
     const patient = await this.prisma.patientProfile.findFirst({
       where: { id: patientId, clinicId, deletedAt: null },
     });

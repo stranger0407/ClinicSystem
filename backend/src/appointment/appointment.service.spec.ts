@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppointmentService } from './appointment.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 
 describe('AppointmentService', () => {
   let service: AppointmentService;
@@ -72,7 +76,7 @@ describe('AppointmentService', () => {
         phone: '9876543210',
         dob: '1990-01-01',
         gender: 'MALE',
-      } as any)
+      } as any),
     ).rejects.toThrow(NotFoundException);
   });
 
@@ -91,8 +95,10 @@ describe('AppointmentService', () => {
         phone: '9876543210',
         dob: '1990-01-01',
         gender: 'MALE',
-      } as any)
-    ).rejects.toThrow(new BadRequestException('Doctor is not available on this date.'));
+      } as any),
+    ).rejects.toThrow(
+      new BadRequestException('Doctor is not available on this date.'),
+    );
   });
 
   it('should throw BadRequestException for weekend/day with no slots and no weekly schedule fallback', async () => {
@@ -118,8 +124,10 @@ describe('AppointmentService', () => {
         phone: '9876543210',
         dob: '1990-01-01',
         gender: 'MALE',
-      } as any)
-    ).rejects.toThrow(new BadRequestException('Doctor is not available on this date.'));
+      } as any),
+    ).rejects.toThrow(
+      new BadRequestException('Doctor is not available on this date.'),
+    );
   });
 
   it('should fallback to default work hours and allow booking if day is not explicitly configured in weekly', async () => {
@@ -135,9 +143,14 @@ describe('AppointmentService', () => {
         cancelledDates: [],
       },
     };
-    mockPrisma.doctorProfile.findFirst.mockResolvedValue(doctorWithDefaultScheduleOnly);
+    mockPrisma.doctorProfile.findFirst.mockResolvedValue(
+      doctorWithDefaultScheduleOnly,
+    );
     mockPrisma.appointment.findFirst.mockResolvedValue(null); // No conflicts
-    mockPrisma.appointment.create.mockResolvedValue({ id: 'app-abc', status: 'BOOKED' });
+    mockPrisma.appointment.create.mockResolvedValue({
+      id: 'app-abc',
+      status: 'BOOKED',
+    });
 
     // June 20, 2026 is Saturday.
     const testDate = new Date('2026-06-20T00:00:00');
@@ -177,7 +190,7 @@ describe('AppointmentService', () => {
         phone: '9876543210',
         dob: '1990-01-01',
         gender: 'MALE',
-      } as any)
+      } as any),
     ).rejects.toThrow(ConflictException);
   });
 
@@ -199,17 +212,19 @@ describe('AppointmentService', () => {
         phone: '9876543210',
         dob: '1990-01-01',
         gender: 'MALE',
-      } as any)
+      } as any),
     ).rejects.toThrow(ConflictException);
   });
 
   it('should create walk-in appointment and assign a queue number', async () => {
     mockPrisma.doctorProfile.findFirst.mockResolvedValue(mockDoctor);
     mockPrisma.appointment.count.mockResolvedValue(4); // 4 existing walk-ins today
-    mockPrisma.appointment.create.mockImplementation((args) => Promise.resolve({
-      id: 'app-walkin',
-      ...args.data,
-    }));
+    mockPrisma.appointment.create.mockImplementation((args) =>
+      Promise.resolve({
+        id: 'app-walkin',
+        ...args.data,
+      }),
+    );
 
     // June 15, 2026 is Monday.
     const result = await service.createAppointment('clinic-123', {

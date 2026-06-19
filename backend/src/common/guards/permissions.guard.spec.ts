@@ -12,7 +12,10 @@ describe('PermissionsGuard', () => {
     guard = new PermissionsGuard(reflector);
   });
 
-  const createMockContext = (user: any, requiredPermissions?: string[]): ExecutionContext => {
+  const createMockContext = (
+    user: any,
+    requiredPermissions?: string[],
+  ): ExecutionContext => {
     const request = { user };
     const httpContext = {
       getRequest: () => request,
@@ -23,7 +26,9 @@ describe('PermissionsGuard', () => {
       getClass: () => ({}),
     } as unknown as ExecutionContext;
 
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(requiredPermissions);
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue(requiredPermissions);
 
     return context;
   };
@@ -39,19 +44,25 @@ describe('PermissionsGuard', () => {
   });
 
   it('should unconditionally allow access to OWNER', () => {
-    const context = createMockContext({ role: UserRole.OWNER }, ['CLINICAL', 'BILLING']);
+    const context = createMockContext({ role: UserRole.OWNER }, [
+      'CLINICAL',
+      'BILLING',
+    ]);
     expect(guard.canActivate(context)).toBe(true);
   });
 
   it('should unconditionally allow access to DOCTOR', () => {
-    const context = createMockContext({ role: UserRole.DOCTOR }, ['REGISTRATION', 'BILLING']);
+    const context = createMockContext({ role: UserRole.DOCTOR }, [
+      'REGISTRATION',
+      'BILLING',
+    ]);
     expect(guard.canActivate(context)).toBe(true);
   });
 
   it('should deny access to STAFF if they lack required permissions', () => {
     const context = createMockContext(
       { role: UserRole.STAFF, permissions: ['BILLING'] },
-      ['REGISTRATION']
+      ['REGISTRATION'],
     );
     expect(guard.canActivate(context)).toBe(false);
   });
@@ -59,7 +70,7 @@ describe('PermissionsGuard', () => {
   it('should allow access to STAFF if they possess all required permissions', () => {
     const context = createMockContext(
       { role: UserRole.STAFF, permissions: ['REGISTRATION', 'BILLING'] },
-      ['REGISTRATION', 'BILLING']
+      ['REGISTRATION', 'BILLING'],
     );
     expect(guard.canActivate(context)).toBe(true);
   });

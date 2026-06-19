@@ -15,7 +15,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request & { clinicId?: string; user?: any }>();
+    const request = ctx.getRequest<
+      Request & { clinicId?: string; user?: any }
+    >();
 
     const status =
       exception instanceof HttpException
@@ -36,7 +38,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       clinicId: request.clinicId || null,
       userId: request.user?.id || null,
       role: request.user?.role || null,
-      message: typeof message === 'object' && message !== null ? (message as any).message || JSON.stringify(message) : message,
+      message:
+        typeof message === 'object' && message !== null
+          ? (message as any).message || JSON.stringify(message)
+          : message,
       error: exception instanceof Error ? exception.message : String(exception),
       stack: exception instanceof Error ? exception.stack : null,
     };
