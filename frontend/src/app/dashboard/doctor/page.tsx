@@ -2614,20 +2614,27 @@ export default function DoctorDashboard() {
                         onChange={(e) => setDoctorForm({ ...doctorForm, durationMin: Number(e.target.value) })}
                         className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2"
                       />
-                           {/* Customize Weekly/Date Slots Availability Section */}
-                  <div className="space-y-3 border-t border-slate-100 pt-4">
-                    <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px] block">Customize Slots Availability</label>
-                    <p className="text-[10px] text-slate-400 leading-normal mb-3">
-                      Configure weekly slot templates or block off slots on specific calendar dates. Disabled slots are crossed out.
+                    </div>
+                  </div>
+
+                  {/* Customize Weekly/Date Slots Availability Section */}
+                  <div className="space-y-4 border-t border-slate-100 pt-5">
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-wider block flex items-center">
+                      <Clock className="w-4 h-4 mr-2 text-indigo-650" /> Public Booking Slot Controls
+                    </span>
+                    <p className="text-[11px] text-slate-400 leading-normal">
+                      Configure your weekly availability patterns or block off specific slots on calendar dates. Disabled slots are shown in red with a strikethrough.
                     </p>
                     
                     {/* Mode Selector Tabs */}
-                    <div className="flex bg-slate-100 rounded-lg p-0.5 max-w-xs mb-3">
+                    <div className="flex bg-slate-100/80 rounded-xl p-1 max-w-xs border border-slate-200/50">
                       <button
                         type="button"
                         onClick={() => setSlotOverrideMode('weekly')}
-                        className={`flex-1 py-1 text-center text-[10px] font-bold rounded-md transition-all ${
-                          slotOverrideMode === 'weekly' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                        className={`flex-1 py-2 text-center text-[10px] font-extrabold rounded-lg transition-all ${
+                          slotOverrideMode === 'weekly' 
+                            ? 'bg-white text-indigo-600 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-800'
                         }`}
                       >
                         Weekly Pattern
@@ -2635,86 +2642,146 @@ export default function DoctorDashboard() {
                       <button
                         type="button"
                         onClick={() => setSlotOverrideMode('date')}
-                        className={`flex-1 py-1 text-center text-[10px] font-bold rounded-md transition-all ${
-                          slotOverrideMode === 'date' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                        className={`flex-1 py-2 text-center text-[10px] font-extrabold rounded-lg transition-all ${
+                          slotOverrideMode === 'date' 
+                            ? 'bg-white text-indigo-600 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-800'
                         }`}
                       >
-                        Specific Date Override
+                        Date-Specific Overrides
                       </button>
                     </div>
 
                     {slotOverrideMode === 'weekly' ? (
-                      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 border border-slate-100 rounded-xl p-3 bg-slate-50/40">
+                      <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1 border border-slate-200/60 rounded-2xl p-4 bg-slate-50/20 shadow-inner">
                         {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
                           const weeklyRanges = doctorForm.schedule?.weekly || {};
                           const disabledSlotsForDay = doctorForm.schedule?.disabledWeekly?.[day] || [];
                           const generatedSlots = generateWeeklySlotsForDay(day, weeklyRanges, doctorForm.durationMin);
                           
                           if (generatedSlots.length === 0) return null;
+
+                          const morningWeekly = generatedSlots.filter(t => parseInt(t.split(':')[0], 10) < 12);
+                          const afternoonWeekly = generatedSlots.filter(t => parseInt(t.split(':')[0], 10) >= 12);
                           
                           return (
-                            <div key={day} className="space-y-1.5 pb-2.5 border-b border-slate-150 last:border-0 last:pb-0">
-                              <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider block capitalize">
+                            <div key={day} className="space-y-2.5 pb-4 border-b border-slate-200/60 last:border-0 last:pb-0">
+                              <span className="text-[10px] font-black text-indigo-650 uppercase tracking-widest block capitalize">
                                 {day}
                               </span>
-                              <div className="grid grid-cols-4 gap-2">
-                                {generatedSlots.map(timeStr => {
-                                  const isDisabled = disabledSlotsForDay.includes(timeStr);
-                                  return (
-                                    <button
-                                      key={timeStr}
-                                      type="button"
-                                      onClick={() => {
-                                        const updatedDisabled = [...disabledSlotsForDay];
-                                        if (isDisabled) {
-                                          const index = updatedDisabled.indexOf(timeStr);
-                                          if (index > -1) updatedDisabled.splice(index, 1);
-                                        } else {
-                                          updatedDisabled.push(timeStr);
-                                        }
-                                        
-                                        setDoctorForm({
-                                          ...doctorForm,
-                                          schedule: {
-                                            ...doctorForm.schedule,
-                                            disabledWeekly: {
-                                              ...(doctorForm.schedule?.disabledWeekly || {}),
-                                              [day]: updatedDisabled,
+                              
+                              {/* Morning Section */}
+                              {morningWeekly.length > 0 && (
+                                <div className="space-y-1">
+                                  <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block">☀️ Morning</span>
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {morningWeekly.map(timeStr => {
+                                      const isDisabled = disabledSlotsForDay.includes(timeStr);
+                                      return (
+                                        <button
+                                          key={timeStr}
+                                          type="button"
+                                          onClick={() => {
+                                            const updatedDisabled = [...disabledSlotsForDay];
+                                            if (isDisabled) {
+                                              const index = updatedDisabled.indexOf(timeStr);
+                                              if (index > -1) updatedDisabled.splice(index, 1);
+                                            } else {
+                                              updatedDisabled.push(timeStr);
                                             }
-                                          }
-                                        });
-                                      }}
-                                      className={`py-1.5 rounded-lg text-xs font-semibold text-center border transition-all ${
-                                        isDisabled
-                                          ? 'bg-red-50 text-red-500 border-red-250 line-through'
-                                          : 'bg-white text-slate-750 border-slate-200 hover:border-slate-350 hover:bg-slate-50'
-                                      }`}
-                                    >
-                                      {timeStr}
-                                    </button>
-                                  );
-                                })}
-                              </div>
+                                            
+                                            setDoctorForm({
+                                              ...doctorForm,
+                                              schedule: {
+                                                ...doctorForm.schedule,
+                                                disabledWeekly: {
+                                                  ...(doctorForm.schedule?.disabledWeekly || {}),
+                                                  [day]: updatedDisabled,
+                                                }
+                                              }
+                                            });
+                                          }}
+                                          className={`py-2 rounded-xl text-xs font-bold text-center border transition-all ${
+                                            isDisabled
+                                              ? 'bg-rose-50 border-rose-150 text-rose-500 line-through decoration-rose-300'
+                                              : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-200 hover:text-indigo-650 hover:bg-indigo-50/10'
+                                          }`}
+                                        >
+                                          {timeStr}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Afternoon Section */}
+                              {afternoonWeekly.length > 0 && (
+                                <div className="space-y-1">
+                                  <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block">🌙 Afternoon & Evening</span>
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {afternoonWeekly.map(timeStr => {
+                                      const isDisabled = disabledSlotsForDay.includes(timeStr);
+                                      return (
+                                        <button
+                                          key={timeStr}
+                                          type="button"
+                                          onClick={() => {
+                                            const updatedDisabled = [...disabledSlotsForDay];
+                                            if (isDisabled) {
+                                              const index = updatedDisabled.indexOf(timeStr);
+                                              if (index > -1) updatedDisabled.splice(index, 1);
+                                            } else {
+                                              updatedDisabled.push(timeStr);
+                                            }
+                                            
+                                            setDoctorForm({
+                                              ...doctorForm,
+                                              schedule: {
+                                                ...doctorForm.schedule,
+                                                disabledWeekly: {
+                                                  ...(doctorForm.schedule?.disabledWeekly || {}),
+                                                  [day]: updatedDisabled,
+                                                }
+                                              }
+                                            });
+                                          }}
+                                          className={`py-2 rounded-xl text-xs font-bold text-center border transition-all ${
+                                            isDisabled
+                                              ? 'bg-rose-50 border-rose-150 text-rose-500 line-through decoration-rose-300'
+                                              : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-200 hover:text-indigo-650 hover:bg-indigo-50/10'
+                                          }`}
+                                        >
+                                          {timeStr}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="space-y-3 border border-slate-100 rounded-xl p-3 bg-slate-50/40">
-                        <div className="flex items-center space-x-3">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Select Override Date:</label>
-                          <input
-                            type="date"
-                            value={overrideDate}
-                            onChange={(e) => setOverrideDate(e.target.value)}
-                            className="bg-white border border-slate-200 focus:outline-none rounded-lg px-3 py-1 text-xs"
-                          />
+                      <div className="space-y-4 border border-slate-200/60 rounded-2xl p-4 bg-slate-50/20 shadow-inner">
+                        <div className="flex items-center space-x-3 bg-white border border-slate-200 rounded-xl p-3 max-w-sm">
+                          <Calendar className="w-4 h-4 text-indigo-650 shrink-0" />
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-[9px] text-slate-400 font-extrabold uppercase">Target Date</span>
+                            <input
+                              type="date"
+                              value={overrideDate}
+                              onChange={(e) => setOverrideDate(e.target.value)}
+                              className="bg-transparent focus:outline-none text-xs text-slate-800 font-bold mt-0.5 cursor-pointer"
+                            />
+                          </div>
                         </div>
 
                         {(() => {
                           const dateObj = new Date(overrideDate);
                           if (isNaN(dateObj.getTime())) {
-                            return <p className="text-[10px] text-slate-400">Please select a valid date</p>;
+                            return <p className="text-xs text-slate-400 font-medium">Please select a valid date.</p>;
                           }
                           const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
                           const dayName = weekdays[dateObj.getDay()];
@@ -2723,58 +2790,112 @@ export default function DoctorDashboard() {
                           const generatedSlots = generateWeeklySlotsForDay(dayName, weeklyRanges, doctorForm.durationMin);
 
                           if (generatedSlots.length === 0) {
-                            return <p className="text-[10px] text-slate-400 italic">Practitioner has no weekly schedule template defined for {dayName}s.</p>;
+                            return <p className="text-xs text-slate-400 italic">No schedule configured for {dayName}s in weekly template.</p>;
                           }
 
+                          const morningDate = generatedSlots.filter(t => parseInt(t.split(':')[0], 10) < 12);
+                          const afternoonDate = generatedSlots.filter(t => parseInt(t.split(':')[0], 10) >= 12);
+
                           return (
-                            <div className="space-y-2 pt-2 border-t border-slate-150">
-                              <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider block">
-                                Slots for {dateObj.toLocaleDateString(undefined, { dateStyle: 'medium' })} ({dayName})
+                            <div className="space-y-3 pt-3 border-t border-slate-200/60">
+                              <span className="text-xs font-black text-slate-800 block">
+                                Slots for {dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                               </span>
-                              <div className="grid grid-cols-4 gap-2">
-                                {generatedSlots.map(timeStr => {
-                                  const isDisabled = disabledForDate.includes(timeStr);
-                                  return (
-                                    <button
-                                      key={timeStr}
-                                      type="button"
-                                      onClick={() => {
-                                        const updatedDisabled = [...disabledForDate];
-                                        if (isDisabled) {
-                                          const index = updatedDisabled.indexOf(timeStr);
-                                          if (index > -1) updatedDisabled.splice(index, 1);
-                                        } else {
-                                          updatedDisabled.push(timeStr);
-                                        }
-                                        
-                                        setDoctorForm({
-                                          ...doctorForm,
-                                          schedule: {
-                                            ...doctorForm.schedule,
-                                            disabledDates: {
-                                              ...(doctorForm.schedule?.disabledDates || {}),
-                                              [overrideDate]: updatedDisabled,
+
+                              {/* Morning Section */}
+                              {morningDate.length > 0 && (
+                                <div className="space-y-1.5">
+                                  <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block">☀️ Morning</span>
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {morningDate.map(timeStr => {
+                                      const isDisabled = disabledForDate.includes(timeStr);
+                                      return (
+                                        <button
+                                          key={timeStr}
+                                          type="button"
+                                          onClick={() => {
+                                            const updatedDisabled = [...disabledForDate];
+                                            if (isDisabled) {
+                                              const index = updatedDisabled.indexOf(timeStr);
+                                              if (index > -1) updatedDisabled.splice(index, 1);
+                                            } else {
+                                              updatedDisabled.push(timeStr);
                                             }
-                                          }
-                                        });
-                                      }}
-                                      className={`py-1.5 rounded-lg text-xs font-semibold text-center border transition-all ${
-                                        isDisabled
-                                          ? 'bg-red-50 text-red-500 border-red-255 line-through'
-                                          : 'bg-white text-slate-750 border-slate-200 hover:border-slate-350 hover:bg-slate-50'
-                                      }`}
-                                    >
-                                      {timeStr}
-                                    </button>
-                                  );
-                                })}
-                              </div>
+                                            
+                                            setDoctorForm({
+                                              ...doctorForm,
+                                              schedule: {
+                                                ...doctorForm.schedule,
+                                                disabledDates: {
+                                                  ...(doctorForm.schedule?.disabledDates || {}),
+                                                  [overrideDate]: updatedDisabled,
+                                                }
+                                              }
+                                            });
+                                          }}
+                                          className={`py-2 rounded-xl text-xs font-bold text-center border transition-all ${
+                                            isDisabled
+                                              ? 'bg-rose-50 border-rose-150 text-rose-500 line-through decoration-rose-300'
+                                              : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-200 hover:text-indigo-650 hover:bg-indigo-50/10'
+                                          }`}
+                                        >
+                                          {timeStr}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Afternoon Section */}
+                              {afternoonDate.length > 0 && (
+                                <div className="space-y-1.5">
+                                  <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block">🌙 Afternoon & Evening</span>
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {afternoonDate.map(timeStr => {
+                                      const isDisabled = disabledForDate.includes(timeStr);
+                                      return (
+                                        <button
+                                          key={timeStr}
+                                          type="button"
+                                          onClick={() => {
+                                            const updatedDisabled = [...disabledForDate];
+                                            if (isDisabled) {
+                                              const index = updatedDisabled.indexOf(timeStr);
+                                              if (index > -1) updatedDisabled.splice(index, 1);
+                                            } else {
+                                              updatedDisabled.push(timeStr);
+                                            }
+                                            
+                                            setDoctorForm({
+                                              ...doctorForm,
+                                              schedule: {
+                                                ...doctorForm.schedule,
+                                                disabledDates: {
+                                                  ...(doctorForm.schedule?.disabledDates || {}),
+                                                  [overrideDate]: updatedDisabled,
+                                                }
+                                              }
+                                            });
+                                          }}
+                                          className={`py-2 rounded-xl text-xs font-bold text-center border transition-all ${
+                                            isDisabled
+                                              ? 'bg-rose-50 border-rose-150 text-rose-500 line-through decoration-rose-300'
+                                              : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-200 hover:text-indigo-650 hover:bg-indigo-50/10'
+                                          }`}
+                                        >
+                                          {timeStr}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
                       </div>
                     )}
-                  </div>               </div>
                   </div>
 
                   <div className="flex justify-end pt-2">
