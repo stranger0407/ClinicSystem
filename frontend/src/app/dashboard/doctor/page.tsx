@@ -894,7 +894,7 @@ export default function DoctorDashboard() {
                 }}
                 className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all transform ${
                   isSelected
-                    ? 'bg-gradient-to-r from-indigo-600/90 to-teal-650/80 text-white font-bold shadow-md shadow-indigo-500/5 translate-x-1'
+                    ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/10 translate-x-1'
                     : 'text-slate-500 hover:bg-slate-900/40 hover:text-white'
                 }`}
               >
@@ -1000,7 +1000,7 @@ export default function DoctorDashboard() {
                             </h4>
                             <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
                               app.status === 'CHECKED_IN' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
-                              app.status === 'IN_CONSULTATION' ? 'bg-indigo-50 text-indigo-650 border border-indigo-200' :
+                              app.status === 'IN_CONSULTATION' ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' :
                               app.status === 'COMPLETED' ? 'bg-slate-100 text-slate-500 border border-slate-300' :
                               'bg-slate-50 text-slate-600 border border-slate-200'
                             }`}>
@@ -1038,7 +1038,7 @@ export default function DoctorDashboard() {
                     <form onSubmit={handleSaveEncounter} className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6 flex flex-col text-slate-800">
                       <div className="flex justify-between items-center border-b border-slate-100 pb-4 shrink-0">
                         <div className="flex items-center space-x-3">
-                          <Clipboard className="w-5 h-5 text-indigo-650" />
+                          <Clipboard className="w-5 h-5 text-indigo-600" />
                           <h3 className="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Consultation Pad</h3>
                         </div>
                         <span className="text-xs text-slate-500">
@@ -1329,7 +1329,7 @@ export default function DoctorDashboard() {
                             </div>
 
                             {/* Error & Success Messages */}
-                            {errorMsg && <p className="text-red-650 text-xs font-semibold">{errorMsg}</p>}
+                            {errorMsg && <p className="text-red-600 text-xs font-semibold">{errorMsg}</p>}
                             {successMsg && <p className="text-emerald-600 text-xs font-bold">{successMsg}</p>}
 
                             <div className="flex justify-between items-center pt-4 border-t border-slate-100">
@@ -1345,7 +1345,7 @@ export default function DoctorDashboard() {
                               <button
                                 type="submit"
                                 disabled={savingEncounter}
-                                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-teal-650 hover:from-indigo-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-indigo-500/10 disabled:opacity-50"
+                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center space-x-2 shadow-md shadow-indigo-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 {savingEncounter && <Loader className="h-4 w-4 animate-spin" />}
                                 <span>Sign & Complete Consultation</span>
