@@ -86,7 +86,15 @@ export class AppController {
     const dayName = weekdays[date.getDay()];
 
     const schedule = doctor.schedule as any;
-    const daySlots = schedule?.weekly?.[dayName] || [];
+    const cancelledDates = schedule?.cancelledDates || [];
+    if (cancelledDates.includes(dateStr)) {
+      return [];
+    }
+
+    const weekly = schedule?.weekly || {};
+    const workStart = schedule?.workStart || '09:00';
+    const workEnd = schedule?.workEnd || '17:00';
+    const daySlots = weekly[dayName] !== undefined ? weekly[dayName] : [`${workStart}-${workEnd}`];
 
     const slots: { time: string; startTime: string; available: boolean }[] = [];
     const durationMin = doctor.durationMin || 15;

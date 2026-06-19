@@ -17,16 +17,49 @@ export class AppointmentService {
 
     // 2. Perform booking within transaction
     return this.prisma.$transaction(async (tx) => {
-      let startTime: Date | null = null;
+      let startTime: Date;
       let endTime: Date | null = null;
       let queueNumber: number | null = null;
 
+      if (dto.startTime) {
+        startTime = new Date(dto.startTime);
+      } else {
+        startTime = new Date();
+      }
+
+      const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayName = weekdays[startTime.getDay()];
+
+      // Local Date YYYY-MM-DD
+      const y = startTime.getFullYear();
+      const m = String(startTime.getMonth() + 1).padStart(2, '0');
+      const d = String(startTime.getDate()).padStart(2, '0');
+      const dateStr = `${y}-${m}-${d}`;
+
+      const schedule = doctor.schedule as any;
+      const weekly = schedule?.weekly || {};
+      const workStart = schedule?.workStart || '09:00';
+      const workEnd = schedule?.workEnd || '17:00';
+      const cancelledDates = schedule?.cancelledDates || [];
+      const disabledWeekly = schedule?.disabledWeekly?.[dayName] || [];
+      const disabledDatesForDate = schedule?.disabledDates?.[dateStr] || [];
+
+      const daySlots = weekly[dayName] !== undefined ? weekly[dayName] : [`${workStart}-${workEnd}`];
+      const isCancelled = cancelledDates.includes(dateStr);
+
+      if (isCancelled || daySlots.length === 0) {
+        throw new BadRequestException('Doctor is not available on this date.');
+      }
+
       if (dto.type === 'SLOT') {
-        if (!dto.startTime) {
-          throw new BadRequestException('Start time is required for slot-based appointments');
+        const slotTimeStr = startTime.toTimeString().substring(0, 5); // "09:00"
+        const isDisabledWeekly = disabledWeekly.includes(slotTimeStr);
+        const isDisabledDate = disabledDatesForDate.includes(slotTimeStr);
+
+        if (isDisabledWeekly || isDisabledDate) {
+          throw new ConflictException('The selected time slot is disabled by the doctor.');
         }
 
-        startTime = new Date(dto.startTime);
         // Add doctor slot duration (minutes)
         endTime = new Date(startTime.getTime() + doctor.durationMin * 60 * 1000);
 
@@ -50,11 +83,10 @@ export class AppointmentService {
         }
       } else {
         // WALK-IN booking
-        // Retrieve count of walk-ins for this doctor today
-        const startOfDay = new Date();
+        const startOfDay = new Date(startTime);
         startOfDay.setHours(0, 0, 0, 0);
 
-        const endOfDay = new Date();
+        const endOfDay = new Date(startTime);
         endOfDay.setHours(23, 59, 59, 999);
 
         const walkInCount = await tx.appointment.count({
@@ -63,7 +95,7 @@ export class AppointmentService {
             doctorId: dto.doctorId,
             type: 'WALK_IN',
             deletedAt: null,
-            createdAt: {
+            startTime: {
               gte: startOfDay,
               lte: endOfDay,
             },

@@ -940,13 +940,32 @@ export default function DoctorDashboard() {
       const docs = await apiFetch('/doctor');
       const myDoc = docs.find((d: any) => d.userId === user?.id) || docs[0];
       if (myDoc) {
+        const schedule = myDoc.schedule || { weekly: {}, disabledWeekly: {}, disabledDates: {}, cancelledDates: [] };
+        
+        // Ensure workStart and workEnd are set
+        if (!schedule.workStart) {
+          schedule.workStart = '09:00';
+        }
+        if (!schedule.workEnd) {
+          schedule.workEnd = '17:00';
+        }
+        
+        // Ensure weekly has all 7 days
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        schedule.weekly = schedule.weekly || {};
+        for (const day of days) {
+          if (!schedule.weekly[day] || schedule.weekly[day].length === 0) {
+            schedule.weekly[day] = [`${schedule.workStart}-${schedule.workEnd}`];
+          }
+        }
+
         setDoctorProfile(myDoc);
         setDoctorForm({
           specialty: myDoc.specialty || '',
           licenseNo: myDoc.licenseNo || '',
           fees: Number(myDoc.fees) || 200,
           durationMin: myDoc.durationMin || 15,
-          schedule: myDoc.schedule || { weekly: {}, disabledWeekly: {} },
+          schedule: schedule,
         });
         setInvoiceItems([{ description: 'Consultation Fee', quantity: 1, amount: Number(myDoc.fees) || 250 }]);
       }
@@ -1008,6 +1027,15 @@ export default function DoctorDashboard() {
       }
     }
     return slots;
+  };
+
+  const updateWeeklySchedule = (newStart: string, newEnd: string) => {
+    const newWeekly: any = {};
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    for (const day of days) {
+      newWeekly[day] = [`${newStart}-${newEnd}`];
+    }
+    return newWeekly;
   };
 
   const handleDoctorProfileUpdate = async (e: React.FormEvent) => {
@@ -2594,7 +2622,7 @@ export default function DoctorDashboard() {
                       className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Consultation Fee (INR)</label>
                       <input
@@ -2602,18 +2630,76 @@ export default function DoctorDashboard() {
                         required
                         value={doctorForm.fees}
                         onChange={(e) => setDoctorForm({ ...doctorForm, fees: Number(e.target.value) })}
-                        className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2"
+                        className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2 font-semibold text-slate-800"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Appointment Slot Duration (Mins)</label>
-                      <input
-                        type="number"
-                        required
+                      <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Appointment Slot Duration</label>
+                      <select
                         value={doctorForm.durationMin}
                         onChange={(e) => setDoctorForm({ ...doctorForm, durationMin: Number(e.target.value) })}
-                        className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2"
-                      />
+                        className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2 font-semibold text-slate-800"
+                      >
+                        <option value={15}>15 Minutes</option>
+                        <option value={30}>30 Minutes</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Start of Work Day</label>
+                      <select
+                        value={doctorForm.schedule?.workStart || '09:00'}
+                        onChange={(e) => {
+                          const start = e.target.value;
+                          const end = doctorForm.schedule?.workEnd || '17:00';
+                          const weekly = updateWeeklySchedule(start, end);
+                          setDoctorForm({
+                            ...doctorForm,
+                            schedule: {
+                              ...doctorForm.schedule,
+                              workStart: start,
+                              workEnd: end,
+                              weekly,
+                            }
+                          });
+                        }}
+                        className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2 font-semibold text-slate-800"
+                      >
+                        <option value="07:00">07:00 AM</option>
+                        <option value="08:00">08:00 AM</option>
+                        <option value="09:00">09:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">End of Work Day</label>
+                      <select
+                        value={doctorForm.schedule?.workEnd || '17:00'}
+                        onChange={(e) => {
+                          const end = e.target.value;
+                          const start = doctorForm.schedule?.workStart || '09:00';
+                          const weekly = updateWeeklySchedule(start, end);
+                          setDoctorForm({
+                            ...doctorForm,
+                            schedule: {
+                              ...doctorForm.schedule,
+                              workStart: start,
+                              workEnd: end,
+                              weekly,
+                            }
+                          });
+                        }}
+                        className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2 font-semibold text-slate-800"
+                      >
+                        <option value="17:00">05:00 PM</option>
+                        <option value="18:00">06:00 PM</option>
+                        <option value="19:00">07:00 PM</option>
+                        <option value="20:00">08:00 PM</option>
+                        <option value="21:00">09:00 PM</option>
+                        <option value="22:00">10:00 PM</option>
+                        <option value="23:00">11:00 PM</option>
+                      </select>
                     </div>
                   </div>
 
@@ -2765,17 +2851,53 @@ export default function DoctorDashboard() {
                       </div>
                     ) : (
                       <div className="space-y-4 border border-slate-200/60 rounded-2xl p-4 bg-slate-50/20 shadow-inner">
-                        <div className="flex items-center space-x-3 bg-white border border-slate-200 rounded-xl p-3 max-w-sm">
-                          <Calendar className="w-4 h-4 text-indigo-650 shrink-0" />
-                          <div className="flex-1 flex flex-col">
-                            <span className="text-[9px] text-slate-400 font-extrabold uppercase">Target Date</span>
-                            <input
-                              type="date"
-                              value={overrideDate}
-                              onChange={(e) => setOverrideDate(e.target.value)}
-                              className="bg-transparent focus:outline-none text-xs text-slate-800 font-bold mt-0.5 cursor-pointer"
-                            />
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <div className="flex items-center space-x-3 bg-white border border-slate-200 rounded-xl p-3 max-w-sm flex-1">
+                            <Calendar className="w-4 h-4 text-indigo-650 shrink-0" />
+                            <div className="flex-1 flex flex-col">
+                              <span className="text-[9px] text-slate-400 font-extrabold uppercase">Target Date</span>
+                              <input
+                                type="date"
+                                value={overrideDate}
+                                onChange={(e) => setOverrideDate(e.target.value)}
+                                className="bg-transparent focus:outline-none text-xs text-slate-800 font-bold mt-0.5 cursor-pointer"
+                              />
+                            </div>
                           </div>
+
+                          {(() => {
+                            const dateObj = new Date(overrideDate);
+                            if (isNaN(dateObj.getTime())) return null;
+                            const isCancelled = doctorForm.schedule?.cancelledDates?.includes(overrideDate);
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentCancelled = doctorForm.schedule?.cancelledDates || [];
+                                  let updatedCancelled = [...currentCancelled];
+                                  if (isCancelled) {
+                                    updatedCancelled = updatedCancelled.filter((d: string) => d !== overrideDate);
+                                  } else {
+                                    updatedCancelled.push(overrideDate);
+                                  }
+                                  setDoctorForm({
+                                    ...doctorForm,
+                                    schedule: {
+                                      ...doctorForm.schedule,
+                                      cancelledDates: updatedCancelled,
+                                    }
+                                  });
+                                }}
+                                className={`px-4 py-3 rounded-xl font-bold text-xs border transition-all ${
+                                  isCancelled
+                                    ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 shadow-sm'
+                                    : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
+                                }`}
+                              >
+                                {isCancelled ? '🟢 Reopen Entire Day' : '🔴 Cancel Entire Day'}
+                              </button>
+                            );
+                          })()}
                         </div>
 
                         {(() => {
@@ -2783,6 +2905,36 @@ export default function DoctorDashboard() {
                           if (isNaN(dateObj.getTime())) {
                             return <p className="text-xs text-slate-400 font-medium">Please select a valid date.</p>;
                           }
+
+                          const isDayCancelled = doctorForm.schedule?.cancelledDates?.includes(overrideDate);
+                          if (isDayCancelled) {
+                            return (
+                              <div className="bg-rose-50 border border-rose-150 rounded-2xl p-6 text-center text-rose-900 space-y-2 mt-3">
+                                <span className="text-sm font-black block">🔴 Day Cancelled / Closed</span>
+                                <p className="text-[11px] text-rose-700">
+                                  You have marked {dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} as fully closed. Patients cannot book slots or register walk-ins on this date.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const currentCancelled = doctorForm.schedule?.cancelledDates || [];
+                                    const updatedCancelled = currentCancelled.filter((d: string) => d !== overrideDate);
+                                    setDoctorForm({
+                                      ...doctorForm,
+                                      schedule: {
+                                        ...doctorForm.schedule,
+                                        cancelledDates: updatedCancelled,
+                                      }
+                                    });
+                                  }}
+                                  className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs transition-colors shadow-sm"
+                                >
+                                  Make Doctor Available
+                                </button>
+                              </div>
+                            );
+                          }
+
                           const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
                           const dayName = weekdays[dateObj.getDay()];
                           const weeklyRanges = doctorForm.schedule?.weekly || {};
