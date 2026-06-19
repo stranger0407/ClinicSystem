@@ -707,7 +707,7 @@ export default function PublicClinicLanding() {
                   <button
                     type="button"
                     onClick={() => setBookingStep(1)}
-                    className="px-5 py-3 bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold rounded-xl text-xs transition-colors"
+                    className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition-colors"
                   >
                     Back
                   </button>
@@ -767,7 +767,7 @@ export default function PublicClinicLanding() {
                 <div className="pt-4 border-t border-slate-800">
                   <button
                     onClick={handleCloseBooking}
-                    className="w-full py-3 bg-slate-800 hover:bg-slate-750 text-slate-200 font-bold rounded-xl text-xs transition-all"
+                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition-all"
                   >
                     Close & Finish
                   </button>
