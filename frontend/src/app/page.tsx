@@ -457,7 +457,7 @@ export default function PublicClinicLanding() {
 
       {/* ==================== APPOINTMENT BOOKING MODAL ==================== */}
       {bookingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
             
             {/* Close button */}
@@ -886,7 +886,7 @@ export default function PublicClinicLanding() {
 
             {/* Step 3: Success Confirmation */}
             {bookingStep === 3 && bookingSuccessData && (
-              <div className="p-8 text-center space-y-6">
+              <div className="p-8 text-center space-y-6 max-h-[70vh] overflow-y-auto">
                 <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/5">
                   <CheckCircle className="w-9 h-9" />
                 </div>
