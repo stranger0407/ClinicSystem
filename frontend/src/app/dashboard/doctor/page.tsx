@@ -1477,6 +1477,7 @@ export default function DoctorDashboard() {
                                     type="number"
                                     value={durationDays}
                                     onChange={(e) => setDurationDays(Number(e.target.value))}
+                                    onFocus={(e) => e.target.select()}
                                     placeholder="5"
                                     className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
                                   />
@@ -1952,6 +1953,7 @@ export default function DoctorDashboard() {
                                   updated[index].quantity = Number(e.target.value);
                                   setInvoiceItems(updated);
                                 }}
+                                onFocus={(e) => e.target.select()}
                                 placeholder="Qty"
                                 className="w-14 bg-slate-50 border border-slate-200 focus:outline-none rounded px-2 py-1.5 text-xs text-center"
                               />
@@ -1964,6 +1966,7 @@ export default function DoctorDashboard() {
                                   updated[index].amount = Number(e.target.value);
                                   setInvoiceItems(updated);
                                 }}
+                                onFocus={(e) => e.target.select()}
                                 placeholder="Fee"
                                 className="w-20 bg-slate-50 border border-slate-200 focus:outline-none rounded px-2 py-1.5 text-xs text-right"
                               />
@@ -1995,7 +1998,8 @@ export default function DoctorDashboard() {
                           <input
                             type="number"
                             value={invoiceDiscount}
-                            onChange={(e) => setInvoiceDiscount(e.target.value)}
+                            onChange={(e) => setInvoiceDiscount(e.target.value.replace(/^0+(?=\d)/, ''))}
+                            onFocus={(e) => e.target.select()}
                             className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded px-3 py-1.5 text-xs"
                           />
                         </div>
@@ -2004,7 +2008,8 @@ export default function DoctorDashboard() {
                           <input
                             type="number"
                             value={invoiceTax}
-                            onChange={(e) => setInvoiceTax(e.target.value)}
+                            onChange={(e) => setInvoiceTax(e.target.value.replace(/^0+(?=\d)/, ''))}
+                            onFocus={(e) => e.target.select()}
                             className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded px-3 py-1.5 text-xs"
                           />
                         </div>
@@ -2174,7 +2179,8 @@ export default function DoctorDashboard() {
                               type="number"
                               required
                               value={paymentAmount}
-                              onChange={(e) => setPaymentAmount(e.target.value)}
+                              onChange={(e) => setPaymentAmount(e.target.value.replace(/^0+(?=\d)/, ''))}
+                              onFocus={(e) => e.target.select()}
                               placeholder="₹0.00"
                               className="w-full bg-white border border-slate-200 focus:outline-none rounded px-2.5 py-1 text-xs"
                             />
@@ -2630,6 +2636,7 @@ export default function DoctorDashboard() {
                         required
                         value={doctorForm.fees}
                         onChange={(e) => setDoctorForm({ ...doctorForm, fees: Number(e.target.value) })}
+                        onFocus={(e) => e.target.select()}
                         className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2 font-semibold text-slate-800"
                       />
                     </div>
