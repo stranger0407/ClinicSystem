@@ -2401,67 +2401,6 @@ export default function DoctorDashboard() {
                 </div>
               )}
 
-              {/* Audit history logs */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-                <span className="text-xs font-black text-slate-800 uppercase tracking-wider block">System Security & Audit History Logs</span>
-                
-                {/* Search logs */}
-                <div className="relative max-w-sm">
-                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-                  <input
-                    type="text"
-                    value={searchAuditQuery}
-                    onChange={(e) => setSearchAuditQuery(e.target.value)}
-                    placeholder="Search logs by action, table, or operator..."
-                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg pl-9 pr-4 py-2 text-xs text-slate-800"
-                  />
-                </div>
-
-                <div className="overflow-y-auto max-h-[400px]">
-                  {loadingAnalytics ? (
-                    <div className="flex justify-center p-8"><Loader className="w-5 h-5 animate-spin text-slate-400" /></div>
-                  ) : filteredAuditLogs.length > 0 ? (
-                    <div className="border border-slate-100 rounded-xl overflow-hidden text-xs">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-500 font-bold uppercase">
-                            <th className="p-3">Timestamp</th>
-                            <th className="p-3">Action</th>
-                            <th className="p-3">Entity Name</th>
-                            <th className="p-3">Entity ID</th>
-                            <th className="p-3">Operator</th>
-                            <th className="p-3">IP Address</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-700">
-                          {filteredAuditLogs.map((log) => (
-                            <tr key={log.id} className="hover:bg-slate-50/50">
-                              <td className="p-3 text-slate-500">{new Date(log.createdAt).toLocaleString()}</td>
-                              <td className="p-3">
-                                <span className={`px-1.5 py-0.5 rounded font-black text-[9px] uppercase tracking-wide ${
-                                  log.action === 'CREATE' ? 'bg-emerald-50 text-emerald-650' :
-                                  log.action === 'UPDATE' ? 'bg-amber-50 text-amber-650' :
-                                  'bg-rose-50 text-rose-650'
-                                }`}>
-                                  {log.action}
-                                </span>
-                              </td>
-                              <td className="p-3 font-semibold text-slate-800">{log.entityName}</td>
-                              <td className="p-3 text-[10px] text-slate-500 font-mono">{log.entityId}</td>
-                              <td className="p-3">
-                                {log.user ? `${log.user.firstName} ${log.user.lastName}` : 'System'}
-                              </td>
-                              <td className="p-3 text-slate-400 font-mono">{log.ipAddress || '—'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-slate-400 text-xs italic p-4 text-center">No system log entries match criteria.</p>
-                  )}
-                </div>
-              </div>
             </div>
           )}
         </main>
