@@ -301,76 +301,103 @@ export default function PublicClinicLanding() {
       </header>
 
       {/* Hero Banner */}
-      <section className="relative py-20 px-6 max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+      <section className="relative py-12 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
         <div className="flex-1 space-y-6 text-center lg:text-left">
-          <div className="inline-flex items-center space-x-2 bg-teal-500/10 border border-teal-500/20 rounded-full px-3.5 py-1.5 text-teal-400 text-xs font-bold">
+          <div className="inline-flex items-center space-x-2 bg-teal-500/10 border border-teal-500/20 rounded-full px-3.5 py-1.5 text-teal-400 text-xs font-bold shadow-sm">
             <Sparkles className="w-3.5 h-3.5 animate-pulse" />
             <span>Modern Single Clinic Digital Operating System</span>
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
             Trustworthy Care, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-400">
               Simplified Booking.
             </span>
           </h1>
-          <p className="text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed">
+          <p className="text-slate-405 text-sm sm:text-base max-w-xl leading-relaxed font-normal">
             Welcome to {clinic?.name || 'Apollo Family Clinic'}. Book appointments, check live doctor schedules, and claim your patient records file directly.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
             <button
               onClick={() => handleOpenBooking()}
-              className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/10 flex items-center justify-center space-x-2 group active:scale-[0.98]"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/10 flex items-center justify-center space-x-2 group active:scale-[0.98] cursor-pointer"
             >
               <span>Schedule Booking</span>
-              <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
             <Link
               href="/register-patient"
-              className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold rounded-xl transition-all text-center"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 bg-slate-900 hover:bg-slate-800 border border-slate-850 text-slate-200 font-bold rounded-xl transition-all text-center text-sm shadow-inner active:scale-[0.98]"
             >
               Claim Patient Portal
             </Link>
           </div>
-
-          {/* Quick timing widget */}
-          <div className="flex items-center space-x-3 bg-slate-900/40 border border-slate-900 rounded-xl p-4 w-fit mx-auto lg:mx-0">
-            <Clock className="w-5 h-5 text-teal-400" />
-            <div className="text-left">
-              <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider block">OPD Working Hours</span>
-              <span className="text-xs text-slate-300 font-medium">{clinic?.settings?.timings || 'Mon - Sat: 9:00 AM - 5:00 PM'}</span>
-            </div>
-          </div>
         </div>
 
-        {/* Dynamic Card */}
-        <div className="flex-1 w-full max-w-md bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl relative">
-          <div className="absolute -top-3 -right-3 w-16 h-16 bg-teal-500/10 rounded-full blur-xl animate-pulse"></div>
-          <div className="flex items-center space-x-2 mb-6 border-b border-slate-800 pb-4">
-            <Award className="w-5 h-5 text-teal-400" />
-            <h3 className="font-extrabold text-base">Services & Facilities</h3>
+        {/* Dynamic Cards Group (Right side) */}
+        <div className="flex-1 w-full max-w-md space-y-4">
+          {/* Services & Facilities Card */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl relative group overflow-hidden">
+            <div className="absolute -top-3 -right-3 w-16 h-16 bg-teal-500/10 rounded-full blur-xl animate-pulse"></div>
+            <div className="flex items-center space-x-2.5 mb-5 border-b border-slate-800/80 pb-3">
+              <Award className="w-5 h-5 text-teal-400" />
+              <h3 className="font-extrabold text-sm text-white">Services & Facilities</h3>
+            </div>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {clinic?.settings?.facilities ? (
+                clinic.settings.facilities.map((fac: string, idx: number) => (
+                  <li key={idx} className="flex items-start space-x-2.5 group/item">
+                    <div className="w-4.5 h-4.5 bg-teal-500/10 rounded-md flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-teal-500/20 transition-colors">
+                      <Check className="w-3 h-3 text-teal-400" />
+                    </div>
+                    <span className="text-xs text-slate-400 font-normal leading-tight">{fac}</span>
+                  </li>
+                ))
+              ) : (
+                ['General Diagnostics OPD', 'Pharmacy Dispensation', 'In-House Vitals & Blood Tests', 'Vaccinations & Immunization', 'Doctor Consultations'].map((fac, idx) => (
+                  <li key={idx} className="flex items-start space-x-2.5 group/item">
+                    <div className="w-4.5 h-4.5 bg-teal-500/10 rounded-md flex items-center justify-center shrink-0 mt-0.5 group-hover/item:bg-teal-500/20 transition-colors">
+                      <Check className="w-3 h-3 text-teal-400" />
+                    </div>
+                    <span className="text-xs text-slate-400 font-normal leading-tight">{fac}</span>
+                  </li>
+                ))
+              )}
+            </ul>
           </div>
-          <ul className="space-y-3.5">
-            {clinic?.settings?.facilities ? (
-              clinic.settings.facilities.map((fac: string, idx: number) => (
-                <li key={idx} className="flex items-center space-x-3">
-                  <div className="w-5 h-5 bg-teal-500/10 rounded-md flex items-center justify-center">
-                    <Check className="w-3.5 h-3.5 text-teal-400" />
-                  </div>
-                  <span className="text-sm text-slate-400">{fac}</span>
-                </li>
-              ))
-            ) : (
-              ['General Diagnostics OPD', 'Pharmacy Dispensation', 'In-House Vitals & Blood Tests', 'Vaccinations & Immunization', 'Doctor Consultations'].map((fac, idx) => (
-                <li key={idx} className="flex items-center space-x-3">
-                  <div className="w-5 h-5 bg-teal-500/10 rounded-md flex items-center justify-center">
-                    <Check className="w-3.5 h-3.5 text-teal-400" />
-                  </div>
-                  <span className="text-sm text-slate-400">{fac}</span>
-                </li>
-              ))
-            )}
-          </ul>
+
+          {/* Secondary Sub-cards Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Timing Card */}
+            <div className="bg-slate-900/40 backdrop-blur-sm border border-slate-850 hover:border-slate-800 transition-colors duration-300 rounded-2xl p-5 shadow-lg flex flex-col justify-between group">
+              <div className="flex items-center space-x-2 text-teal-400 mb-2">
+                <Clock className="w-4 h-4" />
+                <span className="text-[9px] text-slate-505 uppercase font-black tracking-widest block">Working Hours</span>
+              </div>
+              <p className="text-[11px] text-slate-300 font-bold leading-normal">
+                {clinic?.settings?.timings || 'Mon - Sat: 9:00 AM - 5:00 PM'}
+              </p>
+              <span className="text-[9px] text-slate-500 mt-1 font-medium block">Closed Sundays</span>
+            </div>
+
+            {/* Quick Portal Access Card */}
+            <div className="bg-slate-900/40 backdrop-blur-sm border border-slate-850 hover:border-slate-800 transition-colors duration-300 rounded-2xl p-5 shadow-lg flex flex-col justify-between group">
+              <div className="flex items-center space-x-2 text-indigo-400 mb-2">
+                <Sparkles className="w-4 h-4" />
+                <span className="text-[9px] text-slate-505 uppercase font-black tracking-widest block">Patient Portal</span>
+              </div>
+              <div className="flex flex-col space-y-1 text-xs">
+                <Link href="/login" className="text-teal-400 hover:text-teal-350 transition-colors font-bold flex items-center space-x-1">
+                  <span>Portal Sign In</span>
+                  <ChevronRight className="w-3 h-3" />
+                </Link>
+                <Link href="/register-patient" className="text-teal-400 hover:text-teal-350 transition-colors font-bold flex items-center space-x-1">
+                  <span>Register Profile</span>
+                  <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
