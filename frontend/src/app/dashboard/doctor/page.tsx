@@ -185,6 +185,17 @@ export default function DoctorDashboard() {
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [searchAuditQuery, setSearchAuditQuery] = useState('');
 
+  // Quick Check-In / Booking States
+  const [bookingPatient, setBookingPatient] = useState<any | null>(null);
+  const [bookingType, setBookingType] = useState<'SLOT' | 'WALK_IN'>('WALK_IN');
+  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [bookingTime, setBookingTime] = useState('');
+  const [bookingIsFollowUp, setBookingIsFollowUp] = useState(false);
+  const [bookingNotes, setBookingNotes] = useState('');
+  const [bookingSlots, setBookingSlots] = useState<any[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
+
   // ==========================================
   // AUTH GUARD CHECK
   // ==========================================
@@ -231,6 +242,76 @@ export default function DoctorDashboard() {
       console.error(err);
     } finally {
       setLoadingQueue(false);
+    }
+  };
+
+  const fetchBookingSlots = async () => {
+    if (!user?.profileId || !bookingDate || bookingType !== 'SLOT' || !bookingPatient) {
+      setBookingSlots([]);
+      return;
+    }
+    setLoadingSlots(true);
+    setBookingTime('');
+    try {
+      const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${BASE_URL}/public/doctor/${user.profileId}/slots?date=${bookingDate}`);
+      if (!res.ok) throw new Error('Failed to fetch slots');
+      const data = await res.json();
+      setBookingSlots(data);
+    } catch (err) {
+      console.error('Error fetching booking slots:', err);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookingSlots();
+  }, [bookingDate, bookingType, bookingPatient]);
+
+  const handleConfirmBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookingPatient || !user?.profileId) return;
+    setBookingInProgress(true);
+    try {
+      const payload: any = {
+        patientId: bookingPatient.id,
+        doctorId: user.profileId,
+        type: bookingType,
+        isFollowUp: bookingIsFollowUp,
+        notes: bookingNotes,
+      };
+
+      if (bookingType === 'SLOT') {
+        if (!bookingTime) {
+          throw new Error('Please select a booking time');
+        }
+        payload.startTime = new Date(`${bookingDate}T${bookingTime}`).toISOString();
+      } else {
+        payload.startTime = new Date(`${bookingDate}T00:00:00`).toISOString();
+      }
+
+      await apiFetch('/appointment', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      setBookingPatient(null);
+      setBookingTime('');
+      setBookingNotes('');
+      setBookingIsFollowUp(false);
+      
+      loadQueue();
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (bookingDate === todayStr) {
+        setActiveTab('queue');
+      }
+      alert('Patient checked in successfully.');
+    } catch (err: any) {
+      alert(err.message || 'Failed to book appointment');
+    } finally {
+      setBookingInProgress(false);
     }
   };
 
@@ -422,6 +503,7 @@ export default function DoctorDashboard() {
       // refresh search results with new patient
       setPatientSearchResults([res, ...patientSearchResults]);
       viewPatientTimeline(res.id);
+      setBookingPatient(res);
     } catch (err: any) {
       setRegisterError(err.message || 'Failed to register patient');
     } finally {
@@ -1233,6 +1315,12 @@ export default function DoctorDashboard() {
                               <td className="p-3">{pat.gender}</td>
                               <td className="p-3 text-right space-x-2">
                                 <button
+                                  onClick={() => setBookingPatient(pat)}
+                                  className="text-xs text-emerald-600 font-semibold hover:underline"
+                                >
+                                  Check-In
+                                </button>
+                                <button
                                   onClick={() => viewPatientTimeline(pat.id)}
                                   className="text-xs text-indigo-600 font-semibold hover:underline"
                                 >
@@ -1462,6 +1550,15 @@ export default function DoctorDashboard() {
                         </strong>
                       </div>
                     </div>
+
+                    {/* Check-In / Book Patient Button */}
+                    <button
+                      onClick={() => setBookingPatient(selectedPatientForTimeline)}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      <span>Check-In / Book Patient</span>
+                    </button>
 
                     {/* Patient Timeline logs */}
                     <div className="space-y-3 pt-3 border-t border-slate-100">
@@ -2429,6 +2526,172 @@ export default function DoctorDashboard() {
                   className="px-4 py-2 bg-indigo-650 hover:bg-indigo-550 text-white font-bold rounded-lg shadow-sm"
                 >
                   Save Patient Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Quick Check-In / Booking Modal */}
+      {bookingPatient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+              <h3 className="font-extrabold text-slate-800 text-sm uppercase flex items-center">
+                <PlusCircle className="w-5 h-5 mr-2 text-emerald-600" />
+                Quick Check-In / Booking
+              </h3>
+              <button
+                onClick={() => setBookingPatient(null)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleConfirmBooking} className="p-6 space-y-4 text-xs overflow-y-auto text-slate-800">
+              {/* Patient Banner Info */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-slate-800 text-xs">
+                    {bookingPatient.firstName} {bookingPatient.lastName}
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
+                    Phone: {bookingPatient.phone} | DOB: {new Date(bookingPatient.dob).toLocaleDateString()}
+                  </p>
+                </div>
+                <span className="text-[9px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full uppercase border border-emerald-200">
+                  Ready
+                </span>
+              </div>
+
+              {/* Booking Type Selector */}
+              <div className="space-y-1">
+                <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Visit Type</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBookingType('WALK_IN');
+                      setBookingTime('');
+                    }}
+                    className={`py-2 px-3 rounded-lg border font-bold text-center transition-all ${
+                      bookingType === 'WALK_IN'
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    Walk-In / Immediate Queue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingType('SLOT')}
+                    className={`py-2 px-3 rounded-lg border font-bold text-center transition-all ${
+                      bookingType === 'SLOT'
+                        ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    Scheduled Appointment
+                  </button>
+                </div>
+              </div>
+
+              {/* Booking Date */}
+              <div className="space-y-1">
+                <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Date</label>
+                <input
+                  type="date"
+                  required
+                  value={bookingDate}
+                  onChange={(e) => setBookingDate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
+                />
+              </div>
+
+              {/* Time Slots (Visible if Scheduled SLOT) */}
+              {bookingType === 'SLOT' && (
+                <div className="space-y-2">
+                  <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px] block">
+                    Available Time Slots
+                  </label>
+                  {loadingSlots ? (
+                    <div className="flex items-center space-x-2 py-4 justify-center text-slate-500">
+                      <Loader className="w-4 h-4 animate-spin" />
+                      <span>Loading slots...</span>
+                    </div>
+                  ) : bookingSlots.length === 0 ? (
+                    <p className="text-slate-500 italic py-2">No slots available for the selected date.</p>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1 border border-slate-100 rounded-lg">
+                      {bookingSlots.map((slot) => {
+                        const isSelected = bookingTime === slot.time;
+                        return (
+                          <button
+                            key={slot.time}
+                            type="button"
+                            disabled={!slot.available}
+                            onClick={() => setBookingTime(slot.time)}
+                            className={`py-1.5 px-2 rounded-md text-[11px] font-semibold text-center border transition-all ${
+                              !slot.available
+                                ? 'bg-slate-100 border-slate-100 text-slate-400 line-through cursor-not-allowed'
+                                : isSelected
+                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm font-bold'
+                                : 'bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50 text-slate-700'
+                            }`}
+                          >
+                            {slot.time}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Follow Up Checkbox */}
+              <div className="flex items-center space-x-2 py-1">
+                <input
+                  type="checkbox"
+                  id="bookingIsFollowUp"
+                  checked={bookingIsFollowUp}
+                  onChange={(e) => setBookingIsFollowUp(e.target.checked)}
+                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                />
+                <label htmlFor="bookingIsFollowUp" className="text-slate-700 font-bold select-none cursor-pointer">
+                  Is this a follow-up consultation?
+                </label>
+              </div>
+
+              {/* Booking Notes / Chief Complaint */}
+              <div className="space-y-1">
+                <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Chief Complaint / Notes</label>
+                <textarea
+                  value={bookingNotes}
+                  onChange={(e) => setBookingNotes(e.target.value)}
+                  placeholder="e.g. Patient complains of cough and fever for 3 days..."
+                  rows={3}
+                  className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="pt-4 border-t border-slate-100 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setBookingPatient(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={bookingInProgress || (bookingType === 'SLOT' && !bookingTime)}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-sm flex items-center space-x-1.5 transition-all disabled:opacity-50"
+                >
+                  {bookingInProgress && <Loader className="w-4 h-4 animate-spin" />}
+                  <span>Confirm Check-In</span>
                 </button>
               </div>
             </form>
