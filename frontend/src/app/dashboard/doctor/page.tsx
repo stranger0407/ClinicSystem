@@ -1624,25 +1624,33 @@ export default function DoctorDashboard() {
                                 {new Date().getFullYear() - new Date(pat.dob).getFullYear()}y)
                               </td>
                               <td className="p-3">{pat.gender}</td>
-                              <td className="p-3 text-right space-x-2">
-                                <button
-                                  onClick={() => setBookingPatient(pat)}
-                                  className="text-xs text-emerald-600 font-semibold hover:underline"
-                                >
-                                  Check-In
-                                </button>
-                                <button
-                                  onClick={() => viewPatientTimeline(pat.id)}
-                                  className="text-xs text-indigo-600 font-semibold hover:underline"
-                                >
-                                  Open File
-                                </button>
-                                <button
-                                  onClick={() => setEditingPatient(pat)}
-                                  className="text-xs text-slate-500 font-medium hover:text-slate-800"
-                                >
-                                  Edit
-                                </button>
+                              <td className="p-3 text-right">
+                                <div className="flex items-center justify-end space-x-2">
+                                  <button
+                                    onClick={() => setBookingPatient(pat)}
+                                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-700 font-bold rounded transition-all duration-150 shadow-sm"
+                                  >
+                                    <Clock className="w-3 h-3 text-emerald-500" />
+                                    <span>Check-In</span>
+                                  </button>
+                                  
+                                  <button
+                                    onClick={() => viewPatientTimeline(pat.id)}
+                                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-700 font-bold rounded transition-all duration-150 shadow-sm"
+                                  >
+                                    <FileText className="w-3 h-3 text-indigo-500" />
+                                    <span>Open File</span>
+                                  </button>
+                                  
+                                  <button
+                                    onClick={() => setEditingPatient(pat)}
+                                    className="inline-flex items-center space-x-1 px-2 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded transition-all duration-150"
+                                    title="Edit Patient Details"
+                                  >
+                                    <Edit className="w-3 h-3 text-slate-500" />
+                                    <span>Edit</span>
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -1862,14 +1870,24 @@ export default function DoctorDashboard() {
                       </div>
                     </div>
 
-                    {/* Check-In / Book Patient Button */}
-                    <button
-                      onClick={() => setBookingPatient(selectedPatientForTimeline)}
-                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm"
-                    >
-                      <PlusCircle className="w-4 h-4" />
-                      <span>Check-In / Book Patient</span>
-                    </button>
+                    {/* Check-In & Edit Actions */}
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setBookingPatient(selectedPatientForTimeline)}
+                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm shadow-emerald-600/10"
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                        <span>Check-In / Book Patient</span>
+                      </button>
+                      <button
+                        onClick={() => setEditingPatient(selectedPatientForTimeline)}
+                        className="py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-lg text-xs flex items-center justify-center space-x-1 transition-all"
+                        title="Edit Patient Details"
+                      >
+                        <Edit className="w-4 h-4 text-slate-500" />
+                        <span>Edit</span>
+                      </button>
+                    </div>
 
                     {/* Patient Timeline logs */}
                     <div className="space-y-3 pt-3 border-t border-slate-100">
