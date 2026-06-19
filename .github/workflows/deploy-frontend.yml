@@ -86,7 +86,7 @@ jobs:
                   </rule>
                 </rules>
               </rewrite>
-              <iisnode watchedFiles="web.config;*.js" node_env="production" devErrorsEnabled="true" loggingEnabled="true" logDirectory="iisnode" nodeProcessCommandLine="&quot;C:\Program Files (x86)\nodejs\node.exe&quot;" />
+              <iisnode watchedFiles="web.config;*.js" node_env="production" devErrorsEnabled="true" loggingEnabled="true" logDirectory="iisnode" nodeProcessCommandLine="node.exe" />
             </system.webServer>
           </configuration>
           EOF
