@@ -14,7 +14,7 @@ import { UserRole } from '@prisma/client';
 export class PatientController {
   constructor(private readonly patientService: PatientService) {}
 
-  @Roles(UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Post()
   async createPatient(
     @ClinicId() clinicId: string,
@@ -46,7 +46,7 @@ export class PatientController {
     return this.patientService.getPatientTimeline(clinicId, id);
   }
 
-  @Roles(UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Post('merge')
   async mergePatients(
     @ClinicId() clinicId: string,
@@ -56,7 +56,7 @@ export class PatientController {
     return this.patientService.mergePatients(clinicId, user.id, dto);
   }
 
-  @Roles(UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Patch(':id')
   async updatePatient(
     @ClinicId() clinicId: string,

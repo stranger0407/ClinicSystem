@@ -14,7 +14,7 @@ import { UserRole } from '@prisma/client';
 export class BillingController {
   constructor(private readonly billingService: BillingService) {}
 
-  @Roles(UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Post('invoice')
   async createInvoice(
     @ClinicId() clinicId: string,
@@ -24,7 +24,7 @@ export class BillingController {
     return this.billingService.createInvoice(clinicId, dto, user.id);
   }
 
-  @Roles(UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Post('payment')
   async recordPayment(
     @ClinicId() clinicId: string,
@@ -40,7 +40,7 @@ export class BillingController {
     return this.billingService.getInvoiceDetails(clinicId, id);
   }
 
-  @Roles(UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Get('invoice')
   async listInvoices(@ClinicId() clinicId: string) {
     return this.billingService.listInvoices(clinicId);

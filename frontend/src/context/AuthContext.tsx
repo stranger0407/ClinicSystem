@@ -70,12 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Role-based redirect
-    if (userData.role === 'OWNER') {
-      router.push('/dashboard/owner');
-    } else if (userData.role === 'DOCTOR') {
+    if (userData.role === 'OWNER' || userData.role === 'DOCTOR' || userData.role === 'STAFF') {
       router.push('/dashboard/doctor');
-    } else if (userData.role === 'STAFF') {
-      router.push('/dashboard/staff');
     } else {
       router.push('/dashboard/patient');
     }

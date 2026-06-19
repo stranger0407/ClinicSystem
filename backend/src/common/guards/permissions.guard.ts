@@ -24,8 +24,8 @@ export class PermissionsGuard implements CanActivate {
       return false;
     }
 
-    // Clinic OWNER has all permissions by default
-    if (user.role === UserRole.OWNER) {
+    // Clinic OWNER and DOCTOR have all permissions by default in this single-doctor system
+    if (user.role === UserRole.OWNER || user.role === UserRole.DOCTOR) {
       return true;
     }
 

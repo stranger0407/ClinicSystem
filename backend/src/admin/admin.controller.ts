@@ -11,25 +11,25 @@ import { UserRole } from '@prisma/client';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  @Roles(UserRole.OWNER)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR)
   @Get('stats')
   async getStats(@ClinicId() clinicId: string) {
     return this.adminService.getStats(clinicId);
   }
 
-  @Roles(UserRole.OWNER)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR)
   @Get('audit-logs')
   async getAuditLogs(@ClinicId() clinicId: string) {
     return this.adminService.getAuditLogs(clinicId);
   }
 
-  @Roles(UserRole.OWNER)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR)
   @Get('staff')
   async listStaff(@ClinicId() clinicId: string) {
     return this.adminService.listStaff(clinicId);
   }
 
-  @Roles(UserRole.OWNER)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR)
   @Put('clinic')
   async updateClinic(@ClinicId() clinicId: string, @Body() body: any) {
     return this.adminService.updateClinic(clinicId, body);

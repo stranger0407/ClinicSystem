@@ -13,7 +13,7 @@ import { UserRole } from '@prisma/client';
 export class AppointmentController {
   constructor(private readonly appointmentService: AppointmentService) {}
 
-  @Roles(UserRole.OWNER, UserRole.STAFF, UserRole.PATIENT)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF, UserRole.PATIENT)
   @Post()
   async createAppointment(
     @ClinicId() clinicId: string,

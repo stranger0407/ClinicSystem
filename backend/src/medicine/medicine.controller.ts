@@ -16,19 +16,19 @@ export class MedicineController {
     return this.medicineService.listMedicines(clinicId);
   }
 
-  @Roles(UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Post()
   async create(@ClinicId() clinicId: string, @Body() body: any) {
     return this.medicineService.createMedicine(clinicId, body);
   }
 
-  @Roles(UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Patch(':id')
   async update(@ClinicId() clinicId: string, @Param('id') id: string, @Body() body: any) {
     return this.medicineService.updateMedicine(clinicId, id, body);
   }
 
-  @Roles(UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.DOCTOR, UserRole.STAFF)
   @Delete(':id')
   async delete(@ClinicId() clinicId: string, @Param('id') id: string) {
     return this.medicineService.deleteMedicine(clinicId, id);
