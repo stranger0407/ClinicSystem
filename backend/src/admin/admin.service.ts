@@ -39,7 +39,7 @@ export class AdminService {
     // 3. Pending invoice dues calculation
     const pendingInvoices = await this.prisma.invoice.findMany({
       where: { clinicId, status: { in: ['PENDING', 'PARTIALLY_PAID'] }, deletedAt: null },
-      include: { payments: true },
+      include: { payments: true, patient: true },
     });
 
     let pendingDues = 0;
@@ -53,6 +53,115 @@ export class AdminService {
     const doctorsCount = await this.prisma.doctorProfile.count({ where: { clinicId } });
     const staffCount = await this.prisma.staffProfile.count({ where: { clinicId } });
 
+    // --- NEW EXTENDED STATS ---
+
+    // 5. Weekly Trend calculations (Last 7 Days)
+    const weeklyRevenue = [];
+    const weeklyVisits = [];
+    const today = new Date();
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const paymentsLast7Days = await this.prisma.payment.findMany({
+      where: {
+        invoice: { clinicId },
+        createdAt: { gte: sevenDaysAgo },
+      },
+    });
+
+    const encountersLast7Days = await this.prisma.encounter.findMany({
+      where: {
+        clinicId,
+        createdAt: { gte: sevenDaysAgo },
+      },
+    });
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      const start = new Date(d);
+      const end = new Date(d);
+      end.setHours(23, 59, 59, 999);
+
+      const label = d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+
+      // Daily revenue
+      const dayPayments = paymentsLast7Days.filter(p => p.createdAt >= start && p.createdAt <= end);
+      const revSum = dayPayments.reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
+      weeklyRevenue.push({ label, value: revSum });
+
+      // Daily visits
+      const dayVisits = encountersLast7Days.filter(e => e.createdAt >= start && e.createdAt <= end).length;
+      weeklyVisits.push({ label, value: dayVisits });
+    }
+
+    // 6. Top Prescribed Medicines
+    const rxItems = await this.prisma.prescriptionItem.findMany({
+      where: {
+        prescription: { clinicId },
+      },
+      include: {
+        medicine: {
+          select: { name: true, strength: true, dosageForm: true }
+        }
+      }
+    });
+
+    const medCounts: Record<string, { name: string, count: number }> = {};
+    rxItems.forEach(item => {
+      if (!item.medicine) return;
+      const key = item.medicineId;
+      const displayName = `${item.medicine.name} ${item.medicine.strength || ''} (${item.medicine.dosageForm})`;
+      if (!medCounts[key]) {
+        medCounts[key] = { name: displayName, count: 0 };
+      }
+      medCounts[key].count += 1;
+    });
+
+    const topMedicines = Object.values(medCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // 7. Top Diagnoses
+    const encounters = await this.prisma.encounter.findMany({
+      where: { clinicId },
+      select: { diagnosis: true }
+    });
+
+    const diagCounts: Record<string, number> = {};
+    encounters.forEach(e => {
+      const diag = e.diagnosis.trim();
+      if (!diag) return;
+      const normalized = diag.charAt(0).toUpperCase() + diag.slice(1).toLowerCase();
+      diagCounts[normalized] = (diagCounts[normalized] || 0) + 1;
+    });
+
+    const topDiagnoses = Object.entries(diagCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // 8. Top Actionable Outstanding Invoices
+    const topPendingInvoices = pendingInvoices.map(inv => {
+      const total = parseFloat(inv.total.toString());
+      const paid = inv.payments.reduce((acc, p) => acc + parseFloat(p.amount.toString()), 0);
+      const dues = total - paid;
+      return {
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        patientName: inv.patient ? `${inv.patient.firstName} ${inv.patient.lastName}` : 'Unknown Patient',
+        patientPhone: inv.patient?.phone || '',
+        total,
+        dues,
+        createdAt: inv.createdAt
+      };
+    })
+    .sort((a, b) => b.dues - a.dues)
+    .slice(0, 5);
+
     return {
       visitsCount,
       todayRevenue,
@@ -60,6 +169,11 @@ export class AdminService {
       pendingDues,
       doctorsCount,
       staffCount,
+      weeklyRevenue,
+      weeklyVisits,
+      topMedicines,
+      topDiagnoses,
+      topPendingInvoices,
     };
   }
 

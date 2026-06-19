@@ -863,6 +863,11 @@ export default function DoctorDashboard() {
     }
   };
 
+  const handleViewInvoiceFromAnalytics = async (inv: any) => {
+    setActiveTab('billing');
+    await openInvoiceDetails(inv);
+  };
+
   // ==========================================
   // TAB 4: MEDICINE MASTER ACTIONS
   // ==========================================
@@ -2599,40 +2604,253 @@ export default function DoctorDashboard() {
               ========================================== */}
           {activeTab === 'analytics' && (
             <div className="space-y-6">
-              {/* Analytics overview cards */}
               {loadingAnalytics ? (
-                <div className="flex justify-center py-10"><Loader className="w-10 h-10 animate-spin text-indigo-500" /></div>
+                <div className="flex justify-center py-20">
+                  <div className="flex flex-col items-center space-y-3">
+                    <Loader className="w-10 h-10 animate-spin text-indigo-600" />
+                    <span className="text-xs text-slate-500 font-semibold">Loading practice intelligence...</span>
+                  </div>
+                </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Today's Total Patients</span>
-                    <h3 className="font-extrabold text-2xl text-slate-800">{stats.visitsCount || 0}</h3>
-                    <p className="text-[10px] text-slate-400">Scheduled & walk-ins registered today</p>
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Today's Revenue Collected</span>
-                    <h3 className="font-extrabold text-2xl text-emerald-600">₹{parseFloat(stats.todayRevenue || 0).toFixed(2)}</h3>
-                    <p className="text-[10px] text-slate-400">Total payments logged in ledger today</p>
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Pending Dues</span>
-                    <h3 className="font-extrabold text-2xl text-rose-600">₹{parseFloat(stats.pendingDues || 0).toFixed(2)}</h3>
-                    <p className="text-[10px] text-slate-400">Outstanding invoice balances in ledger</p>
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">UPI / CASH Split</span>
-                    <div className="text-[11px] font-semibold text-slate-700 space-y-0.5 mt-1.5">
-                      <div className="flex justify-between">
-                        <span>UPI:</span> <span className="font-bold text-slate-800">₹{parseFloat(stats.paymentSplit?.UPI || 0).toFixed(2)}</span>
+                <>
+                  {/* Top Row: KPI Summary Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    {/* Patients Count */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Today's Total Patients</span>
+                        <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><User className="w-4 h-4" /></div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>CASH:</span> <span className="font-bold text-slate-800">₹{parseFloat(stats.paymentSplit?.CASH || 0).toFixed(2)}</span>
+                      <div>
+                        <h3 className="font-black text-2xl text-slate-900 leading-none">{stats.visitsCount || 0}</h3>
+                        <p className="text-[10px] text-slate-400 mt-1.5 font-medium">Scheduled & walk-ins registered today</p>
+                      </div>
+                    </div>
+
+                    {/* Revenue Card */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Today's Revenue Collected</span>
+                        <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><DollarSign className="w-4 h-4" /></div>
+                      </div>
+                      <div>
+                        <h3 className="font-black text-2xl text-emerald-600 leading-none">₹{parseFloat(stats.todayRevenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                        <p className="text-[10px] text-slate-400 mt-1.5 font-medium">Total payments logged in ledger today</p>
+                      </div>
+                    </div>
+
+                    {/* Outstanding Dues */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Total Pending Dues</span>
+                        <div className="p-1.5 bg-rose-50 text-rose-600 rounded-lg"><Clock className="w-4 h-4" /></div>
+                      </div>
+                      <div>
+                        <h3 className="font-black text-2xl text-rose-600 leading-none">₹{parseFloat(stats.pendingDues || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                        <p className="text-[10px] text-slate-400 mt-1.5 font-medium">Outstanding unpaid ledger balances</p>
+                      </div>
+                    </div>
+
+                    {/* UPI/Cash Splits */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Payment split</span>
+                        <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg"><ArrowRightLeft className="w-4 h-4" /></div>
+                      </div>
+                      <div className="text-[10.5px] font-semibold text-slate-700 space-y-1 mt-0.5">
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5" /> UPI:</span>
+                          <span className="font-bold text-slate-900">₹{parseFloat(stats.paymentSplit?.UPI || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center"><span className="w-1.5 h-1.5 bg-sky-500 rounded-full mr-1.5" /> CASH:</span>
+                          <span className="font-bold text-slate-900">₹{parseFloat(stats.paymentSplit?.CASH || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        {stats.paymentSplit?.CARD > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span className="flex items-center"><span className="w-1.5 h-1.5 bg-indigo-500 rounded-full mr-1.5" /> CARD:</span>
+                            <span className="font-bold text-slate-900">₹{parseFloat(stats.paymentSplit?.CARD || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
 
+                  {/* Middle Row: Trend Visualizations */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Revenue Trend Chart */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">Collections Trend</h4>
+                          <p className="text-[10px] text-slate-400">Total daily revenue split (Last 7 Days)</p>
+                        </div>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full">Weekly Trend</span>
+                      </div>
+                      
+                      {/* Bar chart rendering */}
+                      <div className="flex items-end justify-between h-44 pt-4 border-b border-slate-100 pb-2">
+                        {stats.weeklyRevenue && stats.weeklyRevenue.length > 0 ? (
+                          (() => {
+                            const maxVal = Math.max(...stats.weeklyRevenue.map((d: any) => d.value), 1);
+                            return stats.weeklyRevenue.map((day: any, idx: number) => {
+                              const heightPercent = `${Math.max((day.value / maxVal) * 100, 3)}%`;
+                              return (
+                                <div key={idx} className="flex flex-col items-center group flex-1">
+                                  <div className="relative w-full flex justify-center items-end h-32 px-1">
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-900 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-30">
+                                      ₹{parseFloat(day.value).toFixed(2)}
+                                    </div>
+                                    {/* Bar */}
+                                    <div 
+                                      style={{ height: heightPercent }}
+                                      className={`w-full max-w-[20px] rounded-t-md transition-all duration-300 shadow-sm ${
+                                        day.value === 0 
+                                          ? 'bg-slate-100 border border-dashed border-slate-200' 
+                                          : 'bg-gradient-to-t from-indigo-600 to-indigo-400 group-hover:from-teal-500 group-hover:to-teal-400'
+                                      }`}
+                                    />
+                                  </div>
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase mt-2">{day.label}</span>
+                                </div>
+                              );
+                            });
+                          })()
+                        ) : (
+                          <div className="w-full flex items-center justify-center text-slate-400 italic text-[11px] py-10">No data available</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Patient Visits Trend Chart */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">Patient Volume Trend</h4>
+                          <p className="text-[10px] text-slate-400">Total daily consultations completed (Last 7 Days)</p>
+                        </div>
+                        <span className="text-[10px] bg-teal-50 text-teal-700 font-bold px-2 py-0.5 rounded-full">Weekly Trend</span>
+                      </div>
+                      
+                      {/* Bar chart rendering */}
+                      <div className="flex items-end justify-between h-44 pt-4 border-b border-slate-100 pb-2">
+                        {stats.weeklyVisits && stats.weeklyVisits.length > 0 ? (
+                          (() => {
+                            const maxVal = Math.max(...stats.weeklyVisits.map((d: any) => d.value), 1);
+                            return stats.weeklyVisits.map((day: any, idx: number) => {
+                              const heightPercent = `${Math.max((day.value / maxVal) * 100, 3)}%`;
+                              return (
+                                <div key={idx} className="flex flex-col items-center group flex-1">
+                                  <div className="relative w-full flex justify-center items-end h-32 px-1">
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-900 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-30">
+                                      {day.value} Patients
+                                    </div>
+                                    {/* Bar */}
+                                    <div 
+                                      style={{ height: heightPercent }}
+                                      className={`w-full max-w-[20px] rounded-t-md transition-all duration-300 shadow-sm ${
+                                        day.value === 0 
+                                          ? 'bg-slate-100 border border-dashed border-slate-200' 
+                                          : 'bg-gradient-to-t from-teal-600 to-teal-400 group-hover:from-indigo-500 group-hover:to-indigo-400'
+                                      }`}
+                                    />
+                                  </div>
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase mt-2">{day.label}</span>
+                                </div>
+                              );
+                            });
+                          })()
+                        ) : (
+                          <div className="w-full flex items-center justify-center text-slate-400 italic text-[11px] py-10">No data available</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Row: Clinical & Financial Action Columns */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Column 1: Top Prescribed Medicines */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block border-b border-slate-100 pb-2">Top Prescribed Medicines</span>
+                      <div className="divide-y divide-slate-100 text-xs flex-1">
+                        {stats.topMedicines && stats.topMedicines.length > 0 ? (
+                          stats.topMedicines.map((med: any, idx: number) => (
+                            <div key={idx} className="py-2.5 flex justify-between items-center first:pt-0 last:pb-0">
+                              <div className="flex items-center space-x-2.5">
+                                <span className="font-bold text-slate-400 text-[10px]">#{idx + 1}</span>
+                                <span className="font-semibold text-slate-800">{med.name}</span>
+                              </div>
+                              <span className="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full text-[9px]">
+                                {med.count} Rx
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-slate-400 italic text-[11px] py-4 text-center">No prescription data logged yet.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Column 2: Top Diagnoses */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block border-b border-slate-100 pb-2">Primary Diagnosis Reasons</span>
+                      <div className="divide-y divide-slate-100 text-xs flex-1">
+                        {stats.topDiagnoses && stats.topDiagnoses.length > 0 ? (
+                          stats.topDiagnoses.map((diag: any, idx: number) => (
+                            <div key={idx} className="py-2.5 flex justify-between items-center first:pt-0 last:pb-0">
+                              <div className="flex items-center space-x-2.5">
+                                <span className="font-bold text-slate-400 text-[10px]">#{idx + 1}</span>
+                                <span className="font-semibold text-slate-800 truncate max-w-[140px]">{diag.name}</span>
+                              </div>
+                              <span className="bg-teal-50 text-teal-700 font-bold px-2 py-0.5 rounded-full text-[9px]">
+                                {diag.count} Cases
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-slate-400 italic text-[11px] py-4 text-center">No diagnosis records logged yet.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Column 3: Actionable Outstanding Dues Ledger */}
+                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block border-b border-slate-100 pb-2">Actionable Outstanding Bills</span>
+                      <div className="divide-y divide-slate-100 text-xs flex-1">
+                        {stats.topPendingInvoices && stats.topPendingInvoices.length > 0 ? (
+                          stats.topPendingInvoices.map((inv: any) => (
+                            <div key={inv.id} className="py-2.5 flex flex-col space-y-1.5 first:pt-0 last:pb-0">
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-0.5">
+                                  <span className="font-bold text-slate-900">{inv.patientName}</span>
+                                  <span className="text-[9px] text-slate-400 block font-medium">Inv: {inv.invoiceNumber} | Phone: {inv.patientPhone}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold text-rose-600 text-xs block">₹{parseFloat(inv.dues).toFixed(2)}</span>
+                                  <span className="text-[8.5px] text-slate-400 block font-semibold">Total: ₹{parseFloat(inv.total).toFixed(2)}</span>
+                                </div>
+                              </div>
+                              <div className="flex justify-end pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleViewInvoiceFromAnalytics(inv)}
+                                  className="text-[9.5px] font-bold text-indigo-600 hover:text-white bg-indigo-50 hover:bg-indigo-600 border border-indigo-100 rounded px-2.5 py-0.5 transition-colors"
+                                >
+                                  Manage Payment &rarr;
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-slate-400 italic text-[11px] py-4 text-center">No pending dues. Great job!</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </main>
