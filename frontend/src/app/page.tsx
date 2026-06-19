@@ -129,6 +129,18 @@ export default function PublicClinicLanding() {
     fetchAvailableSlots();
   }, [selectedDoctorId, bookingDate]);
 
+  // Prevent background body scrolling when modal is open
+  useEffect(() => {
+    if (bookingModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [bookingModalOpen]);
+
   const handleOpenBooking = (doctorId?: string) => {
     if (doctorId) {
       setSelectedDoctorId(doctorId);
@@ -457,7 +469,7 @@ export default function PublicClinicLanding() {
 
       {/* ==================== APPOINTMENT BOOKING MODAL ==================== */}
       {bookingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto custom-scrollbar">
           <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
             
             {/* Close button */}
@@ -527,7 +539,7 @@ export default function PublicClinicLanding() {
 
             {/* Step 1: Doctor/Date/Slot Setup */}
             {bookingStep === 1 && (
-              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 {/* Visual Doctor details card */}
                 {activeDoctor && (
                   <div className="bg-slate-950/50 border border-slate-850 rounded-2xl p-4 flex items-center justify-between shadow-inner">
@@ -567,7 +579,7 @@ export default function PublicClinicLanding() {
                 {/* Horizontal Date Swiper */}
                 <div className="space-y-1.5">
                   <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Choose Appointment Date</label>
-                  <div className="flex space-x-2 overflow-x-auto pb-2 pt-0.5 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                  <div className="flex space-x-2 overflow-x-auto pb-2 pt-0.5 custom-scrollbar">
                     {Array.from({ length: 7 }).map((_, idx) => {
                       const d = new Date();
                       d.setDate(d.getDate() + idx);
@@ -741,7 +753,7 @@ export default function PublicClinicLanding() {
 
             {/* Step 2: Patient Registration Info */}
             {bookingStep === 2 && (
-              <form onSubmit={handleBookSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <form onSubmit={handleBookSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">First Name *</label>
@@ -886,7 +898,7 @@ export default function PublicClinicLanding() {
 
             {/* Step 3: Success Confirmation */}
             {bookingStep === 3 && bookingSuccessData && (
-              <div className="p-8 text-center space-y-6 max-h-[70vh] overflow-y-auto">
+              <div className="p-8 text-center space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/5">
                   <CheckCircle className="w-9 h-9" />
                 </div>
