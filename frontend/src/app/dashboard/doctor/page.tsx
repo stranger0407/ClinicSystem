@@ -863,14 +863,13 @@ export default function DoctorDashboard() {
     e.preventDefault();
     setSubmittingMed(true);
     try {
-      let savedMed: any = null;
       if (editingMed) {
-        savedMed = await apiFetch(`/medicine/${editingMed.id}`, {
+        await apiFetch(`/medicine/${editingMed.id}`, {
           method: 'PATCH',
           body: JSON.stringify(medForm),
         });
       } else {
-        savedMed = await apiFetch('/medicine', {
+        await apiFetch('/medicine', {
           method: 'POST',
           body: JSON.stringify(medForm),
         });
@@ -879,16 +878,6 @@ export default function DoctorDashboard() {
       setEditingMed(null);
       setMedForm({ name: '', genericName: '', dosageForm: 'TABLET', strength: '', defaultSchedule: '1-0-1' });
       loadMedicines();
-
-      // If we are currently inside the prescription tab, automatically select this newly created medicine
-      if (savedMed && !editingMed && consultationTab === 'prescription') {
-        setSelectedMed(savedMed);
-        setMedQuery(savedMed.name);
-        setMedResults([]);
-        if (savedMed.defaultSchedule) {
-          setDosage(savedMed.defaultSchedule);
-        }
-      }
     } catch (err: any) {
       alert(err.message || 'Failed to save medicine');
     } finally {
@@ -1354,77 +1343,29 @@ export default function DoctorDashboard() {
                               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end bg-slate-50/50 p-3 border border-slate-100 rounded-xl">
                                 <div className="space-y-1.5 sm:col-span-2 relative">
                                   <label className="text-[9px] text-slate-500 font-bold uppercase block">Medicine Name</label>
-                                  <div className="flex items-center space-x-1.5">
-                                    <input
-                                      type="text"
-                                      value={medQuery}
-                                      onChange={(e) => handleMedSearch(e.target.value)}
-                                      placeholder="Type medicine name..."
-                                      className="flex-1 bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setEditingMed(null);
-                                        setMedForm({
-                                          name: medQuery.trim(),
-                                          genericName: '',
-                                          dosageForm: 'TABLET',
-                                          strength: '',
-                                          defaultSchedule: '1-0-1',
-                                        });
-                                        setMedModalOpen(true);
-                                      }}
-                                      title="Add New Medicine to Catalog"
-                                      className="p-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-650 rounded-lg flex items-center justify-center transition-colors shrink-0"
-                                    >
-                                      <Plus className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                  {medQuery.trim() !== '' && (
-                                    <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-30 overflow-hidden mt-1 p-2 space-y-1.5">
-                                      {medResults.length > 0 ? (
-                                        <div className="max-h-36 overflow-y-auto divide-y divide-slate-100">
-                                          {medResults.map((med) => (
-                                            <div
-                                              key={med.id}
-                                              onClick={() => {
-                                                setSelectedMed(med);
-                                                setMedQuery(med.name);
-                                                setMedResults([]);
-                                              }}
-                                              className="p-2 hover:bg-slate-100 text-xs cursor-pointer text-slate-800 flex justify-between rounded transition-colors"
-                                            >
-                                              <span className="font-bold">{med.name}</span>
-                                              <span className="text-[10px] text-slate-400">{med.genericName} - {med.strength}</span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <div className="text-[11px] text-slate-450 text-center py-2 italic">
-                                          No matching medicines found.
-                                        </div>
-                                      )}
-                                      <div className="border-t border-slate-100 pt-1.5 flex justify-end">
-                                        <button
-                                          type="button"
+                                  <input
+                                    type="text"
+                                    value={medQuery}
+                                    onChange={(e) => handleMedSearch(e.target.value)}
+                                    placeholder="Type medicine name..."
+                                    className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
+                                  />
+                                  {medResults.length > 0 && (
+                                    <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded shadow-lg z-30 max-h-40 overflow-y-auto mt-1 divide-y divide-slate-100">
+                                      {medResults.map((med) => (
+                                        <div
+                                          key={med.id}
                                           onClick={() => {
-                                            setEditingMed(null);
-                                            setMedForm({
-                                              name: medQuery.trim(),
-                                              genericName: '',
-                                              dosageForm: 'TABLET',
-                                              strength: '',
-                                              defaultSchedule: '1-0-1',
-                                            });
-                                            setMedModalOpen(true);
+                                            setSelectedMed(med);
+                                            setMedQuery(med.name);
+                                            setMedResults([]);
                                           }}
-                                          className="text-[10px] text-indigo-650 hover:underline font-bold flex items-center space-x-1"
+                                          className="p-2 hover:bg-slate-100 text-xs cursor-pointer text-slate-800 flex justify-between"
                                         >
-                                          <Plus className="w-3.5 h-3.5" />
-                                          <span>Add "{medQuery}" to Catalog</span>
-                                        </button>
-                                      </div>
+                                          <span className="font-bold">{med.name}</span>
+                                          <span className="text-[10px] text-slate-400">{med.genericName} - {med.strength}</span>
+                                        </div>
+                                      ))}
                                     </div>
                                   )}
                                 </div>
