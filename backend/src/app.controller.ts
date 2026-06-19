@@ -140,6 +140,8 @@ export class AppController {
       select: { startTime: true, endTime: true },
     });
 
+    const disabledSlots = schedule?.disabledWeekly?.[dayName] || [];
+
     for (const slot of slots) {
       const slotStart = new Date(slot.startTime);
       const slotEnd = new Date(slotStart.getTime() + durationMin * 60 * 1000);
@@ -150,7 +152,9 @@ export class AppController {
         return slotStart < bEnd && slotEnd > bStart;
       });
 
-      if (isBooked) {
+      const isDisabled = disabledSlots.includes(slot.time);
+
+      if (isBooked || isDisabled) {
         slot.available = false;
       }
     }

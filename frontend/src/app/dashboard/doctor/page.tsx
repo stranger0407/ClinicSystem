@@ -339,6 +339,7 @@ export default function DoctorDashboard() {
     licenseNo: '',
     fees: 200,
     durationMin: 15,
+    schedule: {} as any,
   });
   const [submittingDoctorProfile, setSubmittingDoctorProfile] = useState(false);
 
@@ -943,6 +944,7 @@ export default function DoctorDashboard() {
           licenseNo: myDoc.licenseNo || '',
           fees: Number(myDoc.fees) || 200,
           durationMin: myDoc.durationMin || 15,
+          schedule: myDoc.schedule || { weekly: {}, disabledWeekly: {} },
         });
         setInvoiceItems([{ description: 'Consultation Fee', quantity: 1, amount: Number(myDoc.fees) || 250 }]);
       }
@@ -976,6 +978,34 @@ export default function DoctorDashboard() {
     } finally {
       setSubmittingClinic(false);
     }
+  };
+
+  const generateWeeklySlotsForDay = (dayName: string, weeklyRanges: any, durationMin: number) => {
+    const daySlots = weeklyRanges?.[dayName] || [];
+    const slots: string[] = [];
+    
+    for (const windowStr of daySlots) {
+      const [startStr, endStr] = windowStr.split('-');
+      if (!startStr || !endStr) continue;
+
+      const [startHour, startMin] = startStr.split(':').map(Number);
+      const [endHour, endMin] = endStr.split(':').map(Number);
+
+      const current = new Date();
+      current.setHours(startHour, startMin, 0, 0);
+
+      const end = new Date();
+      end.setHours(endHour, endMin, 0, 0);
+
+      const durationMs = durationMin * 60 * 1000;
+
+      while (current.getTime() + durationMs <= end.getTime()) {
+        const timeStr = current.toTimeString().substring(0, 5); // "09:00"
+        slots.push(timeStr);
+        current.setTime(current.getTime() + durationMs);
+      }
+    }
+    return slots;
   };
 
   const handleDoctorProfileUpdate = async (e: React.FormEvent) => {
@@ -2584,6 +2614,71 @@ export default function DoctorDashboard() {
                       />
                     </div>
                   </div>
+
+                  {/* Customize Weekly Slots Availability Section */}
+                  <div className="space-y-2 border-t border-slate-100 pt-4">
+                    <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px] block">Customize Weekly Slots Availability</label>
+                    <p className="text-[10px] text-slate-400 leading-normal mb-2">
+                      Toggle individual time slots below to enable or disable them from being booked by public users. Red/Strikethrough slots are disabled.
+                    </p>
+                    
+                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 border border-slate-100 rounded-xl p-3 bg-slate-50/40">
+                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
+                        const weeklyRanges = doctorForm.schedule?.weekly || {};
+                        const disabledSlotsForDay = doctorForm.schedule?.disabledWeekly?.[day] || [];
+                        const generatedSlots = generateWeeklySlotsForDay(day, weeklyRanges, doctorForm.durationMin);
+                        
+                        if (generatedSlots.length === 0) return null;
+                        
+                        return (
+                          <div key={day} className="space-y-1.5 pb-2.5 border-b border-slate-150 last:border-0 last:pb-0">
+                            <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider block capitalize">
+                              {day}
+                            </span>
+                            <div className="grid grid-cols-4 gap-2">
+                              {generatedSlots.map(timeStr => {
+                                const isDisabled = disabledSlotsForDay.includes(timeStr);
+                                return (
+                                  <button
+                                    key={timeStr}
+                                    type="button"
+                                    onClick={() => {
+                                      const updatedDisabled = [...disabledSlotsForDay];
+                                      if (isDisabled) {
+                                        const index = updatedDisabled.indexOf(timeStr);
+                                        if (index > -1) updatedDisabled.splice(index, 1);
+                                      } else {
+                                        updatedDisabled.push(timeStr);
+                                      }
+                                      
+                                      setDoctorForm({
+                                        ...doctorForm,
+                                        schedule: {
+                                          ...doctorForm.schedule,
+                                          disabledWeekly: {
+                                            ...(doctorForm.schedule?.disabledWeekly || {}),
+                                            [day]: updatedDisabled,
+                                          }
+                                        }
+                                      });
+                                    }}
+                                    className={`py-1.5 rounded-lg text-xs font-semibold text-center border transition-all ${
+                                      isDisabled
+                                        ? 'bg-red-50 text-red-500 border-red-250 line-through'
+                                        : 'bg-white text-slate-750 border-slate-200 hover:border-slate-350 hover:bg-slate-50'
+                                    }`}
+                                  >
+                                    {timeStr}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="flex justify-end pt-2">
                     <button
                       type="submit"
