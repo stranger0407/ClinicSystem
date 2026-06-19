@@ -863,13 +863,14 @@ export default function DoctorDashboard() {
     e.preventDefault();
     setSubmittingMed(true);
     try {
+      let savedMed: any = null;
       if (editingMed) {
-        await apiFetch(`/medicine/${editingMed.id}`, {
+        savedMed = await apiFetch(`/medicine/${editingMed.id}`, {
           method: 'PATCH',
           body: JSON.stringify(medForm),
         });
       } else {
-        await apiFetch('/medicine', {
+        savedMed = await apiFetch('/medicine', {
           method: 'POST',
           body: JSON.stringify(medForm),
         });
@@ -878,6 +879,16 @@ export default function DoctorDashboard() {
       setEditingMed(null);
       setMedForm({ name: '', genericName: '', dosageForm: 'TABLET', strength: '', defaultSchedule: '1-0-1' });
       loadMedicines();
+
+      // If we are currently inside the prescription tab, automatically select this newly created medicine
+      if (savedMed && !editingMed && consultationTab === 'prescription') {
+        setSelectedMed(savedMed);
+        setMedQuery(savedMed.name);
+        setMedResults([]);
+        if (savedMed.defaultSchedule) {
+          setDosage(savedMed.defaultSchedule);
+        }
+      }
     } catch (err: any) {
       alert(err.message || 'Failed to save medicine');
     } finally {
@@ -1350,22 +1361,50 @@ export default function DoctorDashboard() {
                                     placeholder="Type medicine name..."
                                     className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
                                   />
-                                  {medResults.length > 0 && (
-                                    <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded shadow-lg z-30 max-h-40 overflow-y-auto mt-1 divide-y divide-slate-100">
-                                      {medResults.map((med) => (
-                                        <div
-                                          key={med.id}
-                                          onClick={() => {
-                                            setSelectedMed(med);
-                                            setMedQuery(med.name);
-                                            setMedResults([]);
-                                          }}
-                                          className="p-2 hover:bg-slate-100 text-xs cursor-pointer text-slate-800 flex justify-between"
-                                        >
-                                          <span className="font-bold">{med.name}</span>
-                                          <span className="text-[10px] text-slate-400">{med.genericName} - {med.strength}</span>
+                                  {medQuery.trim() !== '' && (
+                                    <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-30 overflow-hidden mt-1 p-2 space-y-1.5">
+                                      {medResults.length > 0 ? (
+                                        <div className="max-h-36 overflow-y-auto divide-y divide-slate-100">
+                                          {medResults.map((med) => (
+                                            <div
+                                              key={med.id}
+                                              onClick={() => {
+                                                setSelectedMed(med);
+                                                setMedQuery(med.name);
+                                                setMedResults([]);
+                                              }}
+                                              className="p-2 hover:bg-slate-100 text-xs cursor-pointer text-slate-800 flex justify-between rounded transition-colors"
+                                            >
+                                              <span className="font-bold">{med.name}</span>
+                                              <span className="text-[10px] text-slate-400">{med.genericName} - {med.strength}</span>
+                                            </div>
+                                          ))}
                                         </div>
-                                      ))}
+                                      ) : (
+                                        <div className="text-[11px] text-slate-450 text-center py-2 italic">
+                                          No matching medicines found.
+                                        </div>
+                                      )}
+                                      <div className="border-t border-slate-100 pt-1.5 flex justify-end">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingMed(null);
+                                            setMedForm({
+                                              name: medQuery.trim(),
+                                              genericName: '',
+                                              dosageForm: 'TABLET',
+                                              strength: '',
+                                              defaultSchedule: '1-0-1',
+                                            });
+                                            setMedModalOpen(true);
+                                          }}
+                                          className="text-[10px] text-indigo-650 hover:underline font-bold flex items-center space-x-1"
+                                        >
+                                          <Plus className="w-3.5 h-3.5" />
+                                          <span>Add "{medQuery}" to Catalog</span>
+                                        </button>
+                                      </div>
                                     </div>
                                   )}
                                 </div>
