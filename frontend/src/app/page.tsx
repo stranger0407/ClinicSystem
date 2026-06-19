@@ -282,7 +282,7 @@ export default function PublicClinicLanding() {
             </button>
             <Link
               href="/register-patient"
-              className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 font-bold rounded-xl transition-all text-center"
+              className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold rounded-xl transition-all text-center"
             >
               Claim Patient Portal
             </Link>
@@ -292,7 +292,7 @@ export default function PublicClinicLanding() {
           <div className="flex items-center space-x-3 bg-slate-900/40 border border-slate-900 rounded-xl p-4 w-fit mx-auto lg:mx-0">
             <Clock className="w-5 h-5 text-teal-400" />
             <div className="text-left">
-              <span className="text-[10px] text-slate-450 uppercase font-black tracking-wider block">OPD Working Hours</span>
+              <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider block">OPD Working Hours</span>
               <span className="text-xs text-slate-300 font-medium">{clinic?.settings?.timings || 'Mon - Sat: 9:00 AM - 5:00 PM'}</span>
             </div>
           </div>
@@ -312,7 +312,7 @@ export default function PublicClinicLanding() {
                   <div className="w-5 h-5 bg-teal-500/10 rounded-md flex items-center justify-center">
                     <Check className="w-3.5 h-3.5 text-teal-400" />
                   </div>
-                  <span className="text-sm text-slate-350">{fac}</span>
+                  <span className="text-sm text-slate-400">{fac}</span>
                 </li>
               ))
             ) : (
@@ -321,7 +321,7 @@ export default function PublicClinicLanding() {
                   <div className="w-5 h-5 bg-teal-500/10 rounded-md flex items-center justify-center">
                     <Check className="w-3.5 h-3.5 text-teal-400" />
                   </div>
-                  <span className="text-sm text-slate-350">{fac}</span>
+                  <span className="text-sm text-slate-400">{fac}</span>
                 </li>
               ))
             )}
@@ -430,13 +430,13 @@ export default function PublicClinicLanding() {
             {/* Close button */}
             <button
               onClick={handleCloseBooking}
-              className="absolute top-4 right-4 p-1.5 bg-slate-850 hover:bg-red-500/20 hover:text-red-400 rounded-full text-slate-400 transition-all z-10"
+              className="absolute top-4 right-4 p-1.5 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 rounded-full text-slate-400 transition-all z-10"
             >
               <XIcon className="w-4 h-4" />
             </button>
 
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-slate-850 bg-slate-900">
+            <div className="px-6 py-5 border-b border-slate-800 bg-slate-900">
               <span className="text-[9px] text-teal-400 font-bold uppercase tracking-wider block">Online Scheduling</span>
               <h3 className="text-lg font-black text-white">Book Clinic Appointment</h3>
             </div>
@@ -493,7 +493,7 @@ export default function PublicClinicLanding() {
                       className={`py-2 rounded-xl text-xs font-bold border transition-all ${
                         bookingType === 'SLOT'
                           ? 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-950/20'
-                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-850'
+                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
                       }`}
                     >
                       Scheduled Slot Time
@@ -504,7 +504,7 @@ export default function PublicClinicLanding() {
                       className={`py-2 rounded-xl text-xs font-bold border transition-all ${
                         bookingType === 'WALK_IN'
                           ? 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-950/20'
-                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-850'
+                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
                       }`}
                     >
                       Walk-in (Queue Number)
@@ -540,7 +540,7 @@ export default function PublicClinicLanding() {
                                 ? 'bg-slate-950/40 text-slate-700 border-slate-950/50 cursor-not-allowed line-through'
                                 : selectedSlot?.time === s.time
                                 ? 'bg-teal-500 border-teal-500 text-slate-950 font-bold shadow-md shadow-teal-500/10'
-                                : 'bg-slate-955 text-slate-300 border-slate-800 hover:border-slate-700'
+                                : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
                             }`}
                           >
                             {s.time}
@@ -552,7 +552,7 @@ export default function PublicClinicLanding() {
                 )}
 
                 {bookingType === 'WALK_IN' && (
-                  <div className="bg-slate-950 border border-slate-850 rounded-2xl p-4 text-xs text-slate-400 space-y-1">
+                  <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-slate-400 space-y-1">
                     <p className="font-bold text-slate-300">Queue Number Booking Rules:</p>
                     <p>• The visit date is mandatory; time slots are ignored.</p>
                     <p>• You will be checked in as a walk-in at the reception desk.</p>
@@ -571,7 +571,7 @@ export default function PublicClinicLanding() {
                   />
                 </div>
 
-                <div className="pt-4 border-t border-slate-850 flex justify-end">
+                <div className="pt-4 border-t border-slate-800 flex justify-end">
                   <button
                     onClick={handleNextStep}
                     className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-teal-955/20 transition-all"
@@ -661,13 +661,13 @@ export default function PublicClinicLanding() {
                 </div>
 
                 {/* Create patient account option */}
-                <div className="border-t border-slate-850 pt-4 space-y-3">
+                <div className="border-t border-slate-800 pt-4 space-y-3">
                   <label className="flex items-center space-x-2.5 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={createAccount}
                       onChange={(e) => setCreateAccount(e.target.checked)}
-                      className="w-4 h-4 bg-slate-955 border-slate-800 rounded text-teal-600 focus:ring-0 focus:ring-offset-0"
+                      className="w-4 h-4 bg-slate-950 border-slate-800 rounded text-teal-600 focus:ring-0 focus:ring-offset-0"
                     />
                     <span className="text-xs text-slate-300 font-medium select-none">
                       Create portal account to view prescriptions & receipts online
@@ -689,7 +689,7 @@ export default function PublicClinicLanding() {
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-slate-850 flex space-x-3">
+                <div className="pt-4 border-t border-slate-800 flex space-x-3">
                   <button
                     type="submit"
                     disabled={bookingInProgress}
@@ -730,25 +730,25 @@ export default function PublicClinicLanding() {
                 </div>
 
                 {/* Receipt details */}
-                <div className="bg-slate-955 border border-slate-850 rounded-2xl p-5 text-left text-xs space-y-2.5 max-w-sm mx-auto">
+                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-left text-xs space-y-2.5 max-w-sm mx-auto">
                   <div className="flex justify-between border-b border-slate-900 pb-2">
-                    <span className="text-slate-550 font-medium">Doctor:</span>
+                    <span className="text-slate-1000 font-medium">Doctor:</span>
                     <span className="text-white font-bold">
                       Dr. {activeDoctor?.user.firstName} {activeDoctor?.user.lastName}
                     </span>
                   </div>
                   <div className="flex justify-between border-b border-slate-900 pb-2">
-                    <span className="text-slate-555 font-medium">Patient:</span>
+                    <span className="text-slate-1005 font-medium">Patient:</span>
                     <span className="text-white font-bold">
                       {bookingSuccessData.patientProfile.firstName} {bookingSuccessData.patientProfile.lastName}
                     </span>
                   </div>
                   <div className="flex justify-between border-b border-slate-900 pb-2">
-                    <span className="text-slate-555 font-medium">Visit Date:</span>
+                    <span className="text-slate-1005 font-medium">Visit Date:</span>
                     <span className="text-white font-bold">{new Date(bookingDate).toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-555 font-medium">Timing / Mode:</span>
+                    <span className="text-slate-1005 font-medium">Timing / Mode:</span>
                     <span className="text-teal-400 font-black">
                       {bookingSuccessData.appointment.type === 'SLOT' 
                         ? selectedSlot?.time 
@@ -764,10 +764,10 @@ export default function PublicClinicLanding() {
                   </p>
                 )}
 
-                <div className="pt-4 border-t border-slate-850">
+                <div className="pt-4 border-t border-slate-800">
                   <button
                     onClick={handleCloseBooking}
-                    className="w-full py-3 bg-slate-800 hover:bg-slate-750 text-slate-205 font-bold rounded-xl text-xs transition-all"
+                    className="w-full py-3 bg-slate-800 hover:bg-slate-750 text-slate-200 font-bold rounded-xl text-xs transition-all"
                   >
                     Close & Finish
                   </button>

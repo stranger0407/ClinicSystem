@@ -127,7 +127,7 @@ export default function RegisterPatientPage() {
           {/* Names */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider flex items-center">
+              <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center">
                 <User className="w-3.5 h-3.5 mr-1.5 text-teal-400" />
                 First Name *
               </label>
@@ -141,7 +141,7 @@ export default function RegisterPatientPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider flex items-center">
+              <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center">
                 <User className="w-3.5 h-3.5 mr-1.5 text-teal-400" />
                 Last Name *
               </label>
@@ -159,7 +159,7 @@ export default function RegisterPatientPage() {
           {/* Contact Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider flex items-center">
+              <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center">
                 <Shield className="w-3.5 h-3.5 mr-1.5 text-teal-400" />
                 Mobile / Phone *
               </label>
@@ -171,10 +171,10 @@ export default function RegisterPatientPage() {
                 required
                 className="w-full bg-slate-950/80 border border-slate-700/50 focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500 focus:outline-none rounded-lg px-3 py-2 text-white placeholder-slate-500 text-xs transition-all"
               />
-              <span className="text-[8px] text-slate-450 block leading-tight">Must match the number given to clinic staff to link records.</span>
+              <span className="text-[8px] text-slate-500 block leading-tight">Must match the number given to clinic staff to link records.</span>
             </div>
             <div className="space-y-1">
-              <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider flex items-center">
+              <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center">
                 Email Address
               </label>
               <input
@@ -190,7 +190,7 @@ export default function RegisterPatientPage() {
           {/* DOB & Gender */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider flex items-center">
+              <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center">
                 <Calendar className="w-3.5 h-3.5 mr-1.5 text-teal-400" />
                 Date of Birth *
               </label>
@@ -203,7 +203,7 @@ export default function RegisterPatientPage() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider block">
+              <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block">
                 Gender *
               </label>
               <select
@@ -221,7 +221,7 @@ export default function RegisterPatientPage() {
 
           {/* Password */}
           <div className="space-y-1">
-            <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider flex items-center">
+            <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider flex items-center">
               <Key className="w-3.5 h-3.5 mr-1.5 text-teal-400" />
               Set Password *
             </label>

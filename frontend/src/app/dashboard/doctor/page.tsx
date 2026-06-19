@@ -751,7 +751,7 @@ export default function DoctorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800">
       {/* -------------------- SIDEBAR -------------------- */}
       <aside className="w-full md:w-64 bg-slate-950 text-slate-100 flex flex-col shrink-0 border-r border-slate-900 z-20">
         <div className="p-5 border-b border-slate-900 flex items-center justify-between">
@@ -804,7 +804,7 @@ export default function DoctorDashboard() {
                 className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold tracking-wide transition-all transform ${
                   isSelected
                     ? 'bg-gradient-to-r from-indigo-600/90 to-teal-650/80 text-white font-bold shadow-md shadow-indigo-500/5 translate-x-1'
-                    : 'text-slate-450 hover:bg-slate-900/40 hover:text-white'
+                    : 'text-slate-500 hover:bg-slate-900/40 hover:text-white'
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isSelected ? 'text-teal-350' : 'text-slate-500'}`} />
@@ -818,7 +818,7 @@ export default function DoctorDashboard() {
         <div className="p-4 border-t border-slate-900">
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center space-x-2 py-2 bg-slate-900 hover:bg-red-950/20 hover:text-red-400 hover:border-red-900/30 border border-slate-850 rounded-lg text-xs font-bold text-slate-400 transition-all"
+            className="w-full flex items-center justify-center space-x-2 py-2 bg-slate-900 hover:bg-red-950/20 hover:text-red-400 hover:border-red-900/30 border border-slate-800 rounded-lg text-xs font-bold text-slate-400 transition-all"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out Desk</span>
@@ -827,9 +827,9 @@ export default function DoctorDashboard() {
       </aside>
 
       {/* -------------------- MAIN WORKSPACE -------------------- */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 text-slate-800">
         <header className="h-16 bg-white border-b border-slate-200/85 px-6 flex items-center justify-between shrink-0 shadow-sm print:hidden">
-          <h2 className="font-extrabold text-slate-850 text-sm tracking-wider uppercase">
+          <h2 className="font-extrabold text-slate-800 text-sm tracking-wider uppercase">
             {activeTab === 'queue' && "Today's Clinical Queue"}
             {activeTab === 'patients' && 'Patient Records & Registration'}
             {activeTab === 'billing' && 'Billing Ledger & Invoices'}
@@ -878,13 +878,13 @@ export default function DoctorDashboard() {
                           <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${
                             app.status === 'CHECKED_IN' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
                             app.status === 'IN_CONSULTATION' ? 'bg-indigo-50 text-indigo-650 border border-indigo-200' :
-                            app.status === 'COMPLETED' ? 'bg-slate-100 text-slate-500 border border-slate-250' :
+                            app.status === 'COMPLETED' ? 'bg-slate-100 text-slate-500 border border-slate-300' :
                             'bg-slate-50 text-slate-600 border border-slate-200'
                           }`}>
                             {app.status}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center text-[10px] text-slate-550 mt-2">
+                        <div className="flex justify-between items-center text-[10px] text-slate-1000 mt-2">
                           <span className="flex items-center">
                             <Clock className="w-3.5 h-3.5 mr-1 text-slate-400" />
                             {app.type === 'SLOT' ? (
@@ -1005,7 +1005,7 @@ export default function DoctorDashboard() {
                                       setMedQuery(med.name);
                                       setMedResults([]);
                                     }}
-                                    className="p-2 hover:bg-slate-55 text-xs cursor-pointer text-slate-850 flex justify-between"
+                                    className="p-2 hover:bg-slate-100 text-xs cursor-pointer text-slate-800 flex justify-between"
                                   >
                                     <span className="font-bold">{med.name}</span>
                                     <span className="text-[10px] text-slate-400">{med.genericName} - {med.strength}</span>
@@ -1074,7 +1074,7 @@ export default function DoctorDashboard() {
                                 {prescriptionItems.map((item, index) => (
                                   <tr key={index}>
                                     <td className="p-3 font-semibold text-slate-800">{item.medicineName}</td>
-                                    <td className="p-3 text-slate-450">{item.dosageForm} {item.strength}</td>
+                                    <td className="p-3 text-slate-500">{item.dosageForm} {item.strength}</td>
                                     <td className="p-3 font-semibold">{item.dosage}</td>
                                     <td className="p-3">{item.instructions}</td>
                                     <td className="p-3 text-center font-bold">{item.durationDays}</td>
@@ -1143,11 +1143,11 @@ export default function DoctorDashboard() {
                             <div key={enc.id} className="relative text-xs">
                               {/* marker */}
                               <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full border border-indigo-400 bg-white shadow-sm"></span>
-                              <div className="flex justify-between items-center text-[10px] text-slate-450 font-bold">
+                              <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold">
                                 <span>{new Date(enc.createdAt).toLocaleDateString()}</span>
                               </div>
                               <p className="font-bold text-slate-800 mt-1">Dx: {enc.diagnosis || 'General visit'}</p>
-                              {enc.complaint && <p className="text-slate-550 text-[11px] mt-0.5">Compl: {enc.complaint}</p>}
+                              {enc.complaint && <p className="text-slate-1000 text-[11px] mt-0.5">Compl: {enc.complaint}</p>}
                               {enc.prescription && (
                                 <div className="mt-1 bg-slate-50 border border-slate-100 p-2 rounded text-[10px] space-y-0.5">
                                   <span className="font-semibold text-indigo-750 uppercase tracking-wider text-[8px] block">Rx:</span>
@@ -1165,10 +1165,10 @@ export default function DoctorDashboard() {
                     </aside>
                   </>
                 ) : (
-                  <div className="flex-1 bg-white border border-slate-205 rounded-2xl p-16 shadow-sm text-center flex flex-col items-center justify-center space-y-3">
+                  <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-16 shadow-sm text-center flex flex-col items-center justify-center space-y-3">
                     <Clipboard className="w-12 h-12 text-slate-300" />
                     <h3 className="font-bold text-slate-800 text-base">Workspace Idle</h3>
-                    <p className="text-slate-450 text-xs max-w-md">
+                    <p className="text-slate-500 text-xs max-w-md">
                       Select a checked-in patient from the today queue sidebar to begin consultation and chart details.
                     </p>
                   </div>
@@ -1196,7 +1196,7 @@ export default function DoctorDashboard() {
                       onChange={(e) => setPatientSearchQuery(e.target.value)}
                       placeholder="Search by First Name, Last Name, or Mobile Number..."
                       required
-                      className="flex-1 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none rounded-lg px-3.5 py-2 text-xs text-slate-800 placeholder-slate-450 transition-all"
+                      className="flex-1 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none rounded-lg px-3.5 py-2 text-xs text-slate-800 placeholder-slate-500 transition-all"
                     />
                     <button
                       type="submit"
@@ -1221,7 +1221,7 @@ export default function DoctorDashboard() {
                             <th className="p-3 text-right">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-850">
+                        <tbody className="divide-y divide-slate-100 text-slate-800">
                           {patientSearchResults.map((pat) => (
                             <tr key={pat.id} className="hover:bg-slate-50/50">
                               <td className="p-3 font-semibold">{pat.firstName} {pat.lastName}</td>
@@ -1262,7 +1262,7 @@ export default function DoctorDashboard() {
                   {registerError && <p className="text-red-600 text-xs font-semibold">{registerError}</p>}
                   {registerSuccess && <p className="text-emerald-600 text-xs font-bold">Patient file initialized and registered!</p>}
 
-                  <form onSubmit={handleRegisterPatient} className="space-y-4 text-xs text-slate-850">
+                  <form onSubmit={handleRegisterPatient} className="space-y-4 text-xs text-slate-800">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">First Name *</label>
@@ -1368,7 +1368,7 @@ export default function DoctorDashboard() {
                   <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center">
                     <ArrowRightLeft className="w-4.5 h-4.5 mr-2 text-indigo-650" /> Merge Duplicate Patients
                   </h3>
-                  <p className="text-[11px] text-slate-450 leading-relaxed">
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
                     Instantly merge duplicate patient profiles. Invoices, prescriptions, and clinical history will be consolidated under the survivor record.
                   </p>
 
@@ -1423,7 +1423,7 @@ export default function DoctorDashboard() {
                         <h3 className="font-extrabold text-slate-900 text-sm">
                           {selectedPatientForTimeline.firstName} {selectedPatientForTimeline.lastName}
                         </h3>
-                        <p className="text-[10px] text-slate-450 font-semibold tracking-wider mt-0.5 uppercase">
+                        <p className="text-[10px] text-slate-500 font-semibold tracking-wider mt-0.5 uppercase">
                           ID: {selectedPatientForTimeline.id}
                         </p>
                       </div>
@@ -1473,7 +1473,7 @@ export default function DoctorDashboard() {
                           {patientHistoryTimeline.encounters.map((enc: any) => (
                             <div key={enc.id} className="relative text-xs">
                               <span className="absolute -left-[21px] top-0.5 w-2 h-2 rounded-full border border-indigo-400 bg-white"></span>
-                              <span className="text-[9px] text-slate-450 font-bold">{new Date(enc.createdAt).toLocaleDateString()}</span>
+                              <span className="text-[9px] text-slate-500 font-bold">{new Date(enc.createdAt).toLocaleDateString()}</span>
                               <p className="font-semibold text-slate-800">Dx: {enc.diagnosis || 'Checkup'}</p>
                               {enc.complaint && <p className="text-slate-500 text-[10px]">Compl: {enc.complaint}</p>}
                               {enc.prescription && (
@@ -1492,10 +1492,10 @@ export default function DoctorDashboard() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white border border-slate-205 rounded-2xl p-16 shadow-sm text-center flex flex-col items-center justify-center space-y-3">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-16 shadow-sm text-center flex flex-col items-center justify-center space-y-3">
                     <User className="w-12 h-12 text-slate-300" />
                     <h3 className="font-bold text-slate-800 text-base">Select Patient</h3>
-                    <p className="text-slate-450 text-xs">
+                    <p className="text-slate-500 text-xs">
                       Search and click "Open File" next to a patient record to view their profile timeline.
                     </p>
                   </div>
@@ -1562,7 +1562,7 @@ export default function DoctorDashboard() {
                                   setInvoicePatient(pat);
                                   setInvoicePatientResults([]);
                                 }}
-                                className="p-2 hover:bg-slate-50 text-xs cursor-pointer text-slate-850 flex justify-between"
+                                className="p-2 hover:bg-slate-50 text-xs cursor-pointer text-slate-800 flex justify-between"
                               >
                                 <span className="font-semibold">{pat.firstName} {pat.lastName}</span>
                                 <span className="text-[10px] text-slate-400">{pat.phone}</span>
@@ -1574,7 +1574,7 @@ export default function DoctorDashboard() {
 
                       {/* Items */}
                       <div className="space-y-3">
-                        <span className="text-[10px] text-slate-550 font-bold uppercase tracking-wider block">Line Items</span>
+                        <span className="text-[10px] text-slate-1000 font-bold uppercase tracking-wider block">Line Items</span>
                         <div className="space-y-2">
                           {invoiceItems.map((item, index) => (
                             <div key={index} className="flex gap-2 items-center">
@@ -1690,7 +1690,7 @@ export default function DoctorDashboard() {
                       <div className="border border-slate-100 rounded-xl overflow-hidden text-xs">
                         <table className="w-full text-left border-collapse">
                           <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-450 font-bold uppercase">
+                            <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-500 font-bold uppercase">
                               <th className="p-3">Bill No</th>
                               <th className="p-3">Patient</th>
                               <th className="p-3 text-right">Total</th>
@@ -1699,7 +1699,7 @@ export default function DoctorDashboard() {
                               <th className="p-3 text-right">Action</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 text-slate-850">
+                          <tbody className="divide-y divide-slate-100 text-slate-800">
                             {invoices.map((inv) => (
                               <tr key={inv.id} className="hover:bg-slate-50/50">
                                 <td className="p-3 font-semibold">{inv.invoiceNumber}</td>
@@ -1866,10 +1866,10 @@ export default function DoctorDashboard() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white border border-slate-205 rounded-2xl p-16 shadow-sm text-center flex flex-col items-center justify-center space-y-3">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-16 shadow-sm text-center flex flex-col items-center justify-center space-y-3">
                     <Printer className="w-12 h-12 text-slate-300" />
                     <h3 className="font-bold text-slate-800 text-base">Select Record</h3>
-                    <p className="text-slate-450 text-xs">
+                    <p className="text-slate-500 text-xs">
                       Click "View" next to any invoice to view the breakdown calculations, collect payments, and print clinical receipts.
                     </p>
                   </div>
@@ -1914,7 +1914,7 @@ export default function DoctorDashboard() {
               <div className="border border-slate-100 rounded-xl overflow-hidden text-xs">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-450 font-bold uppercase">
+                    <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-500 font-bold uppercase">
                       <th className="p-3">Medicine Name</th>
                       <th className="p-3">Generic / Active Ingredient</th>
                       <th className="p-3">Form</th>
@@ -1923,7 +1923,7 @@ export default function DoctorDashboard() {
                       <th className="p-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-850">
+                  <tbody className="divide-y divide-slate-100 text-slate-800">
                     {filteredMeds.length > 0 ? (
                       filteredMeds.map((med) => (
                         <tr key={med.id} className="hover:bg-slate-50/50">
@@ -1975,7 +1975,7 @@ export default function DoctorDashboard() {
           {activeTab === 'settings' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
               {/* Clinic configuration */}
-              <div className="bg-white border border-slate-205 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <span className="text-xs font-black text-slate-800 uppercase tracking-wider block border-b border-slate-100 pb-2 flex items-center">
                   <Settings className="w-4.5 h-4.5 mr-2 text-indigo-655" /> Edit Clinic Public Profile
                 </span>
@@ -1987,7 +1987,7 @@ export default function DoctorDashboard() {
                       required
                       value={clinicForm.name}
                       onChange={(e) => setClinicForm({ ...clinicForm, name: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2"
+                      className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2 text-slate-800"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -2054,7 +2054,7 @@ export default function DoctorDashboard() {
               </div>
 
               {/* Doctor availability timings & fees */}
-              <div className="bg-white border border-slate-205 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <span className="text-xs font-black text-slate-800 uppercase tracking-wider block border-b border-slate-100 pb-2 flex items-center">
                   <User className="w-4.5 h-4.5 mr-2 text-indigo-650" /> Edit Doctor Schedule & Public Info
                 </span>
@@ -2129,28 +2129,28 @@ export default function DoctorDashboard() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="text-[10px] text-slate-450 font-bold uppercase tracking-wider block">Today's Total Patients</span>
-                    <h3 className="font-extrabold text-2xl text-slate-850">{stats.visitsCount || 0}</h3>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Today's Total Patients</span>
+                    <h3 className="font-extrabold text-2xl text-slate-800">{stats.visitsCount || 0}</h3>
                     <p className="text-[10px] text-slate-400">Scheduled & walk-ins registered today</p>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="text-[10px] text-slate-450 font-bold uppercase tracking-wider block">Today's Revenue Collected</span>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Today's Revenue Collected</span>
                     <h3 className="font-extrabold text-2xl text-emerald-600">₹{parseFloat(stats.todayRevenue || 0).toFixed(2)}</h3>
                     <p className="text-[10px] text-slate-400">Total payments logged in ledger today</p>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="text-[10px] text-slate-450 font-bold uppercase tracking-wider block">Total Pending Dues</span>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Pending Dues</span>
                     <h3 className="font-extrabold text-2xl text-rose-600">₹{parseFloat(stats.pendingDues || 0).toFixed(2)}</h3>
                     <p className="text-[10px] text-slate-400">Outstanding invoice balances in ledger</p>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="text-[10px] text-slate-450 font-bold uppercase tracking-wider block">UPI / CASH Split</span>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">UPI / CASH Split</span>
                     <div className="text-[11px] font-semibold text-slate-700 space-y-0.5 mt-1.5">
                       <div className="flex justify-between">
-                        <span>UPI:</span> <span className="font-bold text-slate-850">₹{parseFloat(stats.paymentSplit?.UPI || 0).toFixed(2)}</span>
+                        <span>UPI:</span> <span className="font-bold text-slate-800">₹{parseFloat(stats.paymentSplit?.UPI || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>CASH:</span> <span className="font-bold text-slate-850">₹{parseFloat(stats.paymentSplit?.CASH || 0).toFixed(2)}</span>
+                        <span>CASH:</span> <span className="font-bold text-slate-800">₹{parseFloat(stats.paymentSplit?.CASH || 0).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -2163,7 +2163,7 @@ export default function DoctorDashboard() {
                 
                 {/* Search logs */}
                 <div className="relative max-w-sm">
-                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-450" />
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
                   <input
                     type="text"
                     value={searchAuditQuery}
@@ -2180,7 +2180,7 @@ export default function DoctorDashboard() {
                     <div className="border border-slate-100 rounded-xl overflow-hidden text-xs">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-450 font-bold uppercase">
+                          <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-500 font-bold uppercase">
                             <th className="p-3">Timestamp</th>
                             <th className="p-3">Action</th>
                             <th className="p-3">Entity Name</th>
@@ -2284,7 +2284,7 @@ export default function DoctorDashboard() {
                     value={medForm.strength}
                     onChange={(e) => setMedForm({ ...medForm, strength: e.target.value })}
                     placeholder="e.g. 500mg, 10ml"
-                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3.5 py-2 text-slate-850"
+                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3.5 py-2 text-slate-800"
                   />
                 </div>
               </div>
@@ -2295,7 +2295,7 @@ export default function DoctorDashboard() {
                   value={medForm.defaultSchedule}
                   onChange={(e) => setMedForm({ ...medForm, defaultSchedule: e.target.value })}
                   placeholder="e.g. 1-0-1"
-                  className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3.5 py-2 text-slate-850"
+                  className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3.5 py-2 text-slate-800"
                 />
               </div>
 
@@ -2303,7 +2303,7 @@ export default function DoctorDashboard() {
                 <button
                   type="button"
                   onClick={() => setMedModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-650 font-bold rounded-lg"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg"
                 >
                   Cancel
                 </button>
@@ -2420,7 +2420,7 @@ export default function DoctorDashboard() {
                 <button
                   type="button"
                   onClick={() => setEditingPatient(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-205 text-slate-650 font-bold rounded-lg"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg"
                 >
                   Cancel
                 </button>
