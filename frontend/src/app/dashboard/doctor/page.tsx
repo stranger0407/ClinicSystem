@@ -982,7 +982,7 @@ export default function DoctorDashboard() {
                       Refresh
                     </button>
                   </div>
-                  <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[calc(100vh-250px)]">
+                  <div className="flex-1 divide-y divide-slate-100">
                     {loadingQueue ? (
                       <div className="p-8 flex justify-center"><Loader className="w-6 h-6 animate-spin text-indigo-500" /></div>
                     ) : appointments.length > 0 ? (
@@ -1035,7 +1035,7 @@ export default function DoctorDashboard() {
               <div className="flex-1 flex flex-col lg:flex-row gap-6 min-w-0">
                 {selectedApp ? (
                   <>
-                    <form onSubmit={handleSaveEncounter} className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6 overflow-y-auto max-h-[calc(100vh-200px)] flex flex-col text-slate-800">
+                    <form onSubmit={handleSaveEncounter} className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6 flex flex-col text-slate-800">
                       <div className="flex justify-between items-center border-b border-slate-100 pb-4 shrink-0">
                         <div className="flex items-center space-x-3">
                           <Clipboard className="w-5 h-5 text-indigo-650" />
@@ -1359,7 +1359,7 @@ export default function DoctorDashboard() {
 
                     {/* Historical Timeline sidebar */}
                     {showHistorySidebar && (
-                      <aside className="w-full lg:w-76 shrink-0 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm overflow-y-auto max-h-[calc(100vh-200px)] space-y-4">
+                      <aside className="w-full lg:w-76 shrink-0 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-4">
                         <h4 className="text-[10px] text-slate-500 font-black uppercase tracking-wider border-b border-slate-100 pb-2">
                           Patient History Timeline
                         </h4>
