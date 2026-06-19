@@ -310,10 +310,10 @@ export default function PublicClinicLanding() {
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
             Trustworthy Care, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-400">
-              Simplified Booking.
+              Simplified Appointments.
             </span>
           </h1>
-          <p className="text-slate-405 text-sm sm:text-base max-w-xl leading-relaxed font-normal">
+          <p className="text-slate-455 text-sm sm:text-base max-w-xl leading-relaxed font-normal">
             Welcome to {clinic?.name || 'Apollo Family Clinic'}. Book appointments, check live doctor schedules, and claim your patient records file directly.
           </p>
 
@@ -322,7 +322,7 @@ export default function PublicClinicLanding() {
               onClick={() => handleOpenBooking()}
               className="w-full sm:w-auto px-6 sm:px-8 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/10 flex items-center justify-center space-x-2 group active:scale-[0.98] cursor-pointer"
             >
-              <span>Schedule Booking</span>
+              <span>Schedule Appointment</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
             <Link
