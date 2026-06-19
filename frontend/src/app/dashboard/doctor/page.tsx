@@ -392,12 +392,16 @@ export default function DoctorDashboard() {
 
   const addPrescriptionItem = () => {
     if (!medQuery.trim()) return;
-    const name = selectedMed ? selectedMed.name : medQuery.trim();
+    if (!selectedMed) {
+      alert('Please search and select a medicine from the catalog. If it is a new medicine, please add it under the Medicine Catalog tab first.');
+      return;
+    }
     const item = {
-      medicineName: name,
-      genericName: selectedMed?.genericName || '',
-      dosageForm: selectedMed?.dosageForm || 'TABLET',
-      strength: selectedMed?.strength || '',
+      medicineId: selectedMed.id,
+      medicineName: selectedMed.name,
+      genericName: selectedMed.genericName || '',
+      dosageForm: selectedMed.dosageForm || 'TABLET',
+      strength: selectedMed.strength || '',
       dosage,
       instructions,
       durationDays,
@@ -433,7 +437,14 @@ export default function DoctorDashboard() {
         followUpDate: followUpDate ? new Date(followUpDate).toISOString() : undefined,
         testsRequired: testsRequired.trim() || undefined,
         vitals: Object.values(vitals).some(v => v !== '') ? vitals : undefined,
-        prescriptionItems: prescriptionItems.length > 0 ? prescriptionItems : undefined,
+        prescriptionItems: prescriptionItems.length > 0 
+          ? prescriptionItems.map(item => ({
+              medicineId: item.medicineId,
+              dosage: item.dosage,
+              instructions: item.instructions,
+              durationDays: item.durationDays,
+            }))
+          : undefined,
       };
 
       await apiFetch('/encounter', {
