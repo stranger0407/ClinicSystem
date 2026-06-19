@@ -1354,13 +1354,33 @@ export default function DoctorDashboard() {
                               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end bg-slate-50/50 p-3 border border-slate-100 rounded-xl">
                                 <div className="space-y-1.5 sm:col-span-2 relative">
                                   <label className="text-[9px] text-slate-500 font-bold uppercase block">Medicine Name</label>
-                                  <input
-                                    type="text"
-                                    value={medQuery}
-                                    onChange={(e) => handleMedSearch(e.target.value)}
-                                    placeholder="Type medicine name..."
-                                    className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
-                                  />
+                                  <div className="flex items-center space-x-1.5">
+                                    <input
+                                      type="text"
+                                      value={medQuery}
+                                      onChange={(e) => handleMedSearch(e.target.value)}
+                                      placeholder="Type medicine name..."
+                                      className="flex-1 bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingMed(null);
+                                        setMedForm({
+                                          name: medQuery.trim(),
+                                          genericName: '',
+                                          dosageForm: 'TABLET',
+                                          strength: '',
+                                          defaultSchedule: '1-0-1',
+                                        });
+                                        setMedModalOpen(true);
+                                      }}
+                                      title="Add New Medicine to Catalog"
+                                      className="p-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-650 rounded-lg flex items-center justify-center transition-colors shrink-0"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </button>
+                                  </div>
                                   {medQuery.trim() !== '' && (
                                     <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-30 overflow-hidden mt-1 p-2 space-y-1.5">
                                       {medResults.length > 0 ? (
