@@ -1584,7 +1584,7 @@ export default function DoctorDashboard() {
               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-3">
                   <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center">
-                    <Search className="w-4 h-4 mr-2 text-indigo-650" /> Search Patient Records
+                    <Search className="w-4 h-4 mr-2 text-indigo-600" /> Search Patient Records
                   </h3>
                   <div className="flex items-center space-x-2 w-full sm:w-auto">
                     <button
@@ -1593,7 +1593,7 @@ export default function DoctorDashboard() {
                         setRegisterSuccess(false);
                         setRegisterModalOpen(true);
                       }}
-                      className="flex-1 sm:flex-initial px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm hover:shadow-md"
+                      className="flex-1 sm:flex-initial px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm hover:shadow-md"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Register Patient</span>
@@ -3011,14 +3011,14 @@ export default function DoctorDashboard() {
           <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
               <h3 className="font-extrabold text-slate-800 text-sm uppercase flex items-center">
-                <PlusCircle className="w-4 h-4 mr-2 text-indigo-650" /> Register New Patient
+                <PlusCircle className="w-4 h-4 mr-2 text-indigo-600" /> Register New Patient
               </h3>
               <button onClick={() => setRegisterModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleRegisterPatient} className="p-6 space-y-4 text-xs overflow-y-auto">
-              {registerError && <p className="text-red-650 text-xs font-semibold">{registerError}</p>}
+              {registerError && <p className="text-red-600 text-xs font-semibold">{registerError}</p>}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">First Name *</label>
@@ -3145,8 +3145,8 @@ export default function DoctorDashboard() {
                 Consolidate billing invoices, clinical encounter history, and prescriptions from a duplicate record into a survivor record. **The duplicate profile will be deleted permanently.**
               </p>
               
-              {mergeError && <p className="text-red-650 text-xs font-bold">{mergeError}</p>}
-              {mergeSuccess && <p className="text-emerald-650 text-xs font-bold">Profiles successfully consolidated!</p>}
+              {mergeError && <p className="text-red-600 text-xs font-bold">{mergeError}</p>}
+              {mergeSuccess && <p className="text-emerald-600 text-xs font-bold">Profiles successfully consolidated!</p>}
 
               <div className="space-y-1.5">
                 <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Source Patient Profile ID (Duplicate to Delete)</label>
