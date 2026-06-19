@@ -9,7 +9,7 @@
 
 # ---------- CONFIGURATION (Edit these values) ----------
 $RESOURCE_GROUP   = "clinicos-rg"
-$LOCATION         = "centralindia"
+$LOCATION         = "southeastasia"
 $DB_SERVER_NAME   = "clinicos-db"
 $DB_NAME          = "clinic_db"
 $DB_ADMIN_USER    = "clinicadmin"
