@@ -799,6 +799,8 @@ export default function PublicClinicLanding() {
                       required
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
+                      onClick={(e) => (e.target as any).showPicker?.()}
+                      style={{ colorScheme: 'dark' }}
                       className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white transition-all cursor-pointer"
                     />
                   </div>

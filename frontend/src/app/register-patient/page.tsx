@@ -197,8 +197,10 @@ export default function RegisterPatientPage() {
                 type="date"
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
+                onClick={(e) => (e.target as any).showPicker?.()}
+                style={{ colorScheme: 'dark' }}
                 required
-                className="w-full bg-slate-950/80 border border-slate-700/50 focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500 focus:outline-none rounded-lg px-3 py-2 text-white placeholder-slate-500 text-xs transition-all"
+                className="w-full bg-slate-950/80 border border-slate-700/50 focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500 focus:outline-none rounded-lg px-3 py-2 text-white placeholder-slate-500 text-xs transition-all cursor-pointer"
               />
             </div>
             <div className="space-y-1">
