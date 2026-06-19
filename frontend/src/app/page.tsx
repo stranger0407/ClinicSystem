@@ -23,7 +23,9 @@ import {
   BookOpen,
   HelpCircle,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  DollarSign,
+  ArrowRightLeft
 } from 'lucide-react';
 
 export default function PublicClinicLanding() {
@@ -216,6 +218,27 @@ export default function PublicClinicLanding() {
 
   // Helper selectors
   const activeDoctor = doctors.find(d => d.id === selectedDoctorId);
+
+  const getLocalDateString = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const isMorningSlot = (timeStr: string) => {
+    const lower = timeStr.toLowerCase();
+    if (lower.includes('am')) return true;
+    if (lower.includes('pm')) {
+      if (timeStr.startsWith('12')) return false;
+      return false;
+    }
+    const hour = parseInt(timeStr.split(':')[0], 10);
+    return hour < 12;
+  };
+
+  const morningSlots = slots.filter(s => isMorningSlot(s.time));
+  const afternoonSlots = slots.filter(s => !isMorningSlot(s.time));
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col selection:bg-teal-500 selection:text-slate-900 font-sans font-medium">
@@ -429,21 +452,64 @@ export default function PublicClinicLanding() {
             
             {/* Close button */}
             <button
+              type="button"
               onClick={handleCloseBooking}
               className="absolute top-4 right-4 p-1.5 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 rounded-full text-slate-400 transition-all z-10"
             >
               <XIcon className="w-4 h-4" />
             </button>
 
-            {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-slate-800 bg-slate-900">
-              <span className="text-[9px] text-teal-400 font-bold uppercase tracking-wider block">Online Scheduling</span>
-              <h3 className="text-lg font-black text-white">Book Clinic Appointment</h3>
+            {/* Step-by-Step Progress Indicator */}
+            <div className="flex items-center justify-between px-6 py-5 bg-slate-950/40 border-b border-slate-800/80">
+              <div className="flex items-center space-x-2">
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
+                  bookingStep === 1 
+                    ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20' 
+                    : bookingStep > 1 
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                    : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {bookingStep > 1 ? '✓' : '1'}
+                </span>
+                <span className={`text-xs font-bold ${bookingStep === 1 ? 'text-teal-400' : 'text-slate-400'}`}>Schedule</span>
+              </div>
+              <div className="flex-1 h-[2px] bg-slate-800 mx-3">
+                <div className={`h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300 ${
+                  bookingStep === 1 ? 'w-0' : bookingStep === 2 ? 'w-1/2' : 'w-full'
+                }`} />
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
+                  bookingStep === 2 
+                    ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20' 
+                    : bookingStep > 2 
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                    : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {bookingStep > 2 ? '✓' : '2'}
+                </span>
+                <span className={`text-xs font-bold ${bookingStep === 2 ? 'text-teal-400' : 'text-slate-400'}`}>Information</span>
+              </div>
+              <div className="flex-1 h-[2px] bg-slate-800 mx-3">
+                <div className={`h-full bg-emerald-500 transition-all duration-300 ${
+                  bookingStep < 3 ? 'w-0' : 'w-full'
+                }`} />
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
+                  bookingStep === 3 
+                    ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20' 
+                    : 'bg-slate-800 text-slate-400'
+                }`}>
+                  3
+                </span>
+                <span className={`text-xs font-bold ${bookingStep === 3 ? 'text-emerald-400' : 'text-slate-400'}`}>Confirmed</span>
+              </div>
             </div>
 
             {/* Modal Error Alert */}
             {bookingError && (
-              <div className="m-4 mx-6 flex items-start space-x-2.5 bg-red-950/45 border border-red-800 rounded-xl p-3.5 text-red-300 text-xs">
+              <div className="m-4 mx-6 flex items-start space-x-2.5 bg-red-950/45 border border-red-800 rounded-xl p-3 text-red-300 text-xs">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{bookingError}</span>
               </div>
@@ -452,70 +518,79 @@ export default function PublicClinicLanding() {
             {/* Step 1: Doctor/Date/Slot Setup */}
             {bookingStep === 1 && (
               <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Select Doctor */}
-                  <div className="space-y-1">
-                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Doctor</label>
-                    <select
-                      value={selectedDoctorId}
-                      onChange={(e) => setSelectedDoctorId(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
-                    >
-                      {doctors.map(d => (
-                        <option key={d.id} value={d.id}>
-                          Dr. {d.user.firstName} {d.user.lastName} ({d.specialty})
-                        </option>
-                      ))}
-                    </select>
+                {/* Visual Doctor details card */}
+                {activeDoctor && (
+                  <div className="bg-slate-950/50 border border-slate-850 rounded-2xl p-4 flex items-center justify-between shadow-inner">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-teal-500/10 to-indigo-500/10 border border-teal-500/20 rounded-xl flex items-center justify-center text-teal-400 font-bold text-base shadow-sm">
+                        {activeDoctor.user.firstName[0]}{activeDoctor.user.lastName[0]}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white leading-tight">Dr. {activeDoctor.user.firstName} {activeDoctor.user.lastName}</h4>
+                        <p className="text-xs text-teal-400 font-medium">{activeDoctor.specialty}</p>
+                        <p className="text-[9px] text-slate-500 mt-0.5">License: {activeDoctor.licenseNo}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Fee</span>
+                      <span className="text-sm font-black text-emerald-400">₹{parseFloat(activeDoctor.fees).toFixed(2)}</span>
+                    </div>
                   </div>
+                )}
 
-                  {/* Visit Date */}
-                  <div className="space-y-1">
-                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Preferred Date</label>
-                    <input
-                      type="date"
-                      value={bookingDate}
-                      required
-                      min={new Date().toISOString().split('T')[0]}
-                      onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
-                    />
-                  </div>
+                {/* Doctor Selection Dropdown */}
+                <div className="space-y-1">
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Practitioner</label>
+                  <select
+                    value={selectedDoctorId}
+                    onChange={(e) => setSelectedDoctorId(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3 py-2.5 text-xs text-white transition-all cursor-pointer hover:border-slate-750"
+                  >
+                    {doctors.map(d => (
+                      <option key={d.id} value={d.id}>
+                        Dr. {d.user.firstName} {d.user.lastName} ({d.specialty})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Booking Mode */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] text-slate-400 font-bold uppercase">Consultation Type</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setBookingType('SLOT')}
-                      className={`py-2 rounded-xl text-xs font-bold border transition-all ${
-                        bookingType === 'SLOT'
-                          ? 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-950/20'
-                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
-                      }`}
-                    >
-                      Scheduled Slot Time
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBookingType('WALK_IN')}
-                      className={`py-2 rounded-xl text-xs font-bold border transition-all ${
-                        bookingType === 'WALK_IN'
-                          ? 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-950/20'
-                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800'
-                      }`}
-                    >
-                      Walk-in (Queue Number)
-                    </button>
+                {/* Horizontal Date Swiper */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Choose Appointment Date</label>
+                  <div className="flex space-x-2 overflow-x-auto pb-2 pt-0.5 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                    {Array.from({ length: 7 }).map((_, idx) => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + idx);
+                      const isoStr = getLocalDateString(d);
+                      const isSelected = bookingDate === isoStr;
+                      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+                      const dayNum = d.getDate();
+                      const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+                      
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setBookingDate(isoStr)}
+                          className={`flex-shrink-0 w-16 py-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                            isSelected
+                              ? 'bg-teal-500 border-teal-500 text-slate-950 font-bold shadow-lg shadow-teal-500/20'
+                              : 'bg-slate-950 border-slate-850 hover:border-slate-750 text-slate-300'
+                          }`}
+                        >
+                          <span className={`text-[9px] font-bold uppercase ${isSelected ? 'text-slate-950/80' : 'text-slate-500'}`}>{dayName}</span>
+                          <span className="text-sm font-black leading-tight my-0.5">{dayNum}</span>
+                          <span className={`text-[8px] font-medium ${isSelected ? 'text-slate-950/80' : 'text-slate-400'}`}>{monthName}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Slots display */}
                 {bookingType === 'SLOT' && (
-                  <div className="space-y-2 pt-2">
-                    <label className="block text-[10px] text-slate-400 font-bold uppercase">
+                  <div className="space-y-3 pt-1">
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                       Available Time Slots
                     </label>
                     {slotsLoading ? (
@@ -524,57 +599,132 @@ export default function PublicClinicLanding() {
                         Calculating available clinic slots...
                       </div>
                     ) : slots.length === 0 ? (
-                      <div className="text-center py-6 border border-dashed border-slate-800 rounded-xl text-slate-500 text-xs">
-                        Doctor is not available on this date or schedule not configured.
+                      <div className="text-center py-6 border border-dashed border-slate-850 rounded-2xl text-slate-500 text-xs space-y-2">
+                        <p>Doctor is not available on this date or schedule not configured.</p>
+                        <button
+                          type="button"
+                          onClick={() => setBookingType('WALK_IN')}
+                          className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 text-teal-400 font-bold rounded-xl text-xs transition-all"
+                        >
+                          Book Walk-in Queue Ticket
+                        </button>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-4 gap-2">
-                        {slots.map((s, idx) => (
+                      <div className="space-y-3">
+                        {/* Morning Section */}
+                        {morningSlots.length > 0 && (
+                          <div className="space-y-1.5">
+                            <span className="text-[9px] text-teal-400 font-bold uppercase tracking-wider flex items-center space-x-1">
+                              <span>☀️ Morning</span>
+                            </span>
+                            <div className="grid grid-cols-4 gap-2">
+                              {morningSlots.map((s, idx) => (
+                                <button
+                                  key={`morning-${idx}`}
+                                  disabled={!s.available}
+                                  type="button"
+                                  onClick={() => setSelectedSlot(s)}
+                                  className={`py-2 rounded-xl text-xs font-semibold text-center border transition-all ${
+                                    !s.available
+                                      ? 'bg-slate-950/40 text-slate-700 border-slate-950/50 cursor-not-allowed line-through'
+                                      : selectedSlot?.time === s.time
+                                      ? 'bg-teal-500 border-teal-500 text-slate-950 font-bold shadow-md shadow-teal-500/20'
+                                      : 'bg-slate-950 text-slate-300 border-slate-850 hover:border-slate-750'
+                                  }`}
+                                >
+                                  {s.time}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Afternoon Section */}
+                        {afternoonSlots.length > 0 && (
+                          <div className="space-y-1.5">
+                            <span className="text-[9px] text-teal-400 font-bold uppercase tracking-wider flex items-center space-x-1">
+                              <span>🌙 Afternoon & Evening</span>
+                            </span>
+                            <div className="grid grid-cols-4 gap-2">
+                              {afternoonSlots.map((s, idx) => (
+                                <button
+                                  key={`afternoon-${idx}`}
+                                  disabled={!s.available}
+                                  type="button"
+                                  onClick={() => setSelectedSlot(s)}
+                                  className={`py-2 rounded-xl text-xs font-semibold text-center border transition-all ${
+                                    !s.available
+                                      ? 'bg-slate-950/40 text-slate-700 border-slate-950/50 cursor-not-allowed line-through'
+                                      : selectedSlot?.time === s.time
+                                      ? 'bg-teal-500 border-teal-500 text-slate-950 font-bold shadow-md shadow-teal-500/20'
+                                      : 'bg-slate-950 text-slate-300 border-slate-850 hover:border-slate-750'
+                                  }`}
+                                >
+                                  {s.time}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="text-center pt-1">
                           <button
-                            key={idx}
-                            disabled={!s.available}
                             type="button"
-                            onClick={() => setSelectedSlot(s)}
-                            className={`py-2 rounded-lg text-xs font-semibold text-center border transition-all ${
-                              !s.available
-                                ? 'bg-slate-950/40 text-slate-700 border-slate-950/50 cursor-not-allowed line-through'
-                                : selectedSlot?.time === s.time
-                                ? 'bg-teal-500 border-teal-500 text-slate-950 font-bold shadow-md shadow-teal-500/10'
-                                : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
-                            }`}
+                            onClick={() => setBookingType('WALK_IN')}
+                            className="text-[11px] text-slate-500 hover:text-teal-400 transition-colors"
                           >
-                            {s.time}
+                            Prefer booking a walk-in queue ticket? Switch to Walk-in
                           </button>
-                        ))}
+                        </div>
                       </div>
                     )}
                   </div>
                 )}
 
+                {/* Walk-in Booking Active */}
                 {bookingType === 'WALK_IN' && (
-                  <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-slate-400 space-y-1">
-                    <p className="font-bold text-slate-300">Queue Number Booking Rules:</p>
-                    <p>• The visit date is mandatory; time slots are ignored.</p>
-                    <p>• You will be checked in as a walk-in at the reception desk.</p>
-                    <p>• Live queue number will be assigned at the clinic lobby.</p>
+                  <div className="bg-slate-950 border border-slate-850 rounded-2xl p-4.5 text-xs text-slate-400 space-y-2.5 shadow-inner">
+                    <div className="flex items-center space-x-2 text-teal-400">
+                      <ArrowRightLeft className="w-4 h-4 shrink-0" />
+                      <span className="font-bold text-slate-200">Walk-in Queue Mode Active</span>
+                    </div>
+                    <div className="space-y-1 pl-5 border-l border-slate-805">
+                      <p>• The preferred date is reserved; specific appointment times are skipped.</p>
+                      <p>• Check in at the clinic front desk to confirm your arrival.</p>
+                      <p>• Live queue number will be assigned automatically at the lobby.</p>
+                    </div>
+                    <div className="pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBookingType('SLOT');
+                          fetchAvailableSlots();
+                        }}
+                        className="text-xs text-teal-400 hover:text-teal-300 font-semibold underline underline-offset-4"
+                      >
+                        Prefer slot scheduling? Switch to Time Slots
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                <div className="space-y-1 pt-2">
-                  <label className="block text-[10px] text-slate-400 font-bold uppercase">Symptoms / Notes</label>
+                {/* Notes Input */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Symptoms / Notes (Optional)</label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Short description of symptoms (e.g. fever, headache, routine checkup)"
                     rows={2}
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                    className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 transition-all resize-none hover:border-slate-750"
                   />
                 </div>
 
-                <div className="pt-4 border-t border-slate-800 flex justify-end">
+                <div className="pt-3 border-t border-slate-800 flex justify-end">
                   <button
+                    type="button"
                     onClick={handleNextStep}
-                    className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-teal-955/20 transition-all"
+                    className="px-5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md shadow-teal-950/20 transition-all"
                   >
                     <span>Patient Details</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -586,72 +736,72 @@ export default function PublicClinicLanding() {
             {/* Step 2: Patient Registration Info */}
             {bookingStep === 2 && (
               <form onSubmit={handleBookSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="block text-[10px] text-slate-400 font-bold uppercase">First Name *</label>
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">First Name *</label>
                     <input
                       type="text"
                       required
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Rahul"
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                      placeholder="First Name"
+                      className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-700 transition-all"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Last Name *</label>
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Last Name *</label>
                     <input
                       type="text"
                       required
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Kumar"
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                      placeholder="Last Name"
+                      className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-700 transition-all"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Phone Number *</label>
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Phone Number *</label>
                     <input
                       type="tel"
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="10-digit mobile"
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                      placeholder="10-digit number"
+                      className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-700 transition-all"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Email (Optional)</label>
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Email (Optional)</label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="rahul@example.com"
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                      placeholder="name@example.com"
+                      className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-700 transition-all"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Date of Birth *</label>
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Date of Birth *</label>
                     <input
                       type="date"
                       required
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                      className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white transition-all cursor-pointer"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-[10px] text-slate-400 font-bold uppercase">Gender *</label>
+                    <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Gender *</label>
                     <select
                       value={gender}
                       onChange={(e) => setGender(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                      className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white cursor-pointer transition-all"
                     >
                       <option value="MALE">Male</option>
                       <option value="FEMALE">Female</option>
@@ -660,40 +810,51 @@ export default function PublicClinicLanding() {
                   </div>
                 </div>
 
-                {/* Create patient account option */}
-                <div className="border-t border-slate-800 pt-4 space-y-3">
-                  <label className="flex items-center space-x-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={createAccount}
-                      onChange={(e) => setCreateAccount(e.target.checked)}
-                      className="w-4 h-4 bg-slate-950 border-slate-800 rounded text-teal-600 focus:ring-0 focus:ring-offset-0"
-                    />
-                    <span className="text-xs text-slate-300 font-medium select-none">
-                      Create portal account to view prescriptions & receipts online
-                    </span>
-                  </label>
+                {/* Create patient account option (premium sliding toggle) */}
+                <div className="border-t border-slate-800/85 pt-4 space-y-3">
+                  <div className="flex items-center justify-between bg-slate-950/40 border border-slate-850/60 rounded-2xl p-4 shadow-sm">
+                    <div className="flex-1 pr-4">
+                      <h5 className="text-xs font-bold text-slate-200">Create Patient Portal Account</h5>
+                      <p className="text-[10px] text-slate-500 mt-0.5 leading-normal">
+                        Access prescription records, past clinical receipts, and reschedule your booking online anytime.
+                      </p>
+                    </div>
+                    {/* Sliding Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={() => setCreateAccount(!createAccount)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        createAccount ? 'bg-teal-500' : 'bg-slate-800'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          createAccount ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
 
                   {createAccount && (
-                    <div className="space-y-1">
-                      <label className="block text-[10px] text-teal-400 font-bold uppercase">Choose Password *</label>
+                    <div className="space-y-1.5 animate-fadeIn duration-200">
+                      <label className="block text-[10px] text-teal-400 font-bold uppercase tracking-wider">Portal Password *</label>
                       <input
                         type="password"
                         required={createAccount}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-lg px-3 py-2 text-xs text-white"
+                        placeholder="Enter a secure password"
+                        className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-700 transition-all"
                       />
                     </div>
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-slate-800 flex space-x-3">
+                <div className="pt-4 border-t border-slate-800/80 flex space-x-3">
                   <button
                     type="submit"
                     disabled={bookingInProgress}
-                    className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-teal-950/20 transition-all"
+                    className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-teal-955/20 transition-all"
                   >
                     {bookingInProgress ? (
                       <>
@@ -707,7 +868,7 @@ export default function PublicClinicLanding() {
                   <button
                     type="button"
                     onClick={() => setBookingStep(1)}
-                    className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition-colors"
+                    className="px-5 py-3 bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold rounded-xl text-xs transition-colors"
                   >
                     Back
                   </button>
@@ -718,38 +879,41 @@ export default function PublicClinicLanding() {
             {/* Step 3: Success Confirmation */}
             {bookingStep === 3 && bookingSuccessData && (
               <div className="p-8 text-center space-y-6">
-                <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-400">
+                <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/5">
                   <CheckCircle className="w-9 h-9" />
                 </div>
                 
-                <div className="space-y-1.5">
-                  <h3 className="text-xl font-bold text-white">Appointment Confirmed!</h3>
-                  <p className="text-slate-400 text-xs">
-                    Your request has been registered in the clinic schedule ledger.
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-white">Appointment Confirmed!</h3>
+                  <p className="text-slate-400 text-xs max-w-xs mx-auto leading-normal">
+                    Your medical consultation has been successfully booked. A confirmation detail card is rendered below.
                   </p>
                 </div>
 
                 {/* Receipt details */}
-                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-left text-xs space-y-2.5 max-w-sm mx-auto">
-                  <div className="flex justify-between border-b border-slate-900 pb-2">
-                    <span className="text-slate-1000 font-medium">Doctor:</span>
+                <div className="bg-slate-950 border border-slate-850 rounded-2xl p-5 text-left text-xs space-y-3.5 max-w-sm mx-auto shadow-inner relative overflow-hidden">
+                  {/* Decorative vertical badge border */}
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-teal-500 to-emerald-500" />
+                  
+                  <div className="flex justify-between border-b border-slate-900 pb-2.5 pl-2">
+                    <span className="text-slate-500 font-medium">Doctor</span>
                     <span className="text-white font-bold">
                       Dr. {activeDoctor?.user.firstName} {activeDoctor?.user.lastName}
                     </span>
                   </div>
-                  <div className="flex justify-between border-b border-slate-900 pb-2">
-                    <span className="text-slate-1005 font-medium">Patient:</span>
+                  <div className="flex justify-between border-b border-slate-900 pb-2.5 pl-2">
+                    <span className="text-slate-500 font-medium">Patient</span>
                     <span className="text-white font-bold">
                       {bookingSuccessData.patientProfile.firstName} {bookingSuccessData.patientProfile.lastName}
                     </span>
                   </div>
-                  <div className="flex justify-between border-b border-slate-900 pb-2">
-                    <span className="text-slate-1005 font-medium">Visit Date:</span>
-                    <span className="text-white font-bold">{new Date(bookingDate).toLocaleDateString()}</span>
+                  <div className="flex justify-between border-b border-slate-900 pb-2.5 pl-2">
+                    <span className="text-slate-500 font-medium">Appointment Date</span>
+                    <span className="text-white font-bold">{new Date(bookingDate).toLocaleDateString(undefined, { dateStyle: 'long' })}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-1005 font-medium">Timing / Mode:</span>
-                    <span className="text-teal-400 font-black">
+                  <div className="flex justify-between pl-2">
+                    <span className="text-slate-500 font-medium">Scheduling / Mode</span>
+                    <span className="text-teal-400 font-extrabold">
                       {bookingSuccessData.appointment.type === 'SLOT' 
                         ? selectedSlot?.time 
                         : `Walk-in (Queue #${bookingSuccessData.appointment.queueNumber})`
@@ -759,15 +923,16 @@ export default function PublicClinicLanding() {
                 </div>
 
                 {createAccount && (
-                  <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
-                    Use your mobile number <span className="font-semibold text-slate-300">{phone}</span> and selected password to log in to the Patient Portal to view history/prescriptions.
-                  </p>
+                  <div className="bg-teal-500/5 border border-teal-500/10 rounded-xl p-3.5 text-[11px] text-slate-400 max-w-sm mx-auto leading-normal">
+                    🔒 Portal Profile Created! Log in at the <span className="font-semibold text-teal-400">Patient Portal</span> using mobile <span className="font-semibold text-slate-200">{phone}</span> to view prescriptions.
+                  </div>
                 )}
 
-                <div className="pt-4 border-t border-slate-800">
+                <div className="pt-4 border-t border-slate-800/80">
                   <button
+                    type="button"
                     onClick={handleCloseBooking}
-                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition-all"
+                    className="w-full py-3 bg-slate-850 hover:bg-slate-800 text-slate-200 font-bold rounded-xl text-xs transition-all border border-slate-800"
                   >
                     Close & Finish
                   </button>
