@@ -59,7 +59,7 @@ jobs:
           process.chdir(path.join(__dirname, 'frontend'));
           process.env.PORT = process.env.PORT || '8080';
           process.env.HOSTNAME = '0.0.0.0';
-          require('./server.js');
+          require('./frontend/server.js');
           EOF
 
           # Create web.config for IISNode (Required for Windows App Service)
