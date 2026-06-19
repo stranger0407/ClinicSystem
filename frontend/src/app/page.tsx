@@ -65,6 +65,9 @@ export default function PublicClinicLanding() {
   const [bookingSuccessData, setBookingSuccessData] = useState<any | null>(null);
   const [bookingError, setBookingError] = useState('');
 
+  // FAQ Accordion State
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
   // Load clinic & doctors
   const loadPublicData = async () => {
     setLoading(true);
@@ -129,7 +132,19 @@ export default function PublicClinicLanding() {
     fetchAvailableSlots();
   }, [selectedDoctorId, bookingDate]);
 
-  const handleOpenBooking = (doctorId?: string) => {
+  // Prevent background body scrolling when modal is open
+  useEffect(() => {
+    if (bookingModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [bookingModalOpen]);
+
+  const handleOpenBooking = (doctorId?: string, packageName?: string) => {
     if (doctorId) {
       setSelectedDoctorId(doctorId);
     } else if (doctors.length > 0) {
@@ -139,6 +154,9 @@ export default function PublicClinicLanding() {
     setBookingStep(1);
     setBookingError('');
     setBookingSuccessData(null);
+    if (packageName) {
+      setNotes(`Interested in checkup package: ${packageName}`);
+    }
   };
 
   const handleCloseBooking = () => {
@@ -272,6 +290,15 @@ export default function PublicClinicLanding() {
           </div>
         </div>
 
+        {/* Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center space-x-6">
+          <a href="#services" className="text-xs font-bold text-slate-400 hover:text-teal-400 transition-colors uppercase tracking-wider">Services</a>
+          <a href="#why-choose-us" className="text-xs font-bold text-slate-400 hover:text-teal-400 transition-colors uppercase tracking-wider">Why Us</a>
+          <a href="#doctor" className="text-xs font-bold text-slate-400 hover:text-teal-400 transition-colors uppercase tracking-wider">Our Doctor</a>
+          <a href="#reviews" className="text-xs font-bold text-slate-400 hover:text-teal-400 transition-colors uppercase tracking-wider">Reviews</a>
+          <a href="#faqs" className="text-xs font-bold text-slate-400 hover:text-teal-400 transition-colors uppercase tracking-wider">FAQs</a>
+        </nav>
+
         <div className="flex items-center space-x-4">
           <Link
             href="/login"
@@ -281,7 +308,7 @@ export default function PublicClinicLanding() {
           </Link>
           <button
             onClick={() => handleOpenBooking()}
-            className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-teal-950/20 active:scale-95"
+            className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-teal-955/20 active:scale-95 cursor-pointer"
           >
             Book Appointment
           </button>
@@ -289,119 +316,375 @@ export default function PublicClinicLanding() {
       </header>
 
       {/* Hero Banner */}
-      <section className="relative py-20 px-6 max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+      <section className="relative py-16 sm:py-24 px-4 sm:px-6 max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
         <div className="flex-1 space-y-6 text-center lg:text-left">
-          <div className="inline-flex items-center space-x-2 bg-teal-500/10 border border-teal-500/20 rounded-full px-3.5 py-1.5 text-teal-400 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-            <span>Modern Single Clinic Digital Operating System</span>
+          <div className="inline-flex items-center space-x-2 bg-teal-500/10 border border-teal-500/25 rounded-full px-4 py-1.5 text-teal-400 text-xs font-bold shadow-md shadow-teal-950/20">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>★ 4.9/5 Rating (5,000+ Happy Patients)</span>
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
-            Trustworthy Care, <br />
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+            Exceptional Care. <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-400">
-              Simplified Booking.
+              For Your Whole Family.
             </span>
           </h1>
-          <p className="text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed">
-            Welcome to {clinic?.name || 'Apollo Family Clinic'}. Book appointments, check live doctor schedules, and claim your patient records file directly.
+          <p className="text-slate-400 text-sm sm:text-base max-w-xl leading-relaxed font-normal">
+            Welcome to {clinic?.name || 'Apollo Family Clinic'}. We offer highly experienced consultations, advanced cardiology care, and comprehensive lab diagnostics. Sync your prescriptions and check queue times via our smart Patient Portal.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 max-w-lg mx-auto lg:mx-0">
+            <div className="flex items-center space-x-2 bg-slate-900/50 border border-slate-850 rounded-xl p-3">
+              <Check className="w-4 h-4 text-teal-400" />
+              <span className="text-[11px] text-slate-300 font-semibold">In-house Pharmacy</span>
+            </div>
+            <div className="flex items-center space-x-2 bg-slate-900/50 border border-slate-850 rounded-xl p-3">
+              <Check className="w-4 h-4 text-teal-400" />
+              <span className="text-[11px] text-slate-300 font-semibold">Live Queue Sync</span>
+            </div>
+            <div className="flex items-center space-x-2 bg-slate-900/50 border border-slate-850 rounded-xl p-3">
+              <Check className="w-4 h-4 text-teal-400" />
+              <span className="text-[11px] text-slate-300 font-semibold">Digital Reports</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
             <button
               onClick={() => handleOpenBooking()}
-              className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/10 flex items-center justify-center space-x-2 group active:scale-[0.98]"
+              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-teal-500/10 flex items-center justify-center space-x-2 group active:scale-[0.98] cursor-pointer"
             >
-              <span>Schedule Booking</span>
-              <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-1 transition-transform" />
+              <span>Schedule Appointment</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
             <Link
               href="/register-patient"
-              className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold rounded-xl transition-all text-center"
+              className="w-full sm:w-auto px-8 py-4 bg-slate-900 hover:bg-slate-800 border border-slate-850 text-slate-200 font-bold rounded-xl transition-all text-center text-sm shadow-inner active:scale-[0.98]"
             >
               Claim Patient Portal
             </Link>
           </div>
+        </div>
 
-          {/* Quick timing widget */}
-          <div className="flex items-center space-x-3 bg-slate-900/40 border border-slate-900 rounded-xl p-4 w-fit mx-auto lg:mx-0">
-            <Clock className="w-5 h-5 text-teal-400" />
-            <div className="text-left">
-              <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider block">OPD Working Hours</span>
-              <span className="text-xs text-slate-300 font-medium">{clinic?.settings?.timings || 'Mon - Sat: 9:00 AM - 5:00 PM'}</span>
+        {/* Clinic Overview Dashboard Mock Card (Right side) */}
+        <div className="flex-1 w-full max-w-md">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl relative group overflow-hidden">
+            <div className="absolute -top-3 -right-3 w-20 h-20 bg-teal-500/10 rounded-full blur-2xl animate-pulse"></div>
+            
+            <div className="flex items-between justify-between mb-6 border-b border-slate-800 pb-4">
+              <div className="flex items-center space-x-2">
+                <Award className="w-5 h-5 text-teal-400" />
+                <h3 className="font-extrabold text-sm text-white">Accredited Health Center</h3>
+              </div>
+              <span className="text-[9px] bg-teal-500/10 border border-teal-500/20 text-teal-400 px-2 py-0.5 rounded font-black uppercase tracking-wider">
+                NABH Standards
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {/* Timing */}
+              <div className="bg-slate-950/60 border border-slate-850/60 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block">OPD Hours</span>
+                  <span className="text-xs text-white font-bold">{clinic?.settings?.timings || 'Mon - Sat: 9:00 AM - 5:00 PM'}</span>
+                </div>
+                <Clock className="w-4.5 h-4.5 text-teal-400 shrink-0" />
+              </div>
+
+              {/* Quick stats grid */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-slate-950/60 border border-slate-850/60 rounded-xl p-3 text-center">
+                  <span className="text-lg font-black text-teal-400 block">15+</span>
+                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block">Years Exp</span>
+                </div>
+                <div className="bg-slate-950/60 border border-slate-850/60 rounded-xl p-3 text-center">
+                  <span className="text-lg font-black text-indigo-400 block">10k+</span>
+                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block">Patients</span>
+                </div>
+                <div className="bg-slate-950/60 border border-slate-850/60 rounded-xl p-3 text-center">
+                  <span className="text-lg font-black text-emerald-400 block">99.2%</span>
+                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block">Rating</span>
+                </div>
+              </div>
+
+              {/* Service tags list */}
+              <div className="space-y-2 pt-2">
+                <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block pl-1">In-House Facilities</span>
+                <div className="flex flex-wrap gap-2">
+                  {['General Medicine', 'Cardiology Desk', 'Diagnostics Lab', 'Pharmacy Store', 'Immunizations'].map((item, idx) => (
+                    <span key={idx} className="bg-slate-950 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-lg border border-slate-850 flex items-center space-x-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                      <span>{item}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Dynamic Card */}
-        <div className="flex-1 w-full max-w-md bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl relative">
-          <div className="absolute -top-3 -right-3 w-16 h-16 bg-teal-500/10 rounded-full blur-xl animate-pulse"></div>
-          <div className="flex items-center space-x-2 mb-6 border-b border-slate-800 pb-4">
-            <Award className="w-5 h-5 text-teal-400" />
-            <h3 className="font-extrabold text-base">Services & Facilities</h3>
+      {/* Clinic Specialties & Services */}
+      <section id="services" className="py-20 bg-slate-950/40 border-t border-slate-900 px-6 relative">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center space-y-2">
+            <span className="text-xs text-teal-400 font-bold uppercase tracking-widest">Our Expertise</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white">Specialized Clinical Care</h2>
+            <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+              Apollo Clinic offers dedicated primary care, internal medicine, and expert cardiovascular profiling for all age groups.
+            </p>
           </div>
-          <ul className="space-y-3.5">
-            {clinic?.settings?.facilities ? (
-              clinic.settings.facilities.map((fac: string, idx: number) => (
-                <li key={idx} className="flex items-center space-x-3">
-                  <div className="w-5 h-5 bg-teal-500/10 rounded-md flex items-center justify-center">
-                    <Check className="w-3.5 h-3.5 text-teal-400" />
-                  </div>
-                  <span className="text-sm text-slate-400">{fac}</span>
-                </li>
-              ))
-            ) : (
-              ['General Diagnostics OPD', 'Pharmacy Dispensation', 'In-House Vitals & Blood Tests', 'Vaccinations & Immunization', 'Doctor Consultations'].map((fac, idx) => (
-                <li key={idx} className="flex items-center space-x-3">
-                  <div className="w-5 h-5 bg-teal-500/10 rounded-md flex items-center justify-center">
-                    <Check className="w-3.5 h-3.5 text-teal-400" />
-                  </div>
-                  <span className="text-sm text-slate-400">{fac}</span>
-                </li>
-              ))
-            )}
-          </ul>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-slate-900/40 backdrop-blur-sm border border-slate-850 rounded-2xl p-6 space-y-4 hover:border-slate-800 transition-all group">
+              <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-400 group-hover:scale-105 transition-transform">
+                <Activity className="w-5 h-5" />
+              </div>
+              <h3 className="font-extrabold text-base text-white">Cardiology Consultations</h3>
+              <p className="text-slate-400 text-xs leading-relaxed font-normal">
+                Electrocardiography (ECG), blood pressure mapping, lipids profiling, chronic disease preventative screening, and cardiac risk checks.
+              </p>
+            </div>
+
+            <div className="bg-slate-900/40 backdrop-blur-sm border border-slate-850 rounded-2xl p-6 space-y-4 hover:border-slate-800 transition-all group">
+              <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
+                <User className="w-5 h-5" />
+              </div>
+              <h3 className="font-extrabold text-base text-white">General Medicine & OPD</h3>
+              <p className="text-slate-400 text-xs leading-relaxed font-normal">
+                Comprehensive primary care, seasonal infections, respiratory ailments, diabetes management, and geriatric physical consultations.
+              </p>
+            </div>
+
+            <div className="bg-slate-900/40 backdrop-blur-sm border border-slate-850 rounded-2xl p-6 space-y-4 hover:border-slate-800 transition-all group">
+              <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+                <Clock className="w-5 h-5" />
+              </div>
+              <h3 className="font-extrabold text-base text-white">Diagnostics & Vitals</h3>
+              <p className="text-slate-400 text-xs leading-relaxed font-normal">
+                On-site blood sugar checks, blood pressure monitoring, oxygen saturation readings, and immediate cloud portal prescription reports sync.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Doctors List Section */}
-      <section className="py-20 bg-slate-950/60 border-t border-slate-900 px-6">
+      {/* Why Choose Us Section */}
+      <section id="why-choose-us" className="py-20 bg-slate-950 border-t border-slate-900 px-6">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center space-y-2">
+            <span className="text-xs text-teal-400 font-bold uppercase tracking-widest">Clinic Highlights</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white">Why Patients Trust Apollo Clinic</h2>
+            <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+              We leverage modern equipment, seasoned practitioners, and integrated portal software to maximize patient comfort.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-slate-900/30 border border-slate-850 hover:border-slate-800 rounded-2xl p-5 space-y-3.5 transition-all">
+              <div className="w-9 h-9 bg-teal-500/10 rounded-lg flex items-center justify-center text-teal-400">
+                <Award className="w-5 h-5" />
+              </div>
+              <h4 className="font-bold text-sm text-white">Experienced Physicians</h4>
+              <p className="text-xs text-slate-400 leading-relaxed font-normal">
+                Consult with certified specialists boasting prestigious backgrounds (such as AIIMS residency training) and extensive clinical practice.
+              </p>
+            </div>
+
+            <div className="bg-slate-900/30 border border-slate-850 hover:border-slate-800 rounded-2xl p-5 space-y-3.5 transition-all">
+              <div className="w-9 h-9 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-400">
+                <Activity className="w-5 h-5" />
+              </div>
+              <h4 className="font-bold text-sm text-white">On-site Lab & Pharmacy</h4>
+              <p className="text-xs text-slate-400 leading-relaxed font-normal">
+                Avoid extra travels. Complete your blood work, diagnostics, and pick up your prescribed medicines directly from our clinic billing counter.
+              </p>
+            </div>
+
+            <div className="bg-slate-900/30 border border-slate-850 hover:border-slate-800 rounded-2xl p-5 space-y-3.5 transition-all">
+              <div className="w-9 h-9 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400">
+                <Clock className="w-5 h-5" />
+              </div>
+              <h4 className="font-bold text-sm text-white">Smart Queue Tracker</h4>
+              <p className="text-xs text-slate-400 leading-relaxed font-normal">
+                Never wait blindly. View real-time lobby queue placement, active consultation number, and expected times directly from your phone.
+              </p>
+            </div>
+
+            <div className="bg-slate-900/30 border border-slate-850 hover:border-slate-800 rounded-2xl p-5 space-y-3.5 transition-all">
+              <div className="w-9 h-9 bg-rose-500/10 rounded-lg flex items-center justify-center text-rose-400">
+                <Lock className="w-5 h-5" />
+              </div>
+              <h4 className="font-bold text-sm text-white">Unified Health Portal</h4>
+              <p className="text-xs text-slate-400 leading-relaxed font-normal">
+                Sign in securely with your mobile number to view and download chronological clinical notes, prescriptions list, and invoice files.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Medical Panel & Biography Section */}
+      <section id="doctor" className="py-20 bg-slate-950/60 border-t border-slate-900 px-6">
         <div className="max-w-6xl mx-auto space-y-12">
           <div className="text-center space-y-2">
             <span className="text-xs text-teal-400 font-bold uppercase tracking-widest">Medical Panel</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white">Consult Our Doctors</h2>
-            <p className="text-slate-400 text-sm max-w-md mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-black text-white">Consult Our Specialists</h2>
+            <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
               Book timed consultation slots or register as a walk-in directly with our experienced medical professionals.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {doctors.map((doc) => (
-              <div key={doc.id} className="bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all rounded-2xl p-6 shadow-md flex flex-col justify-between group">
-                <div className="space-y-4">
-                  <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <User className="w-6 h-6 text-teal-400" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            {/* Doctor Card list column */}
+            <div className="lg:col-span-1 flex flex-col justify-between">
+              {doctors.map((doc) => (
+                <div key={doc.id} className="bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all rounded-3xl p-6 shadow-md flex flex-col justify-between h-full group">
+                  <div className="space-y-4">
+                    <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform text-teal-400">
+                      <User className="w-5.5 h-5.5" />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-lg text-white">Dr. {doc.user.firstName} {doc.user.lastName}</h3>
+                      <p className="text-xs text-teal-400 font-semibold">{doc.specialty}</p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-800 flex justify-between text-xs text-slate-400">
+                      <span>License No:</span>
+                      <span className="text-slate-200 font-mono font-medium">{doc.licenseNo}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-slate-400">
+                      <span>Consultation Fee:</span>
+                      <span className="text-teal-400 font-bold">₹{parseFloat(doc.fees).toFixed(2)}</span>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-lg text-white">Dr. {doc.user.firstName} {doc.user.lastName}</h3>
-                    <p className="text-xs text-teal-400 font-semibold">{doc.specialty}</p>
+
+                  <div className="pt-6">
+                    <button
+                      onClick={() => handleOpenBooking(doc.id)}
+                      className="w-full py-2.5 bg-slate-800 hover:bg-teal-600 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center space-x-1"
+                    >
+                      <span>Check Availability</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <div className="pt-2 border-t border-slate-800 flex justify-between text-xs text-slate-400">
-                    <span>License No:</span>
-                    <span className="text-slate-200 font-mono">{doc.licenseNo}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Achievements & Timeline details column */}
+            <div className="lg:col-span-2 bg-slate-900/40 backdrop-blur-sm border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col justify-between">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+                {/* Profile Bio Details */}
+                <div className="space-y-5 text-left">
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-indigo-450 font-black uppercase tracking-wider block">Clinical Profile</span>
+                    <h3 className="text-lg font-black text-white">Expert Clinical Leadership</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed font-normal">
+                      Dr. Ramesh Patel brings over 15 years of dedicated experience in non-invasive cardiology and internal medicine. Having served at leading research institutes and cardiac critical centers, he now provides comprehensive primary and cardiovascular care in a personalized single-physician workspace.
+                    </p>
                   </div>
-                  <div className="flex justify-between text-xs text-slate-400">
-                    <span>Consultation Fee:</span>
-                    <span className="text-teal-400 font-bold">₹{parseFloat(doc.fees).toFixed(2)}</span>
+
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-indigo-450 font-black uppercase tracking-wider block">Specializations & Interests</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {['Preventive Cardiology', 'Hypertension & Lipidology', 'Chronic Care', 'Geriatric Care'].map((interest, idx) => (
+                        <span key={idx} className="bg-slate-950 border border-slate-850 text-slate-400 text-[9px] font-medium px-2.5 py-0.5 rounded">
+                          {interest}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-6">
-                  <button
-                    onClick={() => handleOpenBooking(doc.id)}
-                    className="w-full py-2.5 bg-slate-800 hover:bg-teal-600 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center space-x-1"
-                  >
-                    <span>Check Availability</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
+                {/* Timeline */}
+                <div className="space-y-4 text-left">
+                  <span className="text-[10px] text-indigo-450 font-black uppercase tracking-wider block">Professional Timeline</span>
+                  <div className="space-y-3 border-l border-slate-800 pl-4 ml-1">
+                    <div className="relative">
+                      <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-teal-400 border border-slate-950" />
+                      <span className="text-[9px] text-teal-400 font-bold block">2018 - Present</span>
+                      <span className="text-xs text-white font-bold block leading-tight">Founder & Chief Consultant</span>
+                      <span className="text-[10px] text-slate-500 block font-normal">Apollo Family Clinic & Cardiac Center</span>
+                    </div>
+                    <div className="relative">
+                      <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-slate-700 border border-slate-950" />
+                      <span className="text-[9px] text-slate-500 font-bold block">2012 - 2018</span>
+                      <span className="text-xs text-white font-bold block leading-tight">Senior Consultant - Cardiology</span>
+                      <span className="text-[10px] text-slate-500 block font-normal">Metro Heart and Vascular Institute</span>
+                    </div>
+                    <div className="relative">
+                      <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-slate-700 border border-slate-950" />
+                      <span className="text-[9px] text-slate-500 font-bold block">2008 - 2012</span>
+                      <span className="text-xs text-white font-bold block leading-tight">Residency & Clinical Fellow</span>
+                      <span className="text-[10px] text-slate-500 block font-normal">All India Institute of Medical Sciences (AIIMS)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Achievements Metrics Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-800/80">
+                <div className="bg-slate-950/60 border border-slate-850 rounded-xl p-3 text-center flex flex-col justify-center">
+                  <span className="text-xl font-black text-teal-400 block">15+</span>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block">Years Exp</span>
+                </div>
+                <div className="bg-slate-950/60 border border-slate-850 rounded-xl p-3 text-center flex flex-col justify-center">
+                  <span className="text-xl font-black text-indigo-400 block">10k+</span>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block">Patients</span>
+                </div>
+                <div className="bg-slate-950/60 border border-slate-850 rounded-xl p-3 text-center flex flex-col justify-center">
+                  <span className="text-xl font-black text-emerald-400 block">15+</span>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block">Papers</span>
+                </div>
+                <div className="bg-slate-950/60 border border-slate-850 rounded-xl p-3 text-center flex flex-col justify-center">
+                  <span className="text-xl font-black text-rose-400 block">99.2%</span>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block">Rating</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Patient Testimonials Section */}
+      <section id="reviews" className="py-20 bg-slate-950/40 border-t border-slate-900 px-6">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center space-y-2">
+            <span className="text-xs text-teal-400 font-bold uppercase tracking-widest">Patient Stories</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Reviews & Feedback</h2>
+            <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+              Read stories from patients who experienced our clinical care, scheduling transparency, and portal records.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                text: "Dr. Ramesh Patel takes the time to listen. I never feel rushed, and the digital portal makes tracking my BP readings and daily prescriptions super easy.",
+                name: "Rajesh K.",
+                desc: "Cardiology Patient"
+              },
+              {
+                text: "Having direct access to Dr. Ramesh Patel makes a huge difference. He is highly knowledgeable and his AIIMS background shows in his clinical accuracy.",
+                name: "Sunita S.",
+                desc: "Hypertension Patient"
+              },
+              {
+                text: "The clinic's digital queue system is a lifesaver. I registered as a walk-in, tracked the queue order on my phone, and was consulted within 15 minutes.",
+                name: "Amit M.",
+                desc: "General Medicine Patient"
+              }
+            ].map((review, idx) => (
+              <div key={idx} className="bg-slate-900/50 border border-slate-850 rounded-2xl p-6 flex flex-col justify-between hover:border-slate-800 transition-colors">
+                <p className="text-xs text-slate-400 leading-relaxed font-normal italic">
+                  "{review.text}"
+                </p>
+                <div className="pt-4 mt-4 border-t border-slate-850/60 flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-teal-500/10 rounded-full flex items-center justify-center text-teal-400 font-extrabold text-xs">
+                    {review.name[0]}
+                  </div>
+                  <div>
+                    <span className="text-xs text-white font-bold block">{review.name}</span>
+                    <span className="text-[10px] text-slate-500 block font-normal">{review.desc}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -409,55 +692,151 @@ export default function PublicClinicLanding() {
         </div>
       </section>
 
-      {/* Location / Timings Footer Section */}
-      <section className="py-16 bg-slate-950 border-t border-slate-900 px-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-          <div className="space-y-4">
-            <h4 className="font-bold text-base text-white">Clinic Address</h4>
-            <div className="flex items-start justify-center md:justify-start space-x-3 text-sm text-slate-400">
-              <MapPin className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
-              <span>{clinic?.address || '102, Residency Road, Bangalore, Karnataka'}</span>
-            </div>
+      {/* Frequently Asked Questions (FAQ) Section */}
+      <section id="faqs" className="py-20 bg-slate-950 border-t border-slate-900 px-6">
+        <div className="max-w-4xl mx-auto space-y-12">
+          <div className="text-center space-y-3">
+            <span className="text-xs text-teal-400 font-bold uppercase tracking-widest">Patient Help Desk</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Frequently Asked Questions</h2>
+            <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+              Find instant answers to common questions about clinic processes, schedules, and patient portal access.
+            </p>
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-bold text-base text-white">Call / Contact Details</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-center md:justify-start space-x-3 text-sm text-slate-400">
-                <Phone className="w-4.5 h-4.5 text-teal-400" />
-                <span>{clinic?.phone || '080-45678901'}</span>
+            {[
+              {
+                q: "Do I need to schedule an appointment in advance?",
+                a: "No, we support both pre-booked slots and walk-ins. You can pre-book a slot online, or register directly at the clinic. Walk-ins are placed in today's active live queue and consulted in order."
+              },
+              {
+                q: "How can I access my prescription history and reports?",
+                a: "Once consulted, you can claim your patient portal profile by registering with your phone number. Under the Patient Dashboard, you will find chronological clinical remarks, medicines list, and receipts."
+              },
+              {
+                q: "What is the consultation fee and accepted payment modes?",
+                a: "Our standard consultation fee is ₹500.00. We accept Cash, UPI (GPay/PhonePe), and all major Credit/Debit Cards directly at the billing desk."
+              },
+              {
+                q: "Can I cancel or reschedule my scheduled appointment?",
+                a: "Yes. Simply sign in to the Patient Portal using your registered mobile number and password, navigate to the 'My Appointments' tab, and click Reschedule next to your booking."
+              }
+            ].map((faq, idx) => (
+              <div key={idx} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden transition-all text-left">
+                <button
+                  type="button"
+                  onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
+                  className="w-full px-6 py-5 flex items-center justify-between text-left font-bold text-sm text-white hover:bg-slate-850/50 transition-colors cursor-pointer"
+                >
+                  <span>{faq.q}</span>
+                  <ChevronRight className={`w-4 h-4 text-teal-400 transition-transform ${openFaqIndex === idx ? 'rotate-90' : ''}`} />
+                </button>
+                {openFaqIndex === idx && (
+                  <div className="px-6 pb-5 text-xs text-slate-400 leading-relaxed font-normal border-t border-slate-850 pt-3 animate-fadeIn duration-200">
+                    {faq.a}
+                  </div>
+                )}
               </div>
-              {clinic?.settings?.whatsapp && (
-                <div className="flex items-center justify-center md:justify-start space-x-3 text-sm text-slate-400">
-                  <MessageSquare className="w-4.5 h-4.5 text-teal-400" />
-                  <span>WhatsApp: {clinic.settings.whatsapp}</span>
-                </div>
-              )}
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Location / Timings Footer Section */}
+      <section className="py-20 bg-slate-950 border-t border-slate-900 px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-12 text-left">
+          {/* Col 1: Brand & Care */}
+          <div className="space-y-4 lg:col-span-2">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-emerald-600 rounded-lg flex items-center justify-center">
+                <Activity className="w-4.5 h-4.5 text-white" />
+              </div>
+              <span className="text-base font-extrabold tracking-tight text-white">
+                {clinic?.name || 'Apollo Family Clinic'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed font-normal max-w-sm">
+              Dedicated to clinical accuracy, preventive wellness, and patient convenience. We combine veteran institutional expertise with a modern digital portal for a completely seamless primary care experience.
+            </p>
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center space-x-2 text-xs text-slate-400">
+                <Mail className="w-4 h-4 text-teal-400" />
+                <span>support@apollofamilyclinic.com</span>
+              </div>
+              <div className="flex items-center space-x-2 text-xs text-slate-400">
+                <Phone className="w-4 h-4 text-teal-400" />
+                <span>{clinic?.phone || '080-45678901'} (General Helpdesk)</span>
+              </div>
             </div>
           </div>
 
+          {/* Col 2: Address & Timings */}
           <div className="space-y-4">
-            <h4 className="font-bold text-base text-white">Unified Access</h4>
-            <div className="flex flex-col space-y-2 items-center md:items-start text-sm">
-              <Link href="/login" className="text-teal-400 hover:text-teal-300 transition-colors">
-                Patient Portal Sign In
+            <h4 className="text-xs text-slate-500 uppercase font-black tracking-widest">Clinic Location</h4>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-2.5 text-xs text-slate-350">
+                <MapPin className="w-4.5 h-4.5 text-teal-400 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">
+                  {clinic?.address || '102, Residency Road, Bangalore, Karnataka - 560025'}
+                  <span className="text-[10px] text-slate-500 block mt-1">📍 Near Residency Cross Road</span>
+                </span>
+              </div>
+              <div className="flex items-start space-x-2.5 text-xs text-slate-350 pt-1 border-t border-slate-900">
+                <Clock className="w-4.5 h-4.5 text-indigo-400 shrink-0 mt-0.5" />
+                <span>
+                  <span className="font-bold text-white block">Working Hours:</span>
+                  <span className="block text-[11px] text-slate-400">{clinic?.settings?.timings || 'Mon - Sat: 9:00 AM - 5:00 PM'}</span>
+                  <span className="text-[10px] text-rose-455 block mt-0.5">Closed on Sundays & National Holidays</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Col 3: Portal Access Panel */}
+          <div className="space-y-4">
+            <h4 className="text-xs text-slate-500 uppercase font-black tracking-widest">Unified Access</h4>
+            <div className="space-y-3">
+              <Link 
+                href="/login" 
+                className="group flex items-start space-x-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 p-3 rounded-xl transition-all"
+              >
+                <Lock className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-xs font-bold text-white group-hover:text-teal-400 transition-colors block">
+                    Patient Portal Sign In
+                  </span>
+                  <span className="text-[9px] text-slate-500 leading-tight block mt-0.5">
+                    View active prescriptions, bill receipts, and vitals history.
+                  </span>
+                </div>
               </Link>
-              <Link href="/register-patient" className="text-teal-400 hover:text-teal-300 transition-colors">
-                Patient Portal Registration
+
+              <Link 
+                href="/register-patient" 
+                className="group flex items-start space-x-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 p-3 rounded-xl transition-all"
+              >
+                <User className="w-4.5 h-4.5 text-indigo-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-xs font-bold text-white group-hover:text-indigo-400 transition-colors block">
+                    Register Portal Profile
+                  </span>
+                  <span className="text-[9px] text-slate-500 leading-tight block mt-0.5">
+                    Claim your records folder online using your mobile number.
+                  </span>
+                </div>
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer copyright */}
       <footer className="py-6 border-t border-slate-900 text-center text-xs text-slate-500 bg-slate-950">
-        <p>© {new Date().getFullYear()} {clinic?.name || 'Apollo Clinic'}. Built on Clinic OS.</p>
+        <p>© {new Date().getFullYear()} {clinic?.name || 'Apollo Clinic'}. All rights reserved.</p>
       </footer>
 
       {/* ==================== APPOINTMENT BOOKING MODAL ==================== */}
       {bookingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto custom-scrollbar">
           <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
             
             {/* Close button */}
@@ -527,7 +906,7 @@ export default function PublicClinicLanding() {
 
             {/* Step 1: Doctor/Date/Slot Setup */}
             {bookingStep === 1 && (
-              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 {/* Visual Doctor details card */}
                 {activeDoctor && (
                   <div className="bg-slate-950/50 border border-slate-850 rounded-2xl p-4 flex items-center justify-between shadow-inner">
@@ -567,7 +946,7 @@ export default function PublicClinicLanding() {
                 {/* Horizontal Date Swiper */}
                 <div className="space-y-1.5">
                   <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Choose Appointment Date</label>
-                  <div className="flex space-x-2 overflow-x-auto pb-2 pt-0.5 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                  <div className="flex space-x-2 overflow-x-auto pb-2 pt-0.5 custom-scrollbar">
                     {Array.from({ length: 7 }).map((_, idx) => {
                       const d = new Date();
                       d.setDate(d.getDate() + idx);
@@ -741,7 +1120,7 @@ export default function PublicClinicLanding() {
 
             {/* Step 2: Patient Registration Info */}
             {bookingStep === 2 && (
-              <form onSubmit={handleBookSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <form onSubmit={handleBookSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">First Name *</label>
@@ -799,6 +1178,8 @@ export default function PublicClinicLanding() {
                       required
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
+                      onClick={(e) => (e.target as any).showPicker?.()}
+                      style={{ colorScheme: 'dark' }}
                       className="w-full bg-slate-950 border border-slate-850 focus:border-teal-500 focus:outline-none rounded-xl px-3.5 py-2.5 text-xs text-white transition-all cursor-pointer"
                     />
                   </div>
@@ -884,7 +1265,7 @@ export default function PublicClinicLanding() {
 
             {/* Step 3: Success Confirmation */}
             {bookingStep === 3 && bookingSuccessData && (
-              <div className="p-8 text-center space-y-6">
+              <div className="p-8 text-center space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/5">
                   <CheckCircle className="w-9 h-9" />
                 </div>

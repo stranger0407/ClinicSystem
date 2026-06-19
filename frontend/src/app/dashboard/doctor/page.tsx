@@ -237,7 +237,7 @@ export default function DoctorDashboard() {
   const [selectedMed, setSelectedMed] = useState<any | null>(null);
   const [dosage, setDosage] = useState('1-0-1');
   const [instructions, setInstructions] = useState('After food');
-  const [durationDays, setDurationDays] = useState(5);
+  const [durationDays, setDurationDays] = useState('5');
 
   const [savingEncounter, setSavingEncounter] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -301,7 +301,7 @@ export default function DoctorDashboard() {
   const [invoicePatient, setInvoicePatient] = useState<any | null>(null);
   const [invoiceDiscount, setInvoiceDiscount] = useState('0');
   const [invoiceTax, setInvoiceTax] = useState('0');
-  const [invoiceItems, setInvoiceItems] = useState<any[]>([{ description: 'Consultation Fee', quantity: 1, amount: 250 }]);
+  const [invoiceItems, setInvoiceItems] = useState<any[]>([{ description: 'Consultation Fee', quantity: '1', amount: '250' }]);
 
   // ==========================================
   // TAB 4: MEDICINE CATALOG STATES
@@ -337,7 +337,7 @@ export default function DoctorDashboard() {
   const [doctorForm, setDoctorForm] = useState({
     specialty: '',
     licenseNo: '',
-    fees: 200,
+    fees: '200',
     durationMin: 15,
     schedule: {} as any,
   });
@@ -580,7 +580,7 @@ export default function DoctorDashboard() {
       strength: selectedMed.strength || '',
       dosage,
       instructions,
-      durationDays,
+      durationDays: Number(durationDays),
     };
     setPrescriptionItems([...prescriptionItems, item]);
     // Reset builder inputs
@@ -589,7 +589,7 @@ export default function DoctorDashboard() {
     setMedResults([]);
     setDosage('1-0-1');
     setInstructions('After food');
-    setDurationDays(5);
+    setDurationDays('5');
   };
 
   const removePrescriptionItem = (index: number) => {
@@ -823,7 +823,7 @@ export default function DoctorDashboard() {
       setShowCreateInvoiceForm(false);
       setInvoicePatient(null);
       setInvoicePatientSearch('');
-      setInvoiceItems([{ description: 'Consultation Fee', quantity: 1, amount: Number(doctorProfile?.fees) || 250 }]);
+      setInvoiceItems([{ description: 'Consultation Fee', quantity: '1', amount: String(Number(doctorProfile?.fees) || 250) }]);
       setInvoiceDiscount('0');
       setInvoiceTax('0');
       loadInvoices();
@@ -963,11 +963,11 @@ export default function DoctorDashboard() {
         setDoctorForm({
           specialty: myDoc.specialty || '',
           licenseNo: myDoc.licenseNo || '',
-          fees: Number(myDoc.fees) || 200,
+          fees: String(Number(myDoc.fees) || 200),
           durationMin: myDoc.durationMin || 15,
           schedule: schedule,
         });
-        setInvoiceItems([{ description: 'Consultation Fee', quantity: 1, amount: Number(myDoc.fees) || 250 }]);
+        setInvoiceItems([{ description: 'Consultation Fee', quantity: '1', amount: String(Number(myDoc.fees) || 250) }]);
       }
     } catch (err) {
       console.error(err);
@@ -1044,7 +1044,10 @@ export default function DoctorDashboard() {
     try {
       await apiFetch('/doctor/profile', {
         method: 'PATCH',
-        body: JSON.stringify(doctorForm),
+        body: JSON.stringify({
+          ...doctorForm,
+          fees: Number(doctorForm.fees) || 0,
+        }),
       });
       alert('Doctor profile settings updated successfully.');
       loadSettingsData();
@@ -1476,7 +1479,12 @@ export default function DoctorDashboard() {
                                   <input
                                     type="number"
                                     value={durationDays}
-                                    onChange={(e) => setDurationDays(Number(e.target.value))}
+                                    onChange={(e) => {
+                                      const val = e.target.value.replace(/^0+(?=\d)/, '');
+                                      e.target.value = val;
+                                      setDurationDays(val);
+                                    }}
+                                    onFocus={(e) => e.target.select()}
                                     placeholder="5"
                                     className="w-full bg-white border border-slate-200 focus:border-indigo-500 focus:outline-none rounded px-3 py-1.5 text-xs text-slate-800"
                                   />
@@ -1948,10 +1956,13 @@ export default function DoctorDashboard() {
                                 required
                                 value={item.quantity}
                                 onChange={(e) => {
+                                  const val = e.target.value.replace(/^0+(?=\d)/, '');
+                                  e.target.value = val;
                                   const updated = [...invoiceItems];
-                                  updated[index].quantity = Number(e.target.value);
+                                  updated[index].quantity = val;
                                   setInvoiceItems(updated);
                                 }}
+                                onFocus={(e) => e.target.select()}
                                 placeholder="Qty"
                                 className="w-14 bg-slate-50 border border-slate-200 focus:outline-none rounded px-2 py-1.5 text-xs text-center"
                               />
@@ -1960,10 +1971,13 @@ export default function DoctorDashboard() {
                                 required
                                 value={item.amount}
                                 onChange={(e) => {
+                                  const val = e.target.value.replace(/^0+(?=\d)/, '');
+                                  e.target.value = val;
                                   const updated = [...invoiceItems];
-                                  updated[index].amount = Number(e.target.value);
+                                  updated[index].amount = val;
                                   setInvoiceItems(updated);
                                 }}
+                                onFocus={(e) => e.target.select()}
                                 placeholder="Fee"
                                 className="w-20 bg-slate-50 border border-slate-200 focus:outline-none rounded px-2 py-1.5 text-xs text-right"
                               />
@@ -1980,7 +1994,7 @@ export default function DoctorDashboard() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => setInvoiceItems([...invoiceItems, { description: '', quantity: 1, amount: 0 }])}
+                          onClick={() => setInvoiceItems([...invoiceItems, { description: '', quantity: '1', amount: '0' }])}
                           className="text-xs text-indigo-600 font-bold flex items-center space-x-1"
                         >
                           <Plus className="w-3.5 h-3.5" />
@@ -1995,7 +2009,12 @@ export default function DoctorDashboard() {
                           <input
                             type="number"
                             value={invoiceDiscount}
-                            onChange={(e) => setInvoiceDiscount(e.target.value)}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/^0+(?=\d)/, '');
+                              e.target.value = val;
+                              setInvoiceDiscount(val);
+                            }}
+                            onFocus={(e) => e.target.select()}
                             className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded px-3 py-1.5 text-xs"
                           />
                         </div>
@@ -2004,7 +2023,12 @@ export default function DoctorDashboard() {
                           <input
                             type="number"
                             value={invoiceTax}
-                            onChange={(e) => setInvoiceTax(e.target.value)}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/^0+(?=\d)/, '');
+                              e.target.value = val;
+                              setInvoiceTax(val);
+                            }}
+                            onFocus={(e) => e.target.select()}
                             className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded px-3 py-1.5 text-xs"
                           />
                         </div>
@@ -2174,7 +2198,12 @@ export default function DoctorDashboard() {
                               type="number"
                               required
                               value={paymentAmount}
-                              onChange={(e) => setPaymentAmount(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/^0+(?=\d)/, '');
+                                e.target.value = val;
+                                setPaymentAmount(val);
+                              }}
+                              onFocus={(e) => e.target.select()}
                               placeholder="₹0.00"
                               className="w-full bg-white border border-slate-200 focus:outline-none rounded px-2.5 py-1 text-xs"
                             />
@@ -2629,7 +2658,12 @@ export default function DoctorDashboard() {
                         type="number"
                         required
                         value={doctorForm.fees}
-                        onChange={(e) => setDoctorForm({ ...doctorForm, fees: Number(e.target.value) })}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/^0+(?=\d)/, '');
+                          e.target.value = val;
+                          setDoctorForm({ ...doctorForm, fees: val });
+                        }}
+                        onFocus={(e) => e.target.select()}
                         className="w-full bg-slate-50 border border-slate-200 focus:outline-none rounded-lg px-3.5 py-2 font-semibold text-slate-800"
                       />
                     </div>
