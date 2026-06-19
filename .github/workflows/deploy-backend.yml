@@ -42,15 +42,20 @@ jobs:
         run: |
           mkdir -p deploy
           cp -r backend/dist deploy/dist
-          cp -r backend/node_modules deploy/node_modules 2>/dev/null || true
           cp backend/package.json deploy/package.json
           cp -r backend/prisma deploy/prisma
+          
+          # Install production dependencies and generate Prisma client
+          cd deploy
+          npm install --omit=dev
+          npx prisma generate
+          cd ..
           
           # Create a startup entry point
           cat > deploy/main.js << 'EOF'
           // Azure App Service entry point
           process.chdir(__dirname);
-          require('./dist/main.js');
+          require('./dist/src/main.js');
           EOF
           
           # Create web.config for IISNode (if needed)
