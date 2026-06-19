@@ -900,47 +900,93 @@ export default function PublicClinicLanding() {
       </section>
 
       {/* Location / Timings Footer Section */}
-      <section className="py-16 bg-slate-950 border-t border-slate-900 px-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-          <div className="space-y-4">
-            <h4 className="font-bold text-base text-white">Clinic Address</h4>
-            <div className="flex items-start justify-center md:justify-start space-x-3 text-sm text-slate-400">
-              <MapPin className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
-              <span>{clinic?.address || '102, Residency Road, Bangalore, Karnataka'}</span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="font-bold text-base text-white">Call / Contact Details</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-center md:justify-start space-x-3 text-sm text-slate-400">
-                <Phone className="w-4.5 h-4.5 text-teal-400" />
-                <span>{clinic?.phone || '080-45678901'}</span>
+      <section className="py-20 bg-slate-950 border-t border-slate-900 px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-12 text-left">
+          {/* Col 1: Brand & Care */}
+          <div className="space-y-4 lg:col-span-2">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-emerald-600 rounded-lg flex items-center justify-center">
+                <Activity className="w-4.5 h-4.5 text-white" />
               </div>
-              {clinic?.settings?.whatsapp && (
-                <div className="flex items-center justify-center md:justify-start space-x-3 text-sm text-slate-400">
-                  <MessageSquare className="w-4.5 h-4.5 text-teal-400" />
-                  <span>WhatsApp: {clinic.settings.whatsapp}</span>
-                </div>
-              )}
+              <span className="text-base font-extrabold tracking-tight text-white">
+                {clinic?.name || 'Apollo Family Clinic'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed font-normal max-w-sm">
+              Dedicated to clinical accuracy, preventive wellness, and patient convenience. We combine veteran institutional expertise with a modern digital portal for a completely seamless primary care experience.
+            </p>
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center space-x-2 text-xs text-slate-400">
+                <Mail className="w-4 h-4 text-teal-400" />
+                <span>support@apollofamilyclinic.com</span>
+              </div>
+              <div className="flex items-center space-x-2 text-xs text-slate-400">
+                <Phone className="w-4 h-4 text-teal-400" />
+                <span>{clinic?.phone || '080-45678901'} (General Helpdesk)</span>
+              </div>
             </div>
           </div>
 
+          {/* Col 2: Address & Timings */}
           <div className="space-y-4">
-            <h4 className="font-bold text-base text-white">Unified Access</h4>
-            <div className="flex flex-col space-y-2 items-center md:items-start text-sm">
-              <Link href="/login" className="text-teal-400 hover:text-teal-300 transition-colors">
-                Patient Portal Sign In
+            <h4 className="text-xs text-slate-500 uppercase font-black tracking-widest">Clinic Location</h4>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-2.5 text-xs text-slate-350">
+                <MapPin className="w-4.5 h-4.5 text-teal-400 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">
+                  {clinic?.address || '102, Residency Road, Bangalore, Karnataka - 560025'}
+                  <span className="text-[10px] text-slate-500 block mt-1">📍 Near Residency Cross Road</span>
+                </span>
+              </div>
+              <div className="flex items-start space-x-2.5 text-xs text-slate-350 pt-1 border-t border-slate-900">
+                <Clock className="w-4.5 h-4.5 text-indigo-400 shrink-0 mt-0.5" />
+                <span>
+                  <span className="font-bold text-white block">Working Hours:</span>
+                  <span className="block text-[11px] text-slate-400">{clinic?.settings?.timings || 'Mon - Sat: 9:00 AM - 5:00 PM'}</span>
+                  <span className="text-[10px] text-rose-455 block mt-0.5">Closed on Sundays & National Holidays</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Col 3: Portal Access Panel */}
+          <div className="space-y-4">
+            <h4 className="text-xs text-slate-500 uppercase font-black tracking-widest">Unified Access</h4>
+            <div className="space-y-3">
+              <Link 
+                href="/login" 
+                className="group flex items-start space-x-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 p-3 rounded-xl transition-all"
+              >
+                <Lock className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-xs font-bold text-white group-hover:text-teal-400 transition-colors block">
+                    Patient Portal Sign In
+                  </span>
+                  <span className="text-[9px] text-slate-500 leading-tight block mt-0.5">
+                    View active prescriptions, bill receipts, and vitals history.
+                  </span>
+                </div>
               </Link>
-              <Link href="/register-patient" className="text-teal-400 hover:text-teal-300 transition-colors">
-                Patient Portal Registration
+
+              <Link 
+                href="/register-patient" 
+                className="group flex items-start space-x-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 p-3 rounded-xl transition-all"
+              >
+                <User className="w-4.5 h-4.5 text-indigo-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-xs font-bold text-white group-hover:text-indigo-400 transition-colors block">
+                    Register Portal Profile
+                  </span>
+                  <span className="text-[9px] text-slate-500 leading-tight block mt-0.5">
+                    Claim your records folder online using your mobile number.
+                  </span>
+                </div>
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer copyright */}
       <footer className="py-6 border-t border-slate-900 text-center text-xs text-slate-500 bg-slate-950">
         <p>© {new Date().getFullYear()} {clinic?.name || 'Apollo Clinic'}. All rights reserved.</p>
       </footer>
