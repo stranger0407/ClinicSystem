@@ -44,6 +44,9 @@ jobs:
           cp -r frontend/.next/standalone/* deploy/ 2>/dev/null || true
           cp -r frontend/.next/standalone/. deploy/ 2>/dev/null || true
           
+          # Patch Next.js standalone server to support iisnode Named Pipes on Windows
+          node -e "const fs = require('fs'); const file = 'deploy/frontend/server.js'; let content = fs.readFileSync(file, 'utf8'); content = content.replace('parseInt(process.env.PORT, 10)', 'process.env.PORT'); fs.writeFileSync(file, content, 'utf8');"
+          
           # Copy static assets
           mkdir -p deploy/frontend/.next/static
           cp -r frontend/.next/static/* deploy/frontend/.next/static/ 2>/dev/null || true
