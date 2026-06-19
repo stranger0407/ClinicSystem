@@ -278,6 +278,10 @@ export default function DoctorDashboard() {
   const [mergeError, setMergeError] = useState('');
   const [mergeSuccess, setMergeSuccess] = useState(false);
 
+  // Modal Visibility States
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [mergeModalOpen, setMergeModalOpen] = useState(false);
+
   // ==========================================
   // TAB 3: BILLING & RECEIPTS STATES
   // ==========================================
@@ -688,6 +692,7 @@ export default function DoctorDashboard() {
       setPatientSearchResults([res, ...patientSearchResults]);
       viewPatientTimeline(res.id);
       setBookingPatient(res);
+      setRegisterModalOpen(false);
     } catch (err: any) {
       setRegisterError(err.message || 'Failed to register patient');
     } finally {
@@ -1574,350 +1579,204 @@ export default function DoctorDashboard() {
               TAB 2: PATIENT DATABASE & MANAGEMENT
               ========================================== */}
           {activeTab === 'patients' && (
-            <div className="flex flex-col lg:flex-row gap-6 min-h-0">
-              {/* Left Column: Register Patient & Search */}
-              <div className="flex-1 space-y-6">
-                {/* Patient Search */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center">
-                    <Search className="w-4 h-4 mr-2 text-indigo-600" /> Search Patient Records
+            <div className="space-y-6 min-h-0">
+              {/* Patient Search & Action Header */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-3">
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center">
+                    <Search className="w-4 h-4 mr-2 text-indigo-650" /> Search Patient Records
                   </h3>
-                  <form onSubmit={handlePatientSearch} className="flex space-x-3">
-                    <input
-                      type="text"
-                      value={patientSearchQuery}
-                      onChange={(e) => setPatientSearchQuery(e.target.value)}
-                      placeholder="Search by First Name, Last Name, or Mobile Number..."
-                      required
-                      className="flex-1 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none rounded-lg px-3.5 py-2 text-xs text-slate-800 placeholder-slate-500 transition-all"
-                    />
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
                     <button
-                      type="submit"
-                      disabled={searchingPatients}
-                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs flex items-center space-x-1.5 transition-all shadow-sm shadow-indigo-500/10"
+                      onClick={() => {
+                        setRegisterError('');
+                        setRegisterSuccess(false);
+                        setRegisterModalOpen(true);
+                      }}
+                      className="flex-1 sm:flex-initial px-3.5 py-1.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm hover:shadow-md"
                     >
-                      {searchingPatients ? <Loader className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                      <span>Search</span>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Register Patient</span>
                     </button>
-                  </form>
-
-                  {/* Search Results */}
-                  {patientSearchResults.length > 0 && (
-                    <div className="border border-slate-100 rounded-xl overflow-hidden text-xs">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-400 font-bold uppercase">
-                            <th className="p-3">Patient Name</th>
-                            <th className="p-3">Phone</th>
-                            <th className="p-3">DOB / Age</th>
-                            <th className="p-3">Gender</th>
-                            <th className="p-3 text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-800">
-                          {patientSearchResults.map((pat) => (
-                            <tr key={pat.id} className="hover:bg-slate-50/50">
-                              <td className="p-3 font-semibold">{pat.firstName} {pat.lastName}</td>
-                              <td className="p-3">{pat.phone}</td>
-                              <td className="p-3">
-                                {new Date(pat.dob).toLocaleDateString()} (
-                                {new Date().getFullYear() - new Date(pat.dob).getFullYear()}y)
-                              </td>
-                              <td className="p-3">{pat.gender}</td>
-                              <td className="p-3 text-right">
-                                <div className="flex items-center justify-end space-x-2">
-                                  <button
-                                    onClick={() => setBookingPatient(pat)}
-                                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-700 font-bold rounded transition-all duration-150 shadow-sm"
-                                  >
-                                    <Clock className="w-3 h-3 text-emerald-500" />
-                                    <span>Check-In</span>
-                                  </button>
-                                  
-                                  <button
-                                    onClick={() => viewPatientTimeline(pat.id)}
-                                    className="inline-flex items-center space-x-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-700 font-bold rounded transition-all duration-150 shadow-sm"
-                                  >
-                                    <FileText className="w-3 h-3 text-indigo-500" />
-                                    <span>Open File</span>
-                                  </button>
-                                  
-                                  <button
-                                    onClick={() => setEditingPatient(pat)}
-                                    className="inline-flex items-center space-x-1 px-2 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded transition-all duration-150"
-                                    title="Edit Patient Details"
-                                  >
-                                    <Edit className="w-3 h-3 text-slate-500" />
-                                    <span>Edit</span>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-
-                {/* Patient Register Form */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center">
-                    <PlusCircle className="w-4 h-4 mr-2 text-indigo-600" /> Register New Patient
-                  </h3>
-
-                  {registerError && <p className="text-red-600 text-xs font-semibold">{registerError}</p>}
-                  {registerSuccess && <p className="text-emerald-600 text-xs font-bold">Patient file initialized and registered!</p>}
-
-                  <form onSubmit={handleRegisterPatient} className="space-y-4 text-xs text-slate-800">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">First Name *</label>
-                        <input
-                          type="text"
-                          required
-                          value={newPatient.firstName}
-                          onChange={(e) => setNewPatient({ ...newPatient, firstName: e.target.value })}
-                          placeholder="e.g. Rajesh"
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Last Name *</label>
-                        <input
-                          type="text"
-                          required
-                          value={newPatient.lastName}
-                          onChange={(e) => setNewPatient({ ...newPatient, lastName: e.target.value })}
-                          placeholder="e.g. Kumar"
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Phone Number *</label>
-                        <input
-                          type="text"
-                          required
-                          value={newPatient.phone}
-                          onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                          placeholder="e.g. 9876543210"
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Date of Birth *</label>
-                        <input
-                          type="date"
-                          required
-                          value={newPatient.dob}
-                          onChange={(e) => setNewPatient({ ...newPatient, dob: e.target.value })}
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Gender *</label>
-                        <select
-                          value={newPatient.gender}
-                          onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        >
-                          <option value="MALE">Male</option>
-                          <option value="FEMALE">Female</option>
-                          <option value="OTHER">Other</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Address</label>
-                        <input
-                          type="text"
-                          value={newPatient.address}
-                          onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
-                          placeholder="e.g. 102, Residencies, Bangalore"
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Allergies (comma-separated)</label>
-                        <input
-                          type="text"
-                          value={newPatient.allergies}
-                          onChange={(e) => setNewPatient({ ...newPatient, allergies: e.target.value })}
-                          placeholder="e.g. Penicillin, Pollen"
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Chronic Conditions (comma-separated)</label>
-                        <input
-                          type="text"
-                          value={newPatient.chronicConditions}
-                          onChange={(e) => setNewPatient({ ...newPatient, chronicConditions: e.target.value })}
-                          placeholder="e.g. Hypertension, Diabetes"
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={registeringPatient}
-                        className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs flex items-center space-x-1.5 transition-all disabled:opacity-50"
-                      >
-                        {registeringPatient && <Loader className="w-4 h-4 animate-spin" />}
-                        <span>Initialize Patient File</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-                {/* Merge duplicates Form */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 flex items-center">
-                    <ArrowRightLeft className="w-4 h-4 mr-2 text-indigo-600" /> Merge Duplicate Patients
-                  </h3>
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Instantly merge duplicate patient profiles. Invoices, prescriptions, and clinical history will be consolidated under the survivor record.
-                  </p>
-
-                  {mergeError && <p className="text-red-600 text-xs font-bold">{mergeError}</p>}
-                  {mergeSuccess && <p className="text-emerald-600 text-xs font-bold">Patient records successfully merged.</p>}
-
-                  <form onSubmit={handleMergePatientsSubmit} className="space-y-4 text-xs">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Source Profile ID (Duplicate to Delete)</label>
-                        <input
-                          type="text"
-                          required
-                          value={mergeSourceId}
-                          onChange={(e) => setMergeSourceId(e.target.value)}
-                          placeholder="Paste duplicate ID..."
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Target Profile ID (Survivor to Retain)</label>
-                        <input
-                          type="text"
-                          required
-                          value={mergeTargetId}
-                          onChange={(e) => setMergeTargetId(e.target.value)}
-                          placeholder="Paste survivor ID..."
-                          className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-800"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={merging}
-                        className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs flex items-center space-x-1.5 transition-all disabled:opacity-50"
-                      >
-                        {merging && <Loader className="w-4 h-4 animate-spin" />}
-                        <span>Execute Merge</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              {/* Right Column: Selected Patient Detail Timeline */}
-              <div className="w-full lg:w-96 shrink-0">
-                {selectedPatientForTimeline ? (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5 overflow-y-auto max-h-[calc(100vh-200px)]">
-                    <div className="flex justify-between items-start border-b border-slate-100 pb-3">
-                      <div>
-                        <h3 className="font-extrabold text-slate-900 text-sm">
-                          {selectedPatientForTimeline.firstName} {selectedPatientForTimeline.lastName}
-                        </h3>
-                        <p className="text-[10px] text-slate-500 font-semibold tracking-wider mt-0.5 uppercase">
-                          ID: {selectedPatientForTimeline.id}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setEditingPatient(selectedPatientForTimeline)}
-                        className="p-1.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg text-slate-500"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Patient File Meta info */}
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <span className="text-[9px] text-slate-400 block font-bold uppercase">Phone</span>
-                        <strong className="text-slate-800">{selectedPatientForTimeline.phone}</strong>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-slate-400 block font-bold uppercase">DOB</span>
-                        <strong className="text-slate-800">{new Date(selectedPatientForTimeline.dob).toLocaleDateString()}</strong>
-                      </div>
-                      <div className="col-span-2">
-                        <span className="text-[9px] text-slate-400 block font-bold uppercase">Allergies</span>
-                        <strong className="text-slate-800">
-                          {Array.isArray(selectedPatientForTimeline.allergies) && selectedPatientForTimeline.allergies.length > 0
-                            ? selectedPatientForTimeline.allergies.join(', ')
-                            : 'None recorded'}
-                        </strong>
-                      </div>
-                      <div className="col-span-2">
-                        <span className="text-[9px] text-slate-400 block font-bold uppercase">Chronic Conditions</span>
-                        <strong className="text-slate-800">
-                          {Array.isArray(selectedPatientForTimeline.chronicConditions) && selectedPatientForTimeline.chronicConditions.length > 0
-                            ? selectedPatientForTimeline.chronicConditions.join(', ')
-                            : 'None recorded'}
-                        </strong>
-                      </div>
-                    </div>
-
-                    {/* Check-In & Edit Actions */}
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setBookingPatient(selectedPatientForTimeline)}
-                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm shadow-emerald-600/10"
-                      >
-                        <PlusCircle className="w-4 h-4" />
-                        <span>Check-In / Book Patient</span>
-                      </button>
-                      <button
-                        onClick={() => setEditingPatient(selectedPatientForTimeline)}
-                        className="py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-lg text-xs flex items-center justify-center space-x-1 transition-all"
-                        title="Edit Patient Details"
-                      >
-                        <Edit className="w-4 h-4 text-slate-500" />
-                        <span>Edit</span>
-                      </button>
-                    </div>
-
-                    {/* Patient Timeline logs */}
-                    <div className="space-y-3 pt-3 border-t border-slate-100">
-                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Clinical Visit Logs</span>
-                      {loadingHistoryTimeline ? (
-                        <div className="flex justify-center py-6"><Loader className="w-5 h-5 animate-spin text-slate-400" /></div>
-                      ) : patientHistoryTimeline?.encounters?.length > 0 ? (
-                        <div className="relative border-l border-slate-200 pl-4 space-y-6 ml-2 mr-0.5">
-                          {patientHistoryTimeline.encounters.map((enc: any) => (
-                            <div key={enc.id} className="relative">
-                              <span className="absolute -left-[23px] top-4 w-3.5 h-3.5 rounded-full border-2 border-indigo-500 bg-white shadow-sm z-10"></span>
-                              <TimelineEncounterCard enc={enc} />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-slate-400 text-xs italic">No clinical history recorded.</p>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => {
+                        setMergeError('');
+                        setMergeSuccess(false);
+                        setMergeModalOpen(true);
+                      }}
+                      className="flex-1 sm:flex-initial px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm"
+                    >
+                      <ArrowRightLeft className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Merge Profiles</span>
+                    </button>
                   </div>
-                ) : (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-16 shadow-sm text-center flex flex-col items-center justify-center space-y-3">
-                    <User className="w-12 h-12 text-slate-300" />
-                    <h3 className="font-bold text-slate-800 text-base">Select Patient</h3>
-                    <p className="text-slate-500 text-xs">
-                      Search and click "Open File" next to a patient record to view their profile timeline.
-                    </p>
+                </div>
+
+                <form onSubmit={handlePatientSearch} className="flex space-x-3">
+                  <input
+                    type="text"
+                    value={patientSearchQuery}
+                    onChange={(e) => setPatientSearchQuery(e.target.value)}
+                    placeholder="Search by First Name, Last Name, or Mobile Number..."
+                    required
+                    className="flex-1 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none rounded-lg px-3.5 py-2 text-xs text-slate-800 placeholder-slate-500 transition-all"
+                  />
+                  <button
+                    type="submit"
+                    disabled={searchingPatients}
+                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs flex items-center space-x-1.5 transition-all shadow-sm shadow-indigo-500/10"
+                  >
+                    {searchingPatients ? <Loader className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    <span>Search</span>
+                  </button>
+                </form>
+
+                {/* Search Results */}
+                {patientSearchResults.length > 0 && (
+                  <div className="border border-slate-100 rounded-xl overflow-hidden text-xs">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 text-[10px] text-slate-400 font-bold uppercase">
+                          <th className="p-3">Patient Name</th>
+                          <th className="p-3">Phone</th>
+                          <th className="p-3">DOB / Age</th>
+                          <th className="p-3">Gender</th>
+                          <th className="p-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-800">
+                        {patientSearchResults.map((pat) => (
+                          <tr key={pat.id} className="hover:bg-slate-50/50">
+                            <td className="p-3 font-semibold">{pat.firstName} {pat.lastName}</td>
+                            <td className="p-3">{pat.phone}</td>
+                            <td className="p-3">
+                              {new Date(pat.dob).toLocaleDateString()} (
+                              {new Date().getFullYear() - new Date(pat.dob).getFullYear()}y)
+                            </td>
+                            <td className="p-3">{pat.gender}</td>
+                            <td className="p-3 text-right">
+                              <div className="flex items-center justify-end space-x-2">
+                                <button
+                                  onClick={() => setBookingPatient(pat)}
+                                  className="inline-flex items-center space-x-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-700 font-bold rounded transition-all duration-150 shadow-sm"
+                                >
+                                  <Clock className="w-3 h-3 text-emerald-500" />
+                                  <span>Check-In</span>
+                                </button>
+                                
+                                <button
+                                  onClick={() => viewPatientTimeline(pat.id)}
+                                  className="inline-flex items-center space-x-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-700 font-bold rounded transition-all duration-150 shadow-sm"
+                                >
+                                  <FileText className="w-3 h-3 text-indigo-500" />
+                                  <span>Open File</span>
+                                </button>
+                                
+                                <button
+                                  onClick={() => setEditingPatient(pat)}
+                                  className="inline-flex items-center space-x-1 px-2 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded transition-all duration-150"
+                                  title="Edit Patient Details"
+                                >
+                                  <Edit className="w-3 h-3 text-slate-500" />
+                                  <span>Edit</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
+
+              {/* Opened Patient Detail Timeline (Full Width, Below Search) */}
+              {selectedPatientForTimeline && (
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+                  <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-base flex items-center space-x-2.5">
+                        <span className="text-[17px] text-slate-800">{selectedPatientForTimeline.firstName} {selectedPatientForTimeline.lastName}</span>
+                        <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                          ID: {selectedPatientForTimeline.id}
+                        </span>
+                      </h3>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Patient File Folder</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setBookingPatient(selectedPatientForTimeline)}
+                        className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm"
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                        <span>Check-In Patient</span>
+                      </button>
+                      <button
+                        onClick={() => setEditingPatient(selectedPatientForTimeline)}
+                        className="py-1.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-lg text-xs flex items-center justify-center space-x-1 transition-all"
+                        title="Edit Patient Details"
+                      >
+                        <Edit className="w-4 h-4 text-slate-500" />
+                        <span>Edit File</span>
+                      </button>
+                      <button
+                        onClick={() => setSelectedPatientForTimeline(null)}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                        title="Close Patient File"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Patient Info Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs bg-slate-50/50 p-4 border border-slate-100 rounded-xl">
+                    <div className="space-y-0.5">
+                      <span className="text-[9px] text-slate-400 block font-bold uppercase">Phone Number</span>
+                      <strong className="text-slate-800 text-[13px]">{selectedPatientForTimeline.phone}</strong>
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-[9px] text-slate-400 block font-bold uppercase">Date of Birth</span>
+                      <strong className="text-slate-800 text-[13px]">{new Date(selectedPatientForTimeline.dob).toLocaleDateString()}</strong>
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-[9px] text-slate-400 block font-bold uppercase">Allergies</span>
+                      <strong className="text-slate-800 text-[12px] block truncate" title={Array.isArray(selectedPatientForTimeline.allergies) ? selectedPatientForTimeline.allergies.join(', ') : ''}>
+                        {Array.isArray(selectedPatientForTimeline.allergies) && selectedPatientForTimeline.allergies.length > 0
+                          ? selectedPatientForTimeline.allergies.join(', ')
+                          : 'None recorded'}
+                      </strong>
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="text-[9px] text-slate-400 block font-bold uppercase">Chronic Conditions</span>
+                      <strong className="text-slate-800 text-[12px] block truncate" title={Array.isArray(selectedPatientForTimeline.chronicConditions) ? selectedPatientForTimeline.chronicConditions.join(', ') : ''}>
+                        {Array.isArray(selectedPatientForTimeline.chronicConditions) && selectedPatientForTimeline.chronicConditions.length > 0
+                          ? selectedPatientForTimeline.chronicConditions.join(', ')
+                          : 'None recorded'}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Clinical History logs */}
+                  <div className="space-y-3 pt-2">
+                    <span className="text-[10px] text-slate-450 font-bold uppercase tracking-wider block">Clinical Visit Logs</span>
+                    {loadingHistoryTimeline ? (
+                      <div className="flex justify-center py-8"><Loader className="w-8 h-8 animate-spin text-slate-400" /></div>
+                    ) : patientHistoryTimeline?.encounters?.length > 0 ? (
+                      <div className="relative border-l border-slate-200 pl-4 space-y-6 ml-2 mr-0.5">
+                        {patientHistoryTimeline.encounters.map((enc: any) => (
+                          <div key={enc.id} className="relative">
+                            <span className="absolute -left-[23px] top-4 w-3.5 h-3.5 rounded-full border-2 border-indigo-500 bg-white shadow-sm z-10"></span>
+                            <TimelineEncounterCard enc={enc} />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-xs italic">No clinical history recorded.</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -3139,6 +2998,195 @@ export default function DoctorDashboard() {
                 >
                   {bookingInProgress && <Loader className="w-4 h-4 animate-spin" />}
                   <span>Confirm Check-In</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Register Patient Modal */}
+      {registerModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+              <h3 className="font-extrabold text-slate-800 text-sm uppercase flex items-center">
+                <PlusCircle className="w-4 h-4 mr-2 text-indigo-650" /> Register New Patient
+              </h3>
+              <button onClick={() => setRegisterModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleRegisterPatient} className="p-6 space-y-4 text-xs overflow-y-auto">
+              {registerError && <p className="text-red-650 text-xs font-semibold">{registerError}</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">First Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newPatient.firstName}
+                    onChange={(e) => setNewPatient({ ...newPatient, firstName: e.target.value })}
+                    placeholder="Rajesh"
+                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-slate-800 font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Last Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newPatient.lastName}
+                    onChange={(e) => setNewPatient({ ...newPatient, lastName: e.target.value })}
+                    placeholder="Kumar"
+                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-slate-800 font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Phone Number *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newPatient.phone}
+                    onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
+                    placeholder="9876543210"
+                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-slate-800 font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Date of Birth *</label>
+                  <input
+                    type="date"
+                    required
+                    value={newPatient.dob}
+                    onChange={(e) => setNewPatient({ ...newPatient, dob: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-slate-800 font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Gender *</label>
+                  <select
+                    value={newPatient.gender}
+                    onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-slate-800 font-medium"
+                  >
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Address</label>
+                  <input
+                    type="text"
+                    value={newPatient.address}
+                    onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
+                    placeholder="102 Residencies, Bangalore"
+                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-slate-800 font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Allergies (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={newPatient.allergies}
+                    onChange={(e) => setNewPatient({ ...newPatient, allergies: e.target.value })}
+                    placeholder="Penicillin, Pollen"
+                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-slate-800 font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Chronic Conditions (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={newPatient.chronicConditions}
+                    onChange={(e) => setNewPatient({ ...newPatient, chronicConditions: e.target.value })}
+                    placeholder="Hypertension, Diabetes"
+                    className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3 py-2 text-slate-800 font-medium"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setRegisterModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={registeringPatient}
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg flex items-center space-x-1.5 shadow-sm shadow-indigo-500/10 disabled:opacity-50"
+                >
+                  {registeringPatient && <Loader className="w-4 h-4 animate-spin" />}
+                  <span>Register Patient</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Merge Duplicate Patients Modal */}
+      {mergeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+              <h3 className="font-extrabold text-slate-800 text-sm uppercase flex items-center">
+                <ArrowRightLeft className="w-4 h-4 mr-2 text-indigo-600" /> Merge Duplicate Profiles
+              </h3>
+              <button onClick={() => setMergeModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleMergePatientsSubmit} className="p-6 space-y-4 text-xs">
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Consolidate billing invoices, clinical encounter history, and prescriptions from a duplicate record into a survivor record. **The duplicate profile will be deleted permanently.**
+              </p>
+              
+              {mergeError && <p className="text-red-650 text-xs font-bold">{mergeError}</p>}
+              {mergeSuccess && <p className="text-emerald-650 text-xs font-bold">Profiles successfully consolidated!</p>}
+
+              <div className="space-y-1.5">
+                <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Source Patient Profile ID (Duplicate to Delete)</label>
+                <input
+                  type="text"
+                  required
+                  value={mergeSourceId}
+                  onChange={(e) => setMergeSourceId(e.target.value)}
+                  placeholder="Paste duplicate ID string..."
+                  className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3.5 py-2 text-slate-800 font-medium"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Target Patient Profile ID (Survivor to Retain)</label>
+                <input
+                  type="text"
+                  required
+                  value={mergeTargetId}
+                  onChange={(e) => setMergeTargetId(e.target.value)}
+                  placeholder="Paste survivor ID string..."
+                  className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg px-3.5 py-2 text-slate-800 font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setMergeModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={merging}
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg flex items-center space-x-1.5 shadow-sm shadow-indigo-500/10 disabled:opacity-50"
+                >
+                  {merging && <Loader className="w-4 h-4 animate-spin" />}
+                  <span>Execute Consolidation</span>
                 </button>
               </div>
             </form>
