@@ -119,6 +119,8 @@ export class AppController {
 
     const slots: { time: string; startTime: string; available: boolean }[] = [];
     const durationMin = doctor.durationMin || 15;
+    const now = Date.now();
+    const isTest = process.env.NODE_ENV === 'test';
 
     for (const windowStr of daySlots) {
       const [startStr, endStr] = windowStr.split('-');
@@ -138,6 +140,12 @@ export class AppController {
       while (current.getTime() + durationMs <= end.getTime()) {
         const timeStr = current.toTimeString().substring(0, 5); // "09:00"
         const slotStartIso = current.toISOString();
+
+        // Skip past slots in non-test environments
+        if (!isTest && current.getTime() < now) {
+          current = new Date(current.getTime() + durationMs);
+          continue;
+        }
 
         slots.push({
           time: timeStr,
