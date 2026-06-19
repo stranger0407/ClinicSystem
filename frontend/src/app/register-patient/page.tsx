@@ -58,7 +58,6 @@ export default function RegisterPatientPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-clinic-id': resolvedClinicId,
         },
         body: JSON.stringify(payload),
       });

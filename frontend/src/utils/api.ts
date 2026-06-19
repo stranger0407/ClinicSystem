@@ -2,7 +2,6 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const clinicId = typeof window !== 'undefined' ? localStorage.getItem('clinicId') : null;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -11,10 +10,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  if (clinicId) {
-    headers['x-clinic-id'] = clinicId;
   }
 
   const response = await fetch(`${BASE_URL}${path}`, {
