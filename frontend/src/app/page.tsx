@@ -445,6 +445,83 @@ export default function PublicClinicLanding() {
               </div>
             ))}
           </div>
+
+          {/* Solo Practitioner Biography & Achievements Panel */}
+          <div className="mt-16 bg-slate-900/40 backdrop-blur-sm border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Profile Bio Details (Left) */}
+              <div className="lg:col-span-7 space-y-6 text-left">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-3 py-1 text-indigo-405 text-[10px] font-bold uppercase tracking-widest">
+                    <span>Clinical Profile</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white">Expert Clinical Leadership</h3>
+                  <p className="text-slate-400 text-xs sm:text-sm leading-relaxed font-normal">
+                    Dr. Ramesh Patel brings over 15 years of dedicated experience in non-invasive cardiology and internal medicine. Having served at leading research institutes and cardiac critical centers, he now provides comprehensive primary and cardiovascular care in a personalized single-physician workspace.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-xs text-slate-300 uppercase font-black tracking-wider">Clinical Specializations & Interests</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {['Preventive Cardiology', 'Hypertension & Lipidology', 'Chronic Care Management', 'Electrocardiography (ECG)', 'Geriatric Consultations', 'Executive Health Screenings'].map((interest, idx) => (
+                      <span key={idx} className="bg-slate-950 border border-slate-850 text-slate-400 text-[10px] font-medium px-2.5 py-1 rounded-md">
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3.5 pt-2">
+                  <h4 className="text-xs text-slate-300 uppercase font-black tracking-wider">Professional Timeline</h4>
+                  <div className="space-y-3 border-l border-slate-800 pl-4 ml-1">
+                    <div className="relative">
+                      <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-teal-400 border border-slate-950" />
+                      <span className="text-[10px] text-teal-400 font-bold block">2018 - Present</span>
+                      <span className="text-xs text-white font-bold block">Founder & Chief Consultant</span>
+                      <span className="text-[11px] text-slate-500 block font-normal">Apollo Family Clinic & Cardiac Center</span>
+                    </div>
+                    <div className="relative">
+                      <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-slate-700 border border-slate-950" />
+                      <span className="text-[10px] text-slate-500 font-bold block">2012 - 2018</span>
+                      <span className="text-xs text-white font-bold block">Senior Consultant - Cardiology</span>
+                      <span className="text-[11px] text-slate-500 block font-normal">Metro Heart and Vascular Institute</span>
+                    </div>
+                    <div className="relative">
+                      <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-slate-700 border border-slate-950" />
+                      <span className="text-[10px] text-slate-500 font-bold block">2008 - 2012</span>
+                      <span className="text-xs text-white font-bold block">Residency & Clinical Fellow</span>
+                      <span className="text-[11px] text-slate-500 block font-normal">All India Institute of Medical Sciences (AIIMS)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Achievements Metrics Grid (Right) */}
+              <div className="lg:col-span-5 grid grid-cols-2 gap-4 h-full">
+                <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-5 text-center flex flex-col justify-center space-y-1 hover:border-slate-800 transition-colors">
+                  <span className="text-2xl sm:text-3xl font-black text-teal-400 block">15+</span>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block">Years Exp</span>
+                  <span className="text-[10px] text-slate-400 leading-tight block pt-1 font-normal">Years of clinical service</span>
+                </div>
+                <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-5 text-center flex flex-col justify-center space-y-1 hover:border-slate-800 transition-colors">
+                  <span className="text-2xl sm:text-3xl font-black text-indigo-400 block">10k+</span>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block">Patients</span>
+                  <span className="text-[10px] text-slate-400 leading-tight block pt-1 font-normal">Successfully consulted</span>
+                </div>
+                <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-5 text-center flex flex-col justify-center space-y-1 hover:border-slate-800 transition-colors">
+                  <span className="text-2xl sm:text-3xl font-black text-emerald-400 block">15+</span>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block">Publications</span>
+                  <span className="text-[10px] text-slate-400 leading-tight block pt-1 font-normal">National & Int'l papers</span>
+                </div>
+                <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-5 text-center flex flex-col justify-center space-y-1 hover:border-slate-800 transition-colors">
+                  <span className="text-2xl sm:text-3xl font-black text-rose-400 block">99.2%</span>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-wider block">Satisfaction</span>
+                  <span className="text-[10px] text-slate-400 leading-tight block pt-1 font-normal">Post-consultation reviews</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
