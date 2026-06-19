@@ -37,6 +37,168 @@ import {
   Info
 } from 'lucide-react';
 
+function TimelineEncounterCard({ enc }: { enc: any }) {
+  const prescription = enc.prescription || enc.prescriptions?.[0];
+  const hasVitals = enc.vitals && typeof enc.vitals === 'object' && Object.values(enc.vitals).some(v => v !== null && v !== undefined && v !== '');
+
+  // Parse testsRequired safely
+  let testsList: string[] = [];
+  if (Array.isArray(enc.testsRequired)) {
+    testsList = enc.testsRequired;
+  } else if (typeof enc.testsRequired === 'string' && enc.testsRequired.trim()) {
+    testsList = enc.testsRequired.split(',').map((t: string) => t.trim()).filter(Boolean);
+  }
+
+  return (
+    <div className="bg-slate-50/75 border border-slate-200/80 rounded-xl p-3.5 space-y-3 text-xs shadow-sm hover:shadow-md transition-shadow">
+      {/* Date and Provider */}
+      <div className="flex justify-between items-center text-[10px] text-slate-500 font-semibold border-b border-slate-200/50 pb-1.5">
+        <div className="flex items-center space-x-1">
+          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+          <span>{new Date(enc.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+        </div>
+        {enc.doctor?.user && (
+          <span className="text-indigo-650 bg-indigo-50/50 px-1.5 py-0.5 rounded-md text-[9px] font-bold">
+            Dr. {enc.doctor.user.firstName} {enc.doctor.user.lastName.substring(0, 1)}.
+          </span>
+        )}
+      </div>
+
+      {/* Diagnosis */}
+      <div>
+        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5">Diagnosis</span>
+        <div className="font-bold text-slate-800 text-[13px] leading-tight">
+          {enc.diagnosis || 'General Consultation'}
+        </div>
+      </div>
+
+      {/* Chief Complaint */}
+      {enc.complaint && (
+        <div>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5">Chief Complaint</span>
+          <p className="text-slate-850 text-[11px] leading-relaxed bg-white border border-slate-100 p-2 rounded-lg">
+            {enc.complaint}
+          </p>
+        </div>
+      )}
+
+      {/* Vitals */}
+      {hasVitals && (
+        <div>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Vitals / Measurements</span>
+          <div className="grid grid-cols-2 gap-1.5">
+            {enc.vitals.bp && (
+              <div className="bg-white border border-slate-100 px-2 py-1 rounded flex justify-between items-center text-[10px]">
+                <span className="text-slate-500 font-medium">BP</span>
+                <span className="font-semibold text-slate-800">{enc.vitals.bp} <span className="text-[8px] text-slate-400">mmHg</span></span>
+              </div>
+            )}
+            {enc.vitals.pulse && (
+              <div className="bg-white border border-slate-100 px-2 py-1 rounded flex justify-between items-center text-[10px]">
+                <span className="text-slate-500 font-medium">Pulse</span>
+                <span className="font-semibold text-slate-800">{enc.vitals.pulse} <span className="text-[8px] text-slate-400">bpm</span></span>
+              </div>
+            )}
+            {enc.vitals.temp && (
+              <div className="bg-white border border-slate-100 px-2 py-1 rounded flex justify-between items-center text-[10px]">
+                <span className="text-slate-500 font-medium">Temp</span>
+                <span className="font-semibold text-slate-800">{enc.vitals.temp} <span className="text-[8px] text-slate-400">°F</span></span>
+              </div>
+            )}
+            {enc.vitals.weight && (
+              <div className="bg-white border border-slate-100 px-2 py-1 rounded flex justify-between items-center text-[10px]">
+                <span className="text-slate-500 font-medium">Wt</span>
+                <span className="font-semibold text-slate-800">{enc.vitals.weight} <span className="text-[8px] text-slate-400">kg</span></span>
+              </div>
+            )}
+            {enc.vitals.height && (
+              <div className="bg-white border border-slate-100 px-2 py-1 rounded flex justify-between items-center text-[10px]">
+                <span className="text-slate-500 font-medium">Ht</span>
+                <span className="font-semibold text-slate-800">{enc.vitals.height} <span className="text-[8px] text-slate-400">cm</span></span>
+              </div>
+            )}
+            {enc.vitals.sugar && (
+              <div className="bg-white border border-slate-100 px-2 py-1 rounded flex justify-between items-center text-[10px]">
+                <span className="text-slate-500 font-medium">Sugar</span>
+                <span className="font-semibold text-slate-800">{enc.vitals.sugar} <span className="text-[8px] text-slate-400">mg/dL</span></span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Clinical Notes / Remarks */}
+      {enc.clinicalNotes && (
+        <div>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5">Clinical Remarks</span>
+          <p className="text-slate-700 text-[11px] leading-relaxed bg-white border border-slate-100 p-2 rounded-lg whitespace-pre-line italic">
+            {enc.clinicalNotes}
+          </p>
+        </div>
+      )}
+
+      {/* Recommended Lab Tests */}
+      {testsList.length > 0 && (
+        <div>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Recommended Lab Tests</span>
+          <div className="flex flex-wrap gap-1">
+            {testsList.map((test: string, index: number) => (
+              <span key={index} className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-semibold">
+                {test}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Prescription (Rx) */}
+      {prescription && prescription.items && prescription.items.length > 0 && (
+        <div>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Prescription (Rx)</span>
+          <div className="bg-white border border-slate-150 rounded-lg p-2.5 space-y-2">
+            {prescription.items.map((it: any, i: number) => {
+              const medName = it.medicine?.name || it.medicineName;
+              const strength = it.medicine?.strength || it.strength;
+              const dosageForm = it.medicine?.dosageForm || it.dosageForm;
+              const genericName = it.medicine?.genericName || it.genericName;
+              
+              return (
+                <div key={i} className="border-b border-slate-100 last:border-b-0 pb-1.5 last:pb-0 text-[10px] space-y-0.5">
+                  <div className="flex justify-between items-start">
+                    <span className="font-bold text-slate-800">
+                      {medName} {strength && <span className="font-normal text-slate-500 text-[9px]">({strength})</span>}
+                    </span>
+                    <span className="text-indigo-650 font-bold text-[10px]">
+                      {it.dosage}
+                    </span>
+                  </div>
+                  {genericName && (
+                    <div className="text-[9px] text-slate-400 italic">
+                      {genericName}
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-[9px] text-slate-500 pt-0.5">
+                    <span>{it.instructions}</span>
+                    <span className="font-medium text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded-full text-[8px]">{it.durationDays} days</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Follow-up date */}
+      {enc.followUpDate && (
+        <div className="flex items-center space-x-1 text-[9px] text-slate-500 bg-indigo-50 border border-indigo-100 p-2 rounded-lg justify-center font-medium">
+          <Clock className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Follow-up: <strong className="text-indigo-700">{new Date(enc.followUpDate).toLocaleDateString()}</strong></span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DoctorDashboard() {
   const { user, clinic, logout, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -435,7 +597,9 @@ export default function DoctorDashboard() {
         diagnosis: diagnosis.trim(),
         clinicalNotes: clinicalNotes.trim(),
         followUpDate: followUpDate ? new Date(followUpDate).toISOString() : undefined,
-        testsRequired: testsRequired.trim() || undefined,
+        testsRequired: testsRequired.trim()
+          ? testsRequired.split(',').map(s => s.trim()).filter(Boolean)
+          : undefined,
         vitals: Object.values(vitals).some(v => v !== '') ? vitals : undefined,
         prescriptionItems: prescriptionItems.length > 0 
           ? prescriptionItems.map(item => ({
@@ -1377,24 +1541,11 @@ export default function DoctorDashboard() {
                         {loadingTimeline ? (
                           <div className="flex justify-center py-10"><Loader className="w-5 h-5 animate-spin text-slate-400" /></div>
                         ) : patientTimeline?.encounters?.length > 0 ? (
-                          <div className="relative border-l border-slate-100 pl-4 space-y-5">
+                          <div className="relative border-l border-slate-200 pl-4 space-y-6 ml-2 mr-0.5">
                             {patientTimeline.encounters.map((enc: any) => (
-                              <div key={enc.id} className="relative text-xs">
-                                {/* marker */}
-                                <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full border border-indigo-400 bg-white shadow-sm"></span>
-                                <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold">
-                                  <span>{new Date(enc.createdAt).toLocaleDateString()}</span>
-                                </div>
-                                <p className="font-bold text-slate-800 mt-1">Dx: {enc.diagnosis || 'General visit'}</p>
-                                {enc.complaint && <p className="text-slate-1000 text-[11px] mt-0.5">Compl: {enc.complaint}</p>}
-                                {enc.prescription && (
-                                  <div className="mt-1 bg-slate-50 border border-slate-100 p-2 rounded text-[10px] space-y-0.5">
-                                    <span className="font-semibold text-indigo-750 uppercase tracking-wider text-[8px] block">Rx:</span>
-                                    {enc.prescription.items.map((it: any, i: number) => (
-                                      <div key={i}>{it.medicineName} {it.strength} — {it.dosage} ({it.durationDays}d)</div>
-                                    ))}
-                                  </div>
-                                )}
+                              <div key={enc.id} className="relative">
+                                <span className="absolute -left-[23px] top-4 w-3.5 h-3.5 rounded-full border-2 border-indigo-500 bg-white shadow-sm z-10"></span>
+                                <TimelineEncounterCard enc={enc} />
                               </div>
                             ))}
                           </div>
@@ -1724,20 +1875,11 @@ export default function DoctorDashboard() {
                       {loadingHistoryTimeline ? (
                         <div className="flex justify-center py-6"><Loader className="w-5 h-5 animate-spin text-slate-400" /></div>
                       ) : patientHistoryTimeline?.encounters?.length > 0 ? (
-                        <div className="relative border-l border-slate-100 pl-4 space-y-4">
+                        <div className="relative border-l border-slate-200 pl-4 space-y-6 ml-2 mr-0.5">
                           {patientHistoryTimeline.encounters.map((enc: any) => (
-                            <div key={enc.id} className="relative text-xs">
-                              <span className="absolute -left-[21px] top-0.5 w-2 h-2 rounded-full border border-indigo-400 bg-white"></span>
-                              <span className="text-[9px] text-slate-500 font-bold">{new Date(enc.createdAt).toLocaleDateString()}</span>
-                              <p className="font-semibold text-slate-800">Dx: {enc.diagnosis || 'Checkup'}</p>
-                              {enc.complaint && <p className="text-slate-500 text-[10px]">Compl: {enc.complaint}</p>}
-                              {enc.prescription && (
-                                <div className="mt-1 bg-slate-50 border border-slate-100 p-2 rounded text-[10px] space-y-0.5">
-                                  {enc.prescription.items.map((it: any, i: number) => (
-                                    <div key={i}>{it.medicineName} — {it.dosage} ({it.durationDays}d)</div>
-                                  ))}
-                                </div>
-                              )}
+                            <div key={enc.id} className="relative">
+                              <span className="absolute -left-[23px] top-4 w-3.5 h-3.5 rounded-full border-2 border-indigo-500 bg-white shadow-sm z-10"></span>
+                              <TimelineEncounterCard enc={enc} />
                             </div>
                           ))}
                         </div>
